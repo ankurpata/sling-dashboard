@@ -10,6 +10,7 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  CircularProgress,
 } from '@material-ui/core';
 import {LiveProvider, LiveEditor, LiveError, LivePreview} from 'react-live';
 import {makeStyles} from '@material-ui/core/styles';
@@ -255,6 +256,21 @@ const useStyles = makeStyles((theme) => ({
       borderRadius: '50%',
     },
   },
+  noPreview: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    color: theme.palette.text.secondary,
+    fontSize: '0.95rem',
+    padding: theme.spacing(3),
+  },
+  loadingIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: '50%',
+    backgroundColor: '#f5f5f5',
+    padding: theme.spacing(0.5),
+  },
 }));
 
 // Define allowed libraries
@@ -381,6 +397,10 @@ const CanvasLayout = ({
     }
   };
 
+  const handleImageError = (event) => {
+    event.target.src = '/images/default-component.png';
+  };
+
   const renderChatMessage = (message, index) => {
     return (
       <Box
@@ -391,7 +411,7 @@ const CanvasLayout = ({
         className={`${classes.messageWrapper} ${message.type}`}>
         {message.type === 'ai' && (
           <Box className={classes.messageIcon}>
-            <img src='/favicon.ico' alt='AI' />
+            <img src='/favicon.ico' alt='AI' onError={handleImageError} />
           </Box>
         )}
         <Box flex={1}>
@@ -531,9 +551,11 @@ const CanvasLayout = ({
                     <LiveError className={classes.liveError} />
                   </LiveProvider>
                 ) : (
-                  <Typography variant='body2' color='textSecondary'>
-                    No preview available
-                  </Typography>
+                  <Box className={classes.noPreview}>
+                    <img src="/favicon.ico" alt="AI" className={classes.loadingIcon} />
+                    <CircularProgress size={24} />
+                    <Typography>is thinking...</Typography>
+                  </Box>
                 )
               ) : (
                 <LiveProvider

@@ -44,6 +44,16 @@ const AIBuilder = () => {
   const [activeTab, setActiveTab] = useState('preview');
   const [searchId, setSearchId] = useState(null);
   const [initialResponse, setInitialResponse] = useState(null);
+  const processingTimeoutRef = useRef(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (event) => {
     if (event.key === 'Enter' || event.type === 'click') {
@@ -51,6 +61,12 @@ const AIBuilder = () => {
       if (!inputValue.trim()) return;
 
       setIsProcessing(true);
+
+      // Set timeout to show canvas after 4 seconds
+      processingTimeoutRef.current = setTimeout(() => {
+        setIsProcessing(false);
+        setShowCanvas(true);
+      }, 4000);
 
       try {
         const response = await fetch(
@@ -76,6 +92,11 @@ const AIBuilder = () => {
           },
         );
 
+        // Clear timeout since we got a response
+        if (processingTimeoutRef.current) {
+          clearTimeout(processingTimeoutRef.current);
+        }
+
         const data = await response.json();
         setShowCanvas(true);
 
@@ -85,14 +106,18 @@ const AIBuilder = () => {
         // Store initial response for chat
         setInitialResponse(data.summary);
 
-          const cleaned = CodeUtils.cleanCode(data);
-          const transformed = CodeUtils.transformCode(cleaned.code);
-          setGeneratedCode(transformed);
-          setCodeScope(cleaned.scope);
-          setIsProcessing(false);
+        const cleaned = CodeUtils.cleanCode(data);
+        const transformed = CodeUtils.transformCode(cleaned.code);
+        setGeneratedCode(transformed);
+        setCodeScope(cleaned.scope);
+        setIsProcessing(false);
       } catch (error) {
         console.error('Error:', error);
       } finally {
+        // Clear timeout in case of error
+        if (processingTimeoutRef.current) {
+          clearTimeout(processingTimeoutRef.current);
+        }
         setIsProcessing(false);
       }
     }
