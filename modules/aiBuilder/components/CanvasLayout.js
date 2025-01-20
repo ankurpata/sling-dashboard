@@ -11,14 +11,19 @@ import {
   ListItemText,
   Divider,
   CircularProgress,
+  Button,
+  Slide,
 } from '@material-ui/core';
 import {LiveProvider, LiveEditor, LiveError, LivePreview} from 'react-live';
 import {makeStyles} from '@material-ui/core/styles';
 import AttachFile from '@material-ui/icons/AttachFile';
 import Send from '@material-ui/icons/Send';
+import TuneIcon from '@material-ui/icons/Tune';
+import ArrowForwardIosIcon from '@material-ui/icons/ArrowRight';
 import CodeUtils from '../utils';
 import prettier from 'prettier/standalone';
 import parserBabel from 'prettier/parser-babel';
+import PreviewLayout from './PreviewLayout'; // Import PreviewLayout
 
 // Import CodeUtils from index.js
 
@@ -197,6 +202,13 @@ const useStyles = makeStyles((theme) => ({
   },
   headerSection: {
     marginBottom: theme.spacing(3),
+    borderBottom: '1px solid #e2e8f0',
+    padding: theme.spacing(3, 2),
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerLeft: {
     '& h5': {
       fontWeight: 500,
     },
@@ -205,10 +217,66 @@ const useStyles = makeStyles((theme) => ({
       opacity: 0.8,
     },
   },
-  progressItem: {
-    padding: theme.spacing(2),
-    backgroundColor: '#ffffff',
-    border: `1px solid #e6e6e6`,
+  nextButton: {
+    color: 'white',
+    border: 'none',
+    padding: '6px 16px',
+    position: 'relative',
+    fontSize: '1rem',
+    minWidth: '120px',
+    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
+    fontWeight: 500,
+    borderRadius: '10px',
+    paddingRight: '5px',
+    textTransform: 'none',
+    backgroundColor: '#098fdc',
+    transition: 'all 0.2s ease-in-out',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    '& .MuiSvgIcon-root': {
+      fontSize: '1rem',
+      marginLeft: theme.spacing(1),
+    },
+    '&:hover': {
+      backgroundColor: '#0076c6',
+      transform: 'translateX(4px)',
+      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+      '& .MuiSvgIcon-root': {
+        transform: 'translateX(2px)',
+      },
+    },
+  },
+  nextButtonWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+  },
+  nextInfo: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: theme.spacing(1),
+    padding: theme.spacing(1, 2),
+    backgroundColor: 'rgba(9, 143, 220, 0.1)',
+    borderRadius: theme.spacing(1),
+    fontSize: '0.875rem',
+    color: '#098fdc',
+    whiteSpace: 'nowrap',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    '&:before': {
+      content: '""',
+      position: 'absolute',
+      top: -6,
+      right: '30%',
+      width: 12,
+      height: 12,
+      backgroundColor: 'rgba(9, 143, 220, 0.1)',
+      transform: 'rotate(45deg)',
+    },
   },
   tabRoot: {
     minWidth: 'auto',
@@ -283,6 +351,16 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: '#f5f5f5',
     padding: theme.spacing(0.5),
   },
+  slideContainer: {
+    position: 'relative',
+    height: '100%',
+    overflow: 'hidden',
+  },
+  slidePage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
 }));
 
 // Define allowed libraries
@@ -311,6 +389,7 @@ const CanvasLayout = ({
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [currentView, setCurrentView] = useState('editor'); // 'editor' or 'preview'
 
   // Initialize chat history with initial prompt and AI response
   useEffect(() => {
@@ -440,6 +519,19 @@ const CanvasLayout = ({
     );
   };
 
+  const handleNext = () => {
+    setCurrentView('preview');
+  };
+
+  const handleBack = () => {
+    setCurrentView('editor');
+  };
+
+  const handleSave = () => {
+    // TODO: Implement save functionality
+    console.log('Saving layout...');
+  };
+
   return (
     <Box className={classes.canvas}>
       <Box className={classes.progress}>
@@ -511,117 +603,156 @@ const CanvasLayout = ({
         </Box>
       </Box>
       <Box className={classes.preview}>
-        <Box className={classes.headerSection}>
-          <Typography variant="h5" color="primary">
-            Generate UI
-          </Typography>
-          <Typography variant="subtitle1" color="textSecondary">
-            Create and preview your component using AI
-          </Typography>
-        </Box>
-        <Box mb={2}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            classes={{
-              root: classes.tabsRoot,
-              indicator: classes.tabsIndicator,
-            }}>
-            <Tab
-              label='Preview'
-              value='preview'
-              classes={{
-                root: classes.tabRoot,
-              }}
-            />
-            <Tab
-              label='Code'
-              value='code'
-              classes={{
-                root: classes.tabRoot,
-              }}
-            />
-          </Tabs>
-        </Box>
-        <Box flex={1} style={{overflowY: 'auto'}}>
-          {isProcessing ? (
-            <Typography variant='body2' color='textSecondary'>
-              Generating code...
-            </Typography>
-          ) : (
-            <Box
-              style={{
-                backgroundColor: '#ffffff',
-                padding: '16px',
-                borderRadius: '12px',
-                minHeight: '500px',
-              }}>
-              {activeTab === 'preview' ? (
-                generatedCode ? (
-                  <LiveProvider
-                    code={generatedCode}
-                    noInline={true}
-                    scope={{
-                      React,
-                      ...codeScope,
-                    }}>
-                    <Box className={classes.livePreview}>
-                      <LivePreview />
-                    </Box>
-                    <LiveError className={classes.liveError} />
-                  </LiveProvider>
+        <Box className={classes.slideContainer}>
+          <Slide
+            direction='left'
+            in={currentView === 'editor'}
+            mountOnEnter
+            unmountOnExit>
+            <Box className={classes.slidePage}>
+              <Box className={classes.headerSection}>
+                <Box className={classes.headerLeft}>
+                  <Typography variant='h5' color='primary'>
+                    Generate UI
+                  </Typography>
+                  <Typography variant='subtitle1' color='textSecondary'>
+                    Create and preview your component using AI
+                  </Typography>
+                </Box>
+                <Box className={classes.nextButtonWrapper}>
+                  <Button
+                    variant='contained'
+                    className={classes.nextButton}
+                    onClick={handleNext}
+                    disableElevation>
+                    Customize Layout 
+                    <ArrowForwardIosIcon style={{fontSize: 25}} />
+                  </Button>
+                </Box>
+              </Box>
+
+              <Box mb={2}>
+                <Tabs
+                  value={activeTab}
+                  onChange={handleTabChange}
+                  classes={{
+                    root: classes.tabsRoot,
+                    indicator: classes.tabsIndicator,
+                  }}>
+                  <Tab
+                    label='Preview'
+                    value='preview'
+                    classes={{
+                      root: classes.tabRoot,
+                    }}
+                  />
+                  <Tab
+                    label='Code'
+                    value='code'
+                    classes={{
+                      root: classes.tabRoot,
+                    }}
+                  />
+                </Tabs>
+              </Box>
+              <Box flex={1} style={{overflowY: 'auto'}}>
+                {isProcessing ? (
+                  <Typography variant='body2' color='textSecondary'>
+                    Generating code...
+                  </Typography>
                 ) : (
-                  <Box className={classes.noPreview}>
-                    <img
-                      src='/favicon.ico'
-                      alt='AI'
-                      className={classes.loadingIcon}
-                    />
-                    <CircularProgress size={24} />
-                    <Typography>is thinking...</Typography>
-                  </Box>
-                )
-              ) : (
-                <>
-                  <Box mb={2} p={2} bgcolor='#f5f7f9' borderRadius={1}>
-                    <Typography variant='body2' color='textSecondary'>
-                      ✨ Edit the code below and switch to the Preview tab to
-                      see changes in real-time. The code automatically updates
-                      as you type.
-                    </Typography>
-                  </Box>
-                  <LiveProvider
-                    code={generatedCode}
-                    noInline={true}
-                    scope={{
-                      React,
-                      ...codeScope,
+                  <Box
+                    style={{
+                      backgroundColor: '#ffffff',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      minHeight: '500px',
                     }}>
-                    <LiveEditor
-                      onChange={(code) => setGeneratedCode(code)}
-                      className={classes.liveEditor}
-                      style={{
-                        fontFamily: 'monospace',
-                        fontSize: 14,
-                        backgroundColor: '#f8fafc',
-                        borderRadius: 12,
-                        padding: 16,
-                      }}
-                    />
-                    <LiveError
-                      style={{
-                        color: 'red',
-                        marginTop: 8,
-                        padding: 8,
-                        backgroundColor: '#ffebee',
-                        borderRadius: 12,
-                      }}
-                    />
-                  </LiveProvider>
-                </>
-              )}
+                    {activeTab === 'preview' ? (
+                      generatedCode ? (
+                        <LiveProvider
+                          code={generatedCode}
+                          noInline={true}
+                          scope={{
+                            React,
+                            ...codeScope,
+                          }}>
+                          <Box className={classes.livePreview}>
+                            <LivePreview />
+                          </Box>
+                          <LiveError className={classes.liveError} />
+                        </LiveProvider>
+                      ) : (
+                        <Box className={classes.noPreview}>
+                          <img
+                            src='/favicon.ico'
+                            alt='AI'
+                            className={classes.loadingIcon}
+                          />
+                          <CircularProgress size={24} />
+                          <Typography>is thinking...</Typography>
+                        </Box>
+                      )
+                    ) : (
+                      <>
+                        <Box mb={2} p={2} bgcolor='#f5f7f9' borderRadius={1}>
+                          <Typography variant='body2' color='textSecondary'>
+                            ✨ Edit the code below and switch to the Preview tab
+                            to see changes in real-time. The code automatically
+                            updates as you type.
+                          </Typography>
+                        </Box>
+                        <LiveProvider
+                          code={generatedCode}
+                          noInline={true}
+                          scope={{
+                            React,
+                            ...codeScope,
+                          }}>
+                          <LiveEditor
+                            onChange={(code) => setGeneratedCode(code)}
+                            className={classes.liveEditor}
+                            style={{
+                              fontFamily: 'monospace',
+                              fontSize: 14,
+                              backgroundColor: '#f8fafc',
+                              borderRadius: 12,
+                              padding: 16,
+                            }}
+                          />
+                          <LiveError
+                            style={{
+                              color: 'red',
+                              marginTop: 8,
+                              padding: 8,
+                              backgroundColor: '#ffebee',
+                              borderRadius: 12,
+                            }}
+                          />
+                        </LiveProvider>
+                      </>
+                    )}
+                  </Box>
+                )}
+              </Box>
             </Box>
-          )}
+          </Slide>
+
+          <Slide
+            direction='right'
+            in={currentView === 'preview'}
+            mountOnEnter
+            unmountOnExit>
+            <Box className={classes.slidePage}>
+              <PreviewLayout
+                generatedCode={generatedCode}
+                codeScope={codeScope}
+                isProcessing={isProcessing}
+                onBack={handleBack}
+                onSave={handleSave}
+              />
+            </Box>
+          </Slide>
         </Box>
       </Box>
     </Box>

@@ -22,7 +22,7 @@ import StarterTemplates from './components/StarterTemplates';
 const AIBuilder = () => {
   const classes = useStyles();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showCanvas, setShowCanvas] = useState(false);
+  const [showCanvas, setShowCanvas] = useState(true);
   const [inputValue, setInputValue] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
   const [codeScope, setCodeScope] = useState({});
