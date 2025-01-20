@@ -12,6 +12,7 @@ const routesConfig = [
     title: 'AI Builder',
     messageId: 'sidebar.app.aiBuilder',
     type: 'item',
+    disabled: true,
     icon: 'auto_awesome',
     url: '/ai-builder',
   },
