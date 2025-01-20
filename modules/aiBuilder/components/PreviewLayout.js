@@ -112,6 +112,24 @@ const useStyles = makeStyles((theme) => ({
       boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
     },
   },
+  previewOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(2),
+    zIndex: 10,
+  },
+  overlayText: {
+    marginTop: theme.spacing(2),
+    color: theme.palette.text.secondary,
+  },
 }));
 
 const PreviewLayout = ({
@@ -120,6 +138,7 @@ const PreviewLayout = ({
   isProcessing,
   onBack,
   onSave,
+  isBreakingWidgets,
 }) => {
   const classes = useStyles();
 
@@ -153,7 +172,15 @@ const PreviewLayout = ({
         </Box>
       </Box>
 
-      <Box className={classes.previewContainer}>
+      <Box className={classes.previewContainer} style={{ position: 'relative' }}>
+        {isBreakingWidgets && (
+          <Box className={classes.previewOverlay}>
+            <CircularProgress size={40} />
+            <Typography className={classes.overlayText}>
+              Breaking down UI into reusable widgets...
+            </Typography>
+          </Box>
+        )}
         {isProcessing ? (
           <Box className={classes.noPreview}>
             <Typography variant='body2' color='textSecondary'>

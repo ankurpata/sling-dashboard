@@ -160,16 +160,17 @@ const AIBuilder = () => {
         {showCanvas && (
           <Box>
             <CanvasLayout
-              searchId={searchId}
-              inputValue={inputValue}
-              isProcessing={isProcessing}
-              initialResponse={initialResponse}
               activeTab={activeTab}
               handleTabChange={handleTabChange}
               generatedCode={generatedCode}
               codeScope={codeScope}
+              inputValue={inputValue}
+              isProcessing={isProcessing}
+              searchId={searchId}
+              initialResponse={initialResponse}
               setGeneratedCode={setGeneratedCode}
               setCodeScope={setCodeScope}
+              setIsProcessing={setIsProcessing}
             />
           </Box>
         )}

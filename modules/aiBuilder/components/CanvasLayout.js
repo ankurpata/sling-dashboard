@@ -416,14 +416,92 @@ const CanvasLayout = ({
   initialResponse,
   setGeneratedCode,
   setCodeScope,
+  setIsProcessing,
 }) => {
   const classes = useStyles();
   const sharedClasses = useSharedStyles();
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [currentView, setCurrentView] = useState('editor'); // 'editor' or 'preview'
+  const [currentView, setCurrentView] = useState('editor');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isBreakingWidgets, setIsBreakingWidgets] = useState(false);
+
+  const handleBreakWidgets = async (prompt, options = {}) => {
+    setIsProcessing(true);
+    setIsTyping(false);
+
+    try {
+      const response = await fetch(
+        'http://localhost:5001/api/ai/generate-page',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt,
+            mock: false,
+            conversationId: searchId,
+            constraints: {
+              ...options,
+            },
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      // Process returned code same as index.js
+      const cleaned = CodeUtils.cleanCode(data);
+      const transformed = CodeUtils.transformCode(cleaned.code);
+      setGeneratedCode(transformed);
+      setCodeScope(cleaned.scope);
+
+      if (data?.message) {
+        setChatHistories((prev) => ({
+          ...prev,
+          [searchId]: [
+            ...(prev[searchId] || []),
+            {type: 'ai', content: data.message},
+          ],
+        }));
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error generating code:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmNext = async () => {
+    setShowConfirmDialog(false);
+    setCurrentView('preview');
+    setIsBreakingWidgets(true);
+
+    // Add confirmation message to chat
+    setChatHistories((prev) => ({
+      ...prev,
+      [searchId]: [
+        ...(prev[searchId] || []),
+        {
+          type: 'ai',
+          content:
+            'Alright, your request is my command! We are breaking the UI into smaller React Widgets and creating layout config for Sling. This will help in better component organization and reusability.',
+        },
+      ],
+    }));
+
+    try {
+      await handleBreakWidgets(inputValue, {
+        breakWidgets: true,
+      });
+    } finally {
+      setIsBreakingWidgets(false);
+    }
+  };
 
   // Initialize chat history with initial prompt and AI response
   useEffect(() => {
@@ -555,11 +633,6 @@ const CanvasLayout = ({
 
   const handleNext = () => {
     setShowConfirmDialog(true);
-  };
-
-  const handleConfirmNext = () => {
-    setShowConfirmDialog(false);
-    setCurrentView('preview');
   };
 
   const handleCancelNext = () => {
@@ -794,6 +867,7 @@ const CanvasLayout = ({
                 isProcessing={isProcessing}
                 onBack={handleBack}
                 onSave={handleSave}
+                isBreakingWidgets={isBreakingWidgets}
               />
             </Box>
           </Slide>
@@ -803,31 +877,27 @@ const CanvasLayout = ({
         open={showConfirmDialog}
         onClose={handleCancelNext}
         className={classes.confirmDialog}
-        maxWidth="xs"
-        fullWidth
-      >
+        maxWidth='xs'
+        fullWidth>
         <DialogTitle className={classes.dialogTitle}>
           Ready to Customize Layout?
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
           <Typography>
-            Are you done creating the UI using AI? If yes, proceed to breaking this into Sling Layout and Widgets. You can always come back to edit if needed.
+            Are you done creating the UI using AI? If yes, proceed to breaking
+            this into Sling Layout and Widgets. You can always come back to edit
+            if needed.
           </Typography>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
-          <Button
-            onClick={handleCancelNext}
-            color="primary"
-            variant="outlined"
-          >
+          <Button onClick={handleCancelNext} color='primary' variant='outlined'>
             Continue Editing
           </Button>
           <Button
             onClick={handleConfirmNext}
-            color="primary"
-            variant="contained"
-            disableElevation
-          >
+            color='primary'
+            variant='contained'
+            disableElevation>
             Proceed to Customize
           </Button>
         </DialogActions>
