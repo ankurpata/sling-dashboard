@@ -13,6 +13,10 @@ import {
   CircularProgress,
   Button,
   Slide,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@material-ui/core';
 import {LiveProvider, LiveEditor, LiveError, LivePreview} from 'react-live';
 import {makeStyles} from '@material-ui/core/styles';
@@ -366,6 +370,29 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     height: '100%',
   },
+  confirmDialog: {
+    '& .MuiDialog-paper': {
+      borderRadius: '12px',
+      padding: theme.spacing(2),
+    },
+  },
+  dialogTitle: {
+    '& .MuiTypography-root': {
+      fontSize: '1.25rem',
+      fontWeight: 500,
+    },
+  },
+  dialogContent: {
+    padding: theme.spacing(2),
+    paddingBottom: theme.spacing(3),
+    '& .MuiTypography-root': {
+      color: theme.palette.text.secondary,
+    },
+  },
+  dialogActions: {
+    padding: theme.spacing(2),
+    gap: theme.spacing(1),
+  },
 }));
 
 // Define allowed libraries
@@ -396,6 +423,7 @@ const CanvasLayout = ({
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentView, setCurrentView] = useState('editor'); // 'editor' or 'preview'
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Initialize chat history with initial prompt and AI response
   useEffect(() => {
@@ -526,7 +554,16 @@ const CanvasLayout = ({
   };
 
   const handleNext = () => {
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmNext = () => {
+    setShowConfirmDialog(false);
     setCurrentView('preview');
+  };
+
+  const handleCancelNext = () => {
+    setShowConfirmDialog(false);
   };
 
   const handleBack = () => {
@@ -762,6 +799,39 @@ const CanvasLayout = ({
           </Slide>
         </Box>
       </Box>
+      <Dialog
+        open={showConfirmDialog}
+        onClose={handleCancelNext}
+        className={classes.confirmDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className={classes.dialogTitle}>
+          Ready to Customize Layout?
+        </DialogTitle>
+        <DialogContent className={classes.dialogContent}>
+          <Typography>
+            Are you done creating the UI using AI? If yes, proceed to breaking this into Sling Layout and Widgets. You can always come back to edit if needed.
+          </Typography>
+        </DialogContent>
+        <DialogActions className={classes.dialogActions}>
+          <Button
+            onClick={handleCancelNext}
+            color="primary"
+            variant="outlined"
+          >
+            Continue Editing
+          </Button>
+          <Button
+            onClick={handleConfirmNext}
+            color="primary"
+            variant="contained"
+            disableElevation
+          >
+            Proceed to Customize
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
