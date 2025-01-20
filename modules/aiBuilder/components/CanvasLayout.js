@@ -567,6 +567,7 @@ const CanvasLayout = ({
                   }}>
                   <LiveEditor
                     className={classes.liveEditor}
+                    onChange={(code) => setGeneratedCode(code)}
                     style={{
                       fontFamily: 'monospace',
                       fontSize: 14,
