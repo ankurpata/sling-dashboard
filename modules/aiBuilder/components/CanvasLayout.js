@@ -424,17 +424,6 @@ const ALLOWED_LIBRARIES = [
   'prop-types',
 ];
 
-const steps = [
-  {
-    label: 'Generate UI',
-    description: 'Create and preview your component'
-  },
-  {
-    label: 'Customize Layout',
-    description: 'Arrange and style your widgets'
-  }
-];
-
 // CanvasLayout component
 const CanvasLayout = ({
   activeTab,
@@ -569,9 +558,28 @@ const CanvasLayout = ({
 
   // Handle prompt submission
   const handlePromptSubmit = async () => {
-    if (!promptInput.trim() || !searchId) return;
+    if (!promptInput.trim()) return;
 
-    // Add user message to chat
+    if (currentView === 'preview') {
+      setChatHistories((prev) => ({
+        ...prev,
+        [searchId]: [
+          ...(prev[searchId] || []),
+          {
+            type: 'user',
+            content: promptInput,
+          },
+          {
+            type: 'ai',
+            content:
+              'To make changes to the layout, please return to the "Generate UI" step.',
+          },
+        ],
+      }));
+      setPromptInput('');
+      return;
+    }
+
     const newMessage = {
       type: 'user',
       content: promptInput,
@@ -843,7 +851,7 @@ const CanvasLayout = ({
                   />
                 </Tabs>
               </Box>
-              <Box flex={1} style={{overflowY: 'auto'}}>
+              <Box flex={1} style={{overflowY: 'auto', height: '100%'}}>
                 {isProcessing ? (
                   <Typography variant='body2' color='textSecondary'>
                     Generating code...

@@ -10,9 +10,18 @@ import {LiveProvider, LivePreview, LiveError} from 'react-live';
 
 const useStyles = makeStyles((theme) => ({
   root: {
+    height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    height: '100%',
+  },
+  previewContainer: {
+    flex: 1,
+    position: 'relative',
+    overflow: 'auto', // Make scrollable
+    backgroundColor: '#ffffff',
+    padding: '16px',
+    borderRadius: '12px',
+    minHeight: '500px',
   },
   headerSection: {
     marginBottom: theme.spacing(3),
@@ -23,6 +32,7 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'flex-start',
   },
   headerLeft: {
+    flex: 1,
     '& h5': {
       fontWeight: 500,
     },
@@ -30,14 +40,6 @@ const useStyles = makeStyles((theme) => ({
       marginTop: theme.spacing(1),
       opacity: 0.8,
     },
-  },
-  previewContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    padding: '16px',
-    borderRadius: '12px',
-    minHeight: '500px',
-    overflow: 'auto',
   },
   livePreview: {
     padding: theme.spacing(2),
@@ -55,7 +57,8 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: theme.spacing(2),
+    padding: theme.spacing(4),
+    textAlign: 'center',
     height: '100%',
     minHeight: 400,
   },
@@ -130,6 +133,10 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
     color: theme.palette.text.secondary,
   },
+  previewWrapper: {
+    minHeight: '100%',
+    padding: theme.spacing(2),
+  },
 }));
 
 const PreviewLayout = ({
@@ -172,7 +179,7 @@ const PreviewLayout = ({
         </Box>
       </Box>
 
-      <Box className={classes.previewContainer} style={{ position: 'relative' }}>
+      <Box className={classes.previewContainer}>
         {isBreakingWidgets && (
           <Box className={classes.previewOverlay}>
             <CircularProgress size={40} />
@@ -189,18 +196,20 @@ const PreviewLayout = ({
             <CircularProgress size={24} />
           </Box>
         ) : generatedCode ? (
-          <LiveProvider
-            code={generatedCode}
-            noInline={true}
-            scope={{
-              React,
-              ...codeScope,
-            }}>
-            <Box className={classes.livePreview}>
-              <LivePreview />
-            </Box>
-            <LiveError className={classes.liveError} />
-          </LiveProvider>
+          <Box className={classes.previewWrapper}>
+            <LiveProvider
+              code={generatedCode}
+              noInline={true}
+              scope={{
+                React,
+                ...codeScope,
+              }}>
+              <Box className={classes.livePreview}>
+                <LivePreview />
+              </Box>
+              <LiveError className={classes.liveError} />
+            </LiveProvider>
+          </Box>
         ) : (
           <Box className={classes.noPreview}>
             <img src='/favicon.ico' alt='AI' className={classes.loadingIcon} />
