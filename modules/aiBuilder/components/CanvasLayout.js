@@ -17,6 +17,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Stepper,
+  Step,
+  StepLabel,
 } from '@material-ui/core';
 import {LiveProvider, LiveEditor, LiveError, LivePreview} from 'react-live';
 import {makeStyles} from '@material-ui/core/styles';
@@ -393,6 +396,23 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(2),
     gap: theme.spacing(1),
   },
+  stepHeader: {
+    backgroundColor: '#1E1E2E',
+    padding: theme.spacing(3),
+    borderRadius: theme.spacing(1),
+    marginBottom: theme.spacing(3),
+  },
+  stepTitle: {
+    color: '#E4E4E7',
+    fontWeight: 500,
+  },
+  stepDescription: {
+    color: '#A1A1AA',
+    marginTop: theme.spacing(1),
+  },
+  activeStep: {
+    color: '#64FFDA',
+  },
 }));
 
 // Define allowed libraries
@@ -402,6 +422,17 @@ const ALLOWED_LIBRARIES = [
   'react',
   'react-dom',
   'prop-types',
+];
+
+const steps = [
+  {
+    label: 'Generate UI',
+    description: 'Create and preview your component'
+  },
+  {
+    label: 'Customize Layout',
+    description: 'Arrange and style your widgets'
+  }
 ];
 
 // CanvasLayout component
@@ -426,10 +457,19 @@ const CanvasLayout = ({
   const [currentView, setCurrentView] = useState('editor');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isBreakingWidgets, setIsBreakingWidgets] = useState(false);
+  const [originalCode, setOriginalCode] = useState(null);
+  const [originalScope, setOriginalScope] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
 
   const handleBreakWidgets = async (prompt, options = {}) => {
     setIsProcessing(true);
     setIsTyping(false);
+
+    // Store original code before breaking into widgets
+    setOriginalCode(generatedCode);
+    setOriginalScope(codeScope);
+    localStorage.setItem('originalCode', generatedCode);
+    localStorage.setItem('originalScope', JSON.stringify(codeScope));
 
     try {
       const response = await fetch(
@@ -640,6 +680,37 @@ const CanvasLayout = ({
   };
 
   const handleBack = () => {
+    // Restore original code when going back
+    if (originalCode) {
+      setGeneratedCode(originalCode);
+      setOriginalCode(null);
+      localStorage.removeItem('originalCode');
+    } else {
+      // Try to get from localStorage as fallback
+      const savedCode = localStorage.getItem('originalCode');
+      if (savedCode) {
+        setGeneratedCode(savedCode);
+        localStorage.removeItem('originalCode');
+      }
+    }
+
+    if (originalScope) {
+      setCodeScope(originalScope);
+      setOriginalScope(null);
+      localStorage.removeItem('originalScope');
+    } else {
+      // Try to get from localStorage as fallback
+      const savedScope = localStorage.getItem('originalScope');
+      if (savedScope) {
+        try {
+          setCodeScope(JSON.parse(savedScope));
+          localStorage.removeItem('originalScope');
+        } catch (e) {
+          console.error('Error parsing saved scope:', e);
+        }
+      }
+    }
+
     setCurrentView('editor');
   };
 
