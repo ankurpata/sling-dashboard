@@ -24,6 +24,7 @@ import CodeUtils from '../utils';
 import prettier from 'prettier/standalone';
 import parserBabel from 'prettier/parser-babel';
 import PreviewLayout from './PreviewLayout'; // Import PreviewLayout
+import {useStyles as useSharedStyles} from '../styles';
 
 // Import CodeUtils from index.js
 
@@ -202,7 +203,7 @@ const useStyles = makeStyles((theme) => ({
   },
   headerSection: {
     marginBottom: theme.spacing(3),
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid #e2e8f073',
     padding: theme.spacing(3, 2),
     display: 'flex',
     justifyContent: 'space-between',
@@ -234,6 +235,10 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+    '&.Mui-disabled': {
+      backgroundColor: 'rgba(9, 143, 220, 0.4)',
+      color: 'rgba(255, 255, 255, 0.8)',
+    },
     '& .MuiSvgIcon-root': {
       fontSize: '1rem',
       marginLeft: theme.spacing(1),
@@ -386,6 +391,7 @@ const CanvasLayout = ({
   setCodeScope,
 }) => {
   const classes = useStyles();
+  const sharedClasses = useSharedStyles();
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -541,7 +547,7 @@ const CanvasLayout = ({
           </Typography>
         </Box>
         <Box className={classes.progressContent}>
-          <Box className={classes.progressItem}>
+          <Box className={sharedClasses.progressItem}>
             <Typography variant='subtitle2' color='textSecondary'>
               Prompt Analysis
             </Typography>
@@ -605,7 +611,7 @@ const CanvasLayout = ({
       <Box className={classes.preview}>
         <Box className={classes.slideContainer}>
           <Slide
-            direction='left'
+            direction='right'
             in={currentView === 'editor'}
             mountOnEnter
             unmountOnExit>
@@ -619,13 +625,14 @@ const CanvasLayout = ({
                     Create and preview your component using AI
                   </Typography>
                 </Box>
-                <Box className={classes.nextButtonWrapper}>
+                <Box className={classes.buttonGroup}>
                   <Button
                     variant='contained'
                     className={classes.nextButton}
                     onClick={handleNext}
+                    disabled={!generatedCode || isProcessing}
                     disableElevation>
-                    Customize Layout 
+                    Customize Layout
                     <ArrowForwardIosIcon style={{fontSize: 25}} />
                   </Button>
                 </Box>
@@ -739,7 +746,7 @@ const CanvasLayout = ({
           </Slide>
 
           <Slide
-            direction='right'
+            direction='left'
             in={currentView === 'preview'}
             mountOnEnter
             unmountOnExit>

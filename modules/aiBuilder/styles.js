@@ -122,10 +122,9 @@ export const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(2),
   },
   progressItem: {
-    padding: theme.spacing(2),
-    backgroundColor: theme.palette.background.default,
-    borderRadius: theme.shape.borderRadius,
-    border: `1px solid ${theme.palette.divider}`,
+    padding: theme.spacing(2.5, 3),
+    // borderRadius: theme.shape.borderRadius,
+    borderBottom: `1px solid ${theme.palette.divider}`,
   },
   processingView: {
     textAlign: 'center',

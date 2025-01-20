@@ -16,7 +16,7 @@ const useStyles = makeStyles((theme) => ({
   },
   headerSection: {
     marginBottom: theme.spacing(3),
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid #e2e8f073',
     padding: theme.spacing(3, 2),
     display: 'flex',
     justifyContent: 'space-between',
