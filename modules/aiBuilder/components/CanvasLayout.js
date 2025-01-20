@@ -17,6 +17,8 @@ import {makeStyles} from '@material-ui/core/styles';
 import AttachFile from '@material-ui/icons/AttachFile';
 import Send from '@material-ui/icons/Send';
 import CodeUtils from '../utils';
+import prettier from 'prettier/standalone';
+import parserBabel from 'prettier/parser-babel';
 
 // Import CodeUtils from index.js
 
@@ -189,7 +191,7 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
   },
   previewHeader: {
-    borderBottom: `1px solid #f0f0f0`,
+    // borderBottom: `1px solid #f0f0f0`,
     paddingBottom: theme.spacing(2),
     marginBottom: theme.spacing(2),
   },
@@ -217,7 +219,7 @@ const useStyles = makeStyles((theme) => ({
   },
   livePreview: {
     flex: 1,
-    padding: theme.spacing(2),
+    // padding: theme.spacing(2),
     backgroundColor: '#ffffff',
     borderRadius: '12px',
     minHeight: '500px',
@@ -552,40 +554,53 @@ const CanvasLayout = ({
                   </LiveProvider>
                 ) : (
                   <Box className={classes.noPreview}>
-                    <img src="/favicon.ico" alt="AI" className={classes.loadingIcon} />
+                    <img
+                      src='/favicon.ico'
+                      alt='AI'
+                      className={classes.loadingIcon}
+                    />
                     <CircularProgress size={24} />
                     <Typography>is thinking...</Typography>
                   </Box>
                 )
               ) : (
-                <LiveProvider
-                  code={generatedCode}
-                  noInline={true}
-                  scope={{
-                    React,
-                    ...codeScope,
-                  }}>
-                  <LiveEditor
-                    className={classes.liveEditor}
-                    onChange={(code) => setGeneratedCode(code)}
-                    style={{
-                      fontFamily: 'monospace',
-                      fontSize: 14,
-                      backgroundColor: '#f8fafc',
-                      borderRadius: 12,
-                      padding: 16,
-                    }}
-                  />
-                  <LiveError
-                    style={{
-                      color: 'red',
-                      marginTop: 8,
-                      padding: 8,
-                      backgroundColor: '#ffebee',
-                      borderRadius: 12,
-                    }}
-                  />
-                </LiveProvider>
+                <>
+                  <Box mb={2} p={2} bgcolor='#f5f7f9' borderRadius={1}>
+                    <Typography variant='body2' color='textSecondary'>
+                      ✨ Edit the code below and switch to the Preview tab to
+                      see changes in real-time. The code automatically updates
+                      as you type.
+                    </Typography>
+                  </Box>
+                  <LiveProvider
+                    code={generatedCode}
+                    noInline={true}
+                    scope={{
+                      React,
+                      ...codeScope,
+                    }}>
+                    <LiveEditor
+                      onChange={(code) => setGeneratedCode(code)}
+                      className={classes.liveEditor}
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 14,
+                        backgroundColor: '#f8fafc',
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
+                    />
+                    <LiveError
+                      style={{
+                        color: 'red',
+                        marginTop: 8,
+                        padding: 8,
+                        backgroundColor: '#ffebee',
+                        borderRadius: 12,
+                      }}
+                    />
+                  </LiveProvider>
+                </>
               )}
             </Box>
           )}
