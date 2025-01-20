@@ -1,5 +1,5 @@
 /*Embed Responsive Classes*/
-.cr-embed-responsive {
+.sl-embed-responsive {
   position: relative;
   display: block;
   width: 100%;
@@ -7,16 +7,16 @@
   overflow: hidden;
 }
 
-.cr-embed-responsive:before {
+.sl-embed-responsive:before {
   display: block;
   content: '';
 }
 
-.cr-embed-responsive .cr-embed-responsive-item,
-.cr-embed-responsive iframe,
-.cr-embed-responsive embed,
-.cr-embed-responsive object,
-.cr-embed-responsive video {
+.sl-embed-responsive .sl-embed-responsive-item,
+.sl-embed-responsive iframe,
+.sl-embed-responsive embed,
+.sl-embed-responsive object,
+.sl-embed-responsive video {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -26,25 +26,25 @@
   border: 0;
 }
 
-.cr-embed-responsive-21by9:before {
-  padding-top: 42.85714286%;
+.sl-embed-responsive-21by9:before {
+  padding-top: 42.857143%;
 }
 
-.cr-embed-responsive-16by9:before {
+.sl-embed-responsive-16by9:before {
   padding-top: 56.25%;
 }
 
-.cr-embed-responsive-4by3:before {
+.sl-embed-responsive-4by3:before {
   padding-top: 75%;
 }
 
-.cr-embed-responsive-1by1:before {
+.sl-embed-responsive-1by1:before {
   padding-top: 100%;
 }
 
 @media screen and (max-width: 499px) {
-  .cr-embed-responsive-21by9:before,
-  .cr-embed-responsive-16by9:before {
-    padding-top: 100%;
+  .sl-embed-responsive-21by9:before,
+  .sl-embed-responsive-16by9:before {
+    padding-top: 75%;
   }
 }

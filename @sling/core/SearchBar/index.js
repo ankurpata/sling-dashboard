@@ -10,11 +10,8 @@ import {Fonts} from '../../../shared/constants/AppEnums';
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
-    marginRight: 10,
+    // marginRight: 10,
     position: 'relative',
-    [theme.breakpoints.up('sm')]: {
-      marginRight: 20,
-    },
   },
   menuButton: {
     marginRight: theme.spacing(2),
@@ -34,7 +31,7 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       backgroundColor: fade(theme.palette.common.white, 0.25),
     },
-    '&.cr-search': {
+    '&.sl-search': {
       [theme.breakpoints.down('sm')]: {
         position: 'absolute',
         right: 0,
@@ -73,7 +70,7 @@ const useStyles = makeStyles((theme) => ({
     paddingLeft: `calc(1em + ${theme.spacing(4)}px)`,
     transition: theme.transitions.create('width'),
     backgroundColor: theme.palette.common.white,
-    width: 162,
+    width: 192,
     height: 35,
     borderRadius: 4,
     boxSizing: 'border-box',
@@ -140,7 +137,7 @@ const AppSearch = ({
       <Box
         className={clsx(
           classes.search,
-          {'cr-search': overlap},
+          {'sl-search': overlap},
           onlyIcon ? classes.searchIconBox : null,
         )}>
         <Box
@@ -153,7 +150,7 @@ const AppSearch = ({
         <InputBase
           {...rest}
           placeholder={placeholder || 'Search…'}
-          className={clsx(classes.inputBase, 'crAppsSearch')}
+          className={clsx(classes.inputBase, 'slAppsSearch')}
           classes={{
             root: classes.inputRoot,
             input: classes.inputInput,

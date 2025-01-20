@@ -707,5 +707,6 @@
   "sidebar.mui.util.pagination": "Pagination",
   "sidebar.mui.util.alert": "Alert",
   "sidebar.mui.inputs.buttonGroup": "Button Group",
-  "sidebar.mui.inputs.fab": "Floating Action Button"
+  "sidebar.mui.inputs.fab": "Floating Action Button",
+  "sidebar.app.aiBuilder": "AI Builder"
 }

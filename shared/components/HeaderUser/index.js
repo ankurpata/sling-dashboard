@@ -21,7 +21,7 @@ import Hidden from '@material-ui/core/Hidden';
 
 const useStyles = makeStyles((theme) => {
   return {
-    crHeaderUser: {
+    slHeaderUser: {
       backgroundColor: (props) =>
         props.header ? 'transparent' : 'rgba(0,0,0,.08)',
       paddingTop: 9,
@@ -96,7 +96,7 @@ const HeaderUser = (props) => {
   return (
     <Box
       px={{xs: 2, xl: 6}}
-      className={clsx(classes.crHeaderUser, 'cr-user-info')}>
+      className={clsx(classes.slHeaderUser, 'sl-user-info')}>
       <Box display='flex' alignItems='center'>
         <Hidden mdDown> {getUserAvatarView()}</Hidden>
         <Box className={clsx(classes.userInfo, 'user-info')}>

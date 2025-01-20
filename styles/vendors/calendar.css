@@ -49,7 +49,7 @@
   outline: none;
 }
 
-.cr-calendar .react-daypicker-root {
+.sl-calendar .react-daypicker-root {
   border: solid 1px #e5e9ec;
   border-radius: 30px;
   padding: 30px;
@@ -57,89 +57,89 @@
   height: 100%;
 }
 
-.cr-calendar table {
+.sl-calendar table {
   width: 100%;
   height: calc(100% - 30px);
 }
 
-.cr-calendar table td {
+.sl-calendar table td {
   position: relative;
 }
 
-.cr-calendar table th {
+.sl-calendar table th {
   text-transform: uppercase;
   font-weight: var(--light);
   font-size: 15px;
 }
 
-.cr-calendar .header .month-year {
+.sl-calendar .header .month-year {
   font-weight: var(--extra-bold);
   padding-top: 3px;
 }
 
-.cr-calendar-color .react-daypicker-root {
+.sl-calendar-color .react-daypicker-root {
   border: 0 none;
   font-size: 20px;
 }
 
-.cr-calendar-color .header {
+.sl-calendar-color .header {
   padding: 30px;
   margin: -30px -30px 0;
 }
 
-.cr-calendar-color .header .month-year {
+.sl-calendar-color .header .month-year {
   font-size: 22px;
 }
 
-.cr-calendar-color table {
+.sl-calendar-color table {
   font-weight: var(--extra-bold);
   height: calc(100% - 60px);
 }
 
-.cr-calendar-color table thead th {
+.sl-calendar-color table thead th {
   font-weight: var(--extra-bold);
   font-size: 20px;
 }
 
 @media screen and (max-width: 1919px) {
-  .cr-calendar .react-daypicker-root {
+  .sl-calendar .react-daypicker-root {
     padding: 20px;
   }
 
-  .cr-calendar .react-daypicker-root th,
-  .cr-calendar .react-daypicker-root td {
+  .sl-calendar .react-daypicker-root th,
+  .sl-calendar .react-daypicker-root td {
     width: 30px;
   }
 
-  .cr-calendar table th,
-  .cr-calendar table td {
+  .sl-calendar table th,
+  .sl-calendar table td {
     font-size: 12px;
   }
 
-  .cr-calendar-color .react-daypicker-root {
+  .sl-calendar-color .react-daypicker-root {
     font-size: 16px;
   }
 
-  .cr-calendar-color .header {
+  .sl-calendar-color .header {
     padding: 20px;
     margin: -20px -20px 0;
   }
 
-  .cr-calendar-color .header .month-year {
+  .sl-calendar-color .header .month-year {
     font-size: 18px;
   }
 
-  .cr-calendar-color table thead th {
+  .sl-calendar-color table thead th {
     font-size: 15px;
   }
 
-  .cr-calendar-color table {
+  .sl-calendar-color table {
     height: calc(100% - 70px);
   }
 }
 
 @media screen and (max-width: 1367px) {
-  .cr-calendar-color table thead th {
+  .sl-calendar-color table thead th {
     font-size: 13px;
   }
 }
@@ -165,18 +165,18 @@
     margin: 8px 0;
   }
 
-  .cr-calendar table {
+  .sl-calendar table {
     height: auto;
   }
 }
 
 @media screen and (max-width: 599px) {
-  .cr-calendar .react-daypicker-root {
+  .sl-calendar .react-daypicker-root {
     padding: 10px;
   }
 
-  .cr-calendar .react-daypicker-root th,
-  .cr-calendar .react-daypicker-root td {
+  .sl-calendar .react-daypicker-root th,
+  .sl-calendar .react-daypicker-root td {
     width: 20px;
   }
 
@@ -198,8 +198,8 @@
     padding: 5px 10px;
   }
 
-  .cr-calendar table th,
-  .cr-calendar table td {
+  .sl-calendar table th,
+  .sl-calendar table td {
     font-size: 12px;
   }
 }

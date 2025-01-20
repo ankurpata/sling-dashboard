@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => {
         width: '5rem',
       },
 
-      '& .cr-user-info': {
+      '& .sl-user-info': {
         paddingLeft: '10px !important',
         paddingRight: '10px !important',
         transition: 'all 0.5s ease',

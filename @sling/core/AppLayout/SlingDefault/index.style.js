@@ -8,7 +8,7 @@ const useStyles = makeStyles((theme) => {
       display: 'flex',
       flexDirection: 'row',
       position: 'relative',
-      backgroundColor: theme.palette.background.default,
+      backgroundColor: '#ffffff',
       paddingTop: 56,
       [theme.breakpoints.up('sm')]: {
         paddingTop: 70,
@@ -33,6 +33,12 @@ const useStyles = makeStyles((theme) => {
         '& $mainContainer': {
           paddingBottom: 1,
         },
+      },
+    },
+    aiBuilderMain: {
+      backgroundColor: '#ffffff !important',
+      '& $mainContainer': {
+        backgroundColor: '#ffffff !important',
       },
     },
     mainContent: {

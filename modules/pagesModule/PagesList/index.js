@@ -71,6 +71,7 @@ const useStyles = makeStyles((theme) => ({
     // justifyContent: 'center',
     flexDirection: 'row',
     display: 'flex',
+    padding: '0 12px',
   },
   gridItemInfo: {
     justifyContent: 'center',
@@ -84,6 +85,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'top',
     'background-position-y': '45%',
+    position: 'relative',
   },
   cardDesc: {
     height: '60px',
@@ -124,19 +126,74 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   urlBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-    padding: '4px 8px',
-    borderRadius: '12px',
+    backgroundColor: 'rgba(25, 118, 210, 0.95)',
+    color: '#fff',
+    padding: '4px 12px',
+    borderRadius: '16px',
     display: 'flex',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
     '& .MuiSvgIcon-root': {
       fontSize: '0.9rem',
     },
+    '&:hover': {
+      backgroundColor: 'rgba(25, 118, 210, 1)',
+    },
+  },
+  actionBox: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    zIndex: 1,
+    '& .MuiIconButton-root': {
+      padding: 6,
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      '&:hover': {
+        backgroundColor: 'rgba(255, 255, 255, 1)',
+      },
+    },
+  },
+  previewCount: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(25, 118, 210, 0.95)',
+    color: '#fff',
+    padding: '4px 12px',
+    borderRadius: '16px',
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+    zIndex: 1,
+    '& .MuiSvgIcon-root': {
+      fontSize: '0.9rem',
+    },
+    '&:hover': {
+      backgroundColor: 'rgba(25, 118, 210, 1)',
+    },
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 6,
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 1)',
+    },
+  },
+  cardContent: {
+    borderTop: '1px solid #e8e8e880',
   },
 }));
 
@@ -315,7 +372,8 @@ const PageTemplatesList = () => {
 
   const getPreviewUrlsCount = (templateKey) => {
     if (!routesList?.length) return 0;
-    return routesList.filter(route => route.page_template === templateKey).length;
+    return routesList.filter((route) => route.page_template === templateKey)
+      .length;
   };
 
   const getUrlCountMessage = (count) => {
@@ -382,7 +440,10 @@ const PageTemplatesList = () => {
                     sm={12}
                     md={6}
                     lg={4}
-                    style={{borderColor: 'black', padding: 10, cursor: 'pointer'}}
+                    style={{
+                      padding: 10,
+                      cursor: 'pointer',
+                    }}
                     onMouseOver={() => setShowDelete({[v]: true})}
                     onMouseOut={() => setShowDelete({})}
                     onClick={() => handleTemplateClick(v)}>
@@ -390,35 +451,34 @@ const PageTemplatesList = () => {
                       <CardActionArea>
                         {showDelete[v] && (
                           <IconButton
+                            size='small'
+                            className={classes.deleteButton}
                             aria-label='delete'
                             onClick={(e) => {
                               e.stopPropagation(); // Prevent navigation when clicking delete
                               deletePageTemplate(v);
-                            }}
-                            style={{
-                              position: 'absolute',
-                              right: 8,
-                              top: 8,
-                              color: (theme) => theme.palette.grey[500],
                             }}>
-                            <CloseIcon />
+                            <CloseIcon fontSize="small" />
                           </IconButton>
                         )}
                         <CardMedia
                           className={classes.media}
-                          image={meta.preview_image || '/images/cards/pagelayout_default.png'}
+                          image={
+                            meta.preview_image ||
+                            '/images/cards/pagelayout_default.png'
+                          }
                           title={title}
-                        />
-                        <Tooltip 
-                          title={getUrlCountMessage(getPreviewUrlsCount(v))}
-                          placement="top"
                         >
-                          <div className={classes.urlBadge}>
-                            <LinkIcon />
-                            {getPreviewUrlsCount(v)}
-                          </div>
-                        </Tooltip>
-                        <CardContent>
+                          <Tooltip
+                            title={getUrlCountMessage(getPreviewUrlsCount(v))}
+                            placement='top'>
+                            <div className={classes.previewCount}>
+                              <LinkIcon />
+                              <span>{getPreviewUrlsCount(v)}</span>
+                            </div>
+                          </Tooltip>
+                        </CardMedia>
+                        <CardContent className={classes.cardContent}>
                           <Typography
                             gutterBottom
                             className={classes.templateTitle}

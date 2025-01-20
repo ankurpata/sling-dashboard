@@ -20,7 +20,7 @@ import {AuthType, Fonts} from '../../constants/AppEnums';
 
 const useStyles = makeStyles((theme) => {
   return {
-    crUserInfo: {
+    slUserInfo: {
       backgroundColor: 'rgba(0,0,0,.08)',
       paddingTop: 9,
       paddingBottom: 9,
@@ -90,7 +90,7 @@ const UserInfo = (props) => {
   return (
     <Box
       px={{xs: 4, xl: 7}}
-      className={clsx(classes.crUserInfo, 'cr-user-info')}>
+      className={clsx(classes.slUserInfo, 'sl-user-info')}>
       <Box display='flex' alignItems='center'>
         {user.photoURL ? (
           <Avatar className={classes.profilePic} src={user.photoURL} />

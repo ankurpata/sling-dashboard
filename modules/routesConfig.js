@@ -8,6 +8,15 @@ const routesConfig = [
     url: '/dashboards/',
   },
   {
+    id: 'ai-builder',
+    title: 'AI Builder',
+    messageId: 'sidebar.app.aiBuilder',
+    type: 'item',
+    disabled: true,
+    icon: 'auto_awesome',
+    url: '/ai-builder',
+  },
+  {
     id: 'pages',
     title: 'Page Templates',
     messageId: 'sidebar.app.pagesTemplates',
