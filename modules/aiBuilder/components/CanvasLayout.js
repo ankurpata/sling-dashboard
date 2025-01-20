@@ -27,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     gap: theme.spacing(3),
     marginTop: theme.spacing(3),
-    height: 'calc(100vh - 250px)',
+    height: 'calc(100vh - 200px)',
     minHeight: '600px',
   },
   progress: {
@@ -189,11 +189,21 @@ const useStyles = makeStyles((theme) => ({
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
+    padding: theme.spacing(3),
+    // backgroundColor: theme.palette.background.default,
   },
   previewHeader: {
-    // borderBottom: `1px solid #f0f0f0`,
-    paddingBottom: theme.spacing(2),
     marginBottom: theme.spacing(2),
+  },
+  headerSection: {
+    marginBottom: theme.spacing(3),
+    '& h5': {
+      fontWeight: 500,
+    },
+    '& .MuiTypography-subtitle1': {
+      marginTop: theme.spacing(1),
+      opacity: 0.8,
+    },
   },
   progressItem: {
     padding: theme.spacing(2),
@@ -501,7 +511,15 @@ const CanvasLayout = ({
         </Box>
       </Box>
       <Box className={classes.preview}>
-        <Box className={classes.previewHeader}>
+        <Box className={classes.headerSection}>
+          <Typography variant="h5" color="primary">
+            Generate UI
+          </Typography>
+          <Typography variant="subtitle1" color="textSecondary">
+            Create and preview your component using AI
+          </Typography>
+        </Box>
+        <Box mb={2}>
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
