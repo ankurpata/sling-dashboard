@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   Box,
   Typography,
@@ -84,6 +84,10 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     gap: theme.spacing(3),
     padding: theme.spacing(2.5, 3),
+    flex: 1,
+    overflowY: 'auto',
+    marginBottom: theme.spacing(2),
+    scrollBehavior: 'smooth',
   },
   chatMessage: {
     padding: theme.spacing(2),
@@ -449,6 +453,14 @@ const CanvasLayout = ({
   const [originalCode, setOriginalCode] = useState(null);
   const [originalScope, setOriginalScope] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
+  const chatContainerRef = useRef(null);
+
+  useEffect(() => {
+    // Scroll to bottom when chat updates
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatHistories[searchId]]);
 
   const handleBreakWidgets = async (prompt, options = {}) => {
     setIsProcessing(true);
@@ -745,7 +757,7 @@ const CanvasLayout = ({
             </Typography>
           </Box>
 
-          <List className={classes.chatHistory}>
+          <List className={classes.chatHistory} ref={chatContainerRef}>
             {getCurrentChatHistory().map((message, index) =>
               renderChatMessage(message, index),
             )}
