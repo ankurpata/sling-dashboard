@@ -37,6 +37,7 @@ const AIBuilder = () => {
     return savedRepos ? JSON.parse(savedRepos) : [];
   });
   const [selectedRepo, setSelectedRepo] = useState(null);
+  const [repoEnvVars, setRepoEnvVars] = useState({});
   const [loading, setLoading] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
   const [searchId, setSearchId] = useState('');
@@ -105,9 +106,9 @@ const AIBuilder = () => {
     }
   };
 
-  const handleRepoSelect = (repo) => {
-    setSelectedRepo(repo);
-    setShowRepoDialog(false);
+  const handleRepoSelect = (repoData) => {
+    setSelectedRepo(repoData);
+    setRepoEnvVars(repoData.environmentVariables || {});
   };
 
   const handleTabChange = (event, newValue) => {
@@ -265,7 +266,11 @@ const AIBuilder = () => {
             >
               {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
             </Button>
-
+            {selectedRepo && (
+              <Typography variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
+                {Object.keys(repoEnvVars).length} environment variables configured
+              </Typography>
+            )}
             <TextField
               className={classes.searchInput}
               variant='outlined'
