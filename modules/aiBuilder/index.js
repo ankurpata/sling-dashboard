@@ -7,6 +7,10 @@ import {
   Typography,
   TextField,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
 } from '@material-ui/core';
 import Header from './components/Header';
 import CanvasLayout from './components/CanvasLayout';
@@ -216,6 +220,7 @@ const AIBuilder = () => {
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
   const [searchId, setSearchId] = useState('');
   const [initialResponse, setInitialResponse] = useState('');
@@ -264,83 +269,78 @@ const AIBuilder = () => {
 
   const handleInputSubmit = async (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
-      setIsProcessing(true);
-      setProcessingMessages(['Analyzing your request...']);
-      setShowCanvas(true); // Show canvas immediately
+      setShowConfirm(true);
+    }
+  };
 
-      // Set a timeout for processing
-      processingTimeoutRef.current = setTimeout(() => {
-        setProcessingMessages((prev) => [
-          ...prev,
-          'This is taking longer than expected...',
-        ]);
-      }, 10000);
+  const handleConfirm = async () => {
+    setShowConfirm(false);
+    setIsProcessing(true);
+    setProcessingMessages(['Analyzing your request...']);
+    setShowCanvas(true);
 
-      try {
-        // Show initial processing message
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        setProcessingMessages((prev) => [
-          ...prev,
-          'Preparing canvas layout...',
-        ]);
+    processingTimeoutRef.current = setTimeout(() => {
+      setProcessingMessages((prev) => [
+        ...prev,
+        'This is taking longer than expected...',
+      ]);
+    }, 10000);
 
-        // Make API call
-        const response = await fetch(
-          'http://localhost:5001/api/ai/generate-page',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              prompt: inputValue,
-              mock: false,
-              constraints: {
-                componentName: true,
-                useArrowFunction: true,
-                useMaterialUI: true,
-                noStyleImports: true,
-                singleComponent: true,
-                separateDependencies: true,
-                allowedLibraries: ALLOWED_LIBRARIES,
-              },
-            }),
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setProcessingMessages((prev) => [
+        ...prev,
+        'Preparing canvas layout...',
+      ]);
+
+      const response = await fetch(
+        'http://localhost:5001/api/ai/generate-page',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        );
+          body: JSON.stringify({
+            prompt: inputValue,
+            mock: false,
+            constraints: {
+              componentName: true,
+              useArrowFunction: true,
+              useMaterialUI: true,
+              noStyleImports: true,
+              singleComponent: true,
+              separateDependencies: true,
+              allowedLibraries: ALLOWED_LIBRARIES,
+            },
+          }),
+        },
+      );
 
-        // Clear timeout since we got a response
-        if (processingTimeoutRef.current) {
-          clearTimeout(processingTimeoutRef.current);
-        }
-
-        setProcessingMessages((prev) => [
-          ...prev,
-          'Setting up your workspace...',
-        ]);
-
-        const data = await response.json();
-
-        // Update states with response data
-        setSearchId(data.conversationId);
-        setInitialResponse(data.summary);
-
-        // Clean and transform the code
-        const cleaned = CodeUtils.cleanCode(data);
-        const transformed = CodeUtils.transformCode(cleaned.code);
-        setGeneratedCode(transformed);
-        setCodeScope(cleaned.scope);
-        setIsProcessing(false);
-      } catch (error) {
-        console.error('Error generating page:', error);
-        setProcessingMessages((prev) => [
-          ...prev,
-          'An error occurred. Please try again.',
-        ]);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setShowCanvas(false); // Return to input on error
-      } finally {
-        setIsProcessing(false);
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
       }
+
+      setProcessingMessages((prev) => [
+        ...prev,
+        'Setting up your workspace...',
+      ]);
+
+      const data = await response.json();
+      setSearchId(data.conversationId);
+      setInitialResponse(data.summary);
+      const cleaned = CodeUtils.cleanCode(data);
+      const transformed = CodeUtils.transformCode(cleaned.code);
+      setGeneratedCode(transformed);
+      setCodeScope(cleaned.scope);
+    } catch (error) {
+      console.error('Error generating page:', error);
+      setProcessingMessages((prev) => [
+        ...prev,
+        'An error occurred. Please try again.',
+      ]);
+      setShowCanvas(false);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -439,6 +439,45 @@ const AIBuilder = () => {
           setIsProcessing={setIsProcessing}
         />
       )}
+      <Dialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        maxWidth="xs"
+        PaperProps={{
+          style: {
+            borderRadius: 8,
+            padding: 8,
+          },
+        }}
+      >
+        <DialogContent>
+          <DialogContentText style={{ color: '#4b5563' }}>
+            Do you want to proceed with generating the code?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setShowConfirm(false)}
+            style={{ 
+              textTransform: 'none',
+              color: '#6b7280',
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirm}
+            style={{ 
+              backgroundColor: '#0b111e',
+              color: '#fff',
+              textTransform: 'none',
+            }}
+            variant="contained"
+          >
+            Continue
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
