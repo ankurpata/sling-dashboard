@@ -16,33 +16,52 @@ import { ALLOWED_LIBRARIES } from './config';
 
 const useStyles = makeStyles((theme) => ({
   '@global': {
-    'html, body': {
+    body: {
       margin: 0,
       padding: 0,
       minHeight: '100vh',
-      background:
-        'radial-gradient(circle at center, #ffffff 0%, #f0f9ff 35%, #e0f2fe 50%, #f0f9ff 65%, #ffffff 100%)',
-      '&::before': {
-        content: '""',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background:
-          'radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 60%)',
-        pointerEvents: 'none',
-      },
     },
   },
   root: {
     minHeight: '100vh',
     position: 'relative',
     color: '#111827',
-  },
-  main: {
     display: 'flex',
     flexDirection: 'column',
+    transition: 'background 0.3s ease-in-out',
+    background: (props) => !props.showCanvas ? 
+      'radial-gradient(circle at center, #ffffff 0%, #f0f9ff 35%, #e0f2fe 50%, #f0f9ff 65%, #ffffff 100%)' : 
+      '#ffffff',
+    '&::before': (props) => !props.showCanvas ? {
+      content: '""',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      opacity: 1,
+      transition: 'opacity 0.3s ease-in-out',
+      background:
+        'radial-gradient(circle at center, rgba(255,255,255,0) 0%, rgba(240,249,255,0.15) 35%, rgba(224,242,254,0.15) 50%, rgba(240,249,255,0.15) 65%, rgba(255,255,255,0) 100%)',
+      pointerEvents: 'none',
+      zIndex: 0,
+    } : {
+      opacity: 0,
+      content: '""',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      pointerEvents: 'none',
+    },
+  },
+  main: {
+    position: 'relative',
+    zIndex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
     minHeight: 'calc(100vh - 64px)',
@@ -162,13 +181,13 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const AIBuilder = () => {
-  const classes = useStyles();
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
   const [searchId, setSearchId] = useState('');
   const [initialResponse, setInitialResponse] = useState('');
+  const classes = useStyles({ showCanvas });
   const [processingMessages, setProcessingMessages] = useState([]);
   const [generatedCode, setGeneratedCode] = useState('');
   const [codeScope, setCodeScope] = useState({});
