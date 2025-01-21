@@ -13,6 +13,7 @@ import CanvasLayout from './components/CanvasLayout';
 import ProcessingView from './components/ProcessingView';
 import CodeUtils from './utils';
 import { ALLOWED_LIBRARIES } from './config';
+import GitHubIcon from '@material-ui/icons/GitHub';
 
 const useStyles = makeStyles((theme) => ({
   '@global': {
@@ -176,6 +177,35 @@ const useStyles = makeStyles((theme) => ({
         color: '#111827',
         backgroundColor: 'transparent',
       },
+    },
+  },
+  inputContainer: {
+    display: 'flex',
+    gap: theme.spacing(2),
+    alignItems: 'center',
+    width: '100%',
+    justifyContent: 'center',
+    marginBottom: theme.spacing(3),
+  },
+  repoButton: {
+    height: 56, // Match input height
+    padding: theme.spacing(0, 3),
+    whiteSpace: 'nowrap',
+    borderRadius: theme.shape.borderRadius,
+    backgroundColor: '#fff',
+    color: theme.palette.primary.main,
+    border: `1px solid ${theme.palette.primary.main}`,
+    textTransform: 'none',
+    fontSize: '1rem',
+    fontWeight: 500,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    '&:hover': {
+      backgroundColor: 'rgba(25, 118, 210, 0.08)',
+      border: `1px solid ${theme.palette.primary.dark}`,
+    },
+    '& .MuiSvgIcon-root': {
+      marginRight: theme.spacing(1),
+      fontSize: '1.2rem',
     },
   },
 }));
@@ -350,16 +380,26 @@ const AIBuilder = () => {
             {titles[titleIndex].subtitle}
           </Typography>
 
-          <TextField
-            className={classes.searchInput}
-            variant='outlined'
-            placeholder='Create and add a new report to dashboard which ...'
-            fullWidth
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleInputSubmit}
-            inputRef={inputRef}
-          />
+          <Box className={classes.inputContainer}>
+            <Button 
+              variant="outlined" 
+              className={classes.repoButton}
+              startIcon={<GitHubIcon />}
+            >
+              Connect your Repo
+            </Button>
+
+            <TextField
+              className={classes.searchInput}
+              variant='outlined'
+              placeholder='Create and add a new report to dashboard which ...'
+              fullWidth
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleInputSubmit}
+              inputRef={inputRef}
+            />
+          </Box>
 
           <Box className={classes.templates}>
             <Button onClick={() => setInputValue("Create a crypto portfolio tracker")}>
