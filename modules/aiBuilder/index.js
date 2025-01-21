@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import {
   Box,
@@ -15,22 +15,33 @@ import ProcessingView from './components/ProcessingView';
 const useStyles = makeStyles((theme) => ({
   root: {
     minHeight: '100vh',
-    background:
-      'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)',
-    backgroundColor: '#0A0A0B',
-    color: '#fff',
+    background: 'radial-gradient(circle at center, #ffffff 0%, #f0f9ff 35%, #e0f2fe 50%, #f0f9ff 65%, #ffffff 100%)',
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 60%)',
+      pointerEvents: 'none',
+    },
+    color: '#111827',
   },
   main: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 'calc(100vh - 154px)',
+    minHeight: 'calc(100vh - 64px)',
     textAlign: 'center',
-    padding: theme.spacing(4),
+    padding: theme.spacing(2, 4),
+    position: 'relative',
   },
   heartLogo: {
-    marginBottom: theme.spacing(8),
+    marginBottom: theme.spacing(12),
+    zIndex: 1,
     '& img': {
       height: 100,
     },
@@ -38,7 +49,7 @@ const useStyles = makeStyles((theme) => ({
   title: {
     fontSize: '5.6rem',
     fontWeight: 300,
-    marginBottom: theme.spacing(1),
+    marginBottom: theme.spacing(3),
     letterSpacing: '-0.02em',
     lineHeight: 1,
     minHeight: '1.2em',
@@ -46,14 +57,14 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    color: 'rgba(255,255,255,0.9)',
+    color: '#111827',
   },
   subtitle: {
-    color: 'rgb(156 163 175/var(--tw-text-opacity))',
+    color: '#6B7280',
     fontSize: '0.875rem',
-    marginBottom: theme.spacing(6),
+    marginBottom: theme.spacing(8),
     maxWidth: 600,
-    opacity: 0.8,
+    opacity: 0.9,
   },
   fadeIn: {
     animation: '$fadeIn 0.5s ease-in',
@@ -74,25 +85,24 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(8),
     marginBottom: theme.spacing(6),
     '& .MuiOutlinedInput-root': {
-      backgroundColor: 'rgba(255,255,255,0.05)',
+      backgroundColor: 'white',
       borderRadius: 12,
       height: 64,
       '& fieldset': {
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: '#E5E7EB',
       },
       '&:hover fieldset': {
-        borderColor: 'rgba(255,255,255,0.2)',
+        borderColor: '#D1D5DB',
       },
       '&.Mui-focused fieldset': {
         borderColor: '#4ECDC4',
       },
     },
     '& .MuiOutlinedInput-input': {
-      color: '#fff',
+      color: '#111827',
       fontSize: '1.1rem',
-      padding: theme.spacing(3),
       '&::placeholder': {
-        color: 'rgba(255,255,255,0.5)',
+        color: '#6B7280',
         opacity: 1,
       },
     },
@@ -104,16 +114,16 @@ const useStyles = makeStyles((theme) => ({
     flexWrap: 'wrap',
     justifyContent: 'center',
     '& button': {
-      backgroundColor: 'rgba(255,255,255,0.05)',
-      color: '#fff',
+      backgroundColor: '#F3F4F6',
+      color: '#111827',
       borderRadius: 24,
       padding: theme.spacing(1, 3),
       fontSize: '0.95rem',
       textTransform: 'none',
-      border: '1px solid rgba(255,255,255,0.1)',
+      border: '1px solid #E5E7EB',
       '&:hover': {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: '#E5E7EB',
+        borderColor: '#D1D5DB',
       },
     },
   },
@@ -122,13 +132,13 @@ const useStyles = makeStyles((theme) => ({
     gap: theme.spacing(4),
     marginBottom: theme.spacing(4),
     '& button': {
-      color: 'rgba(255,255,255,0.7)',
+      color: '#6B7280',
       padding: theme.spacing(1, 0),
       minWidth: 'auto',
       textTransform: 'none',
       fontSize: '0.95rem',
       '&:hover': {
-        color: '#fff',
+        color: '#111827',
         backgroundColor: 'transparent',
       },
     },
@@ -141,6 +151,21 @@ const AIBuilder = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    // Auto focus input on mount
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTitleIndex((prev) => (prev + 1) % titles.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const titles = [
     {
@@ -160,14 +185,6 @@ const AIBuilder = () => {
     },
   ];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTitleIndex((prev) => (prev + 1) % titles.length);
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <Box className={classes.root}>
       <Header />
@@ -184,9 +201,11 @@ const AIBuilder = () => {
               fontSize: '3.6rem',
               fontWeight: 600,
               lineHeight: 1,
+              zIndex: 23,
+              color: '#0b111e',
               margin: 0,
             }}
-            className={classes.fadeIn}
+            // className={classes.fadeIn}
             key={titleIndex}>
             {titles[titleIndex].title}
           </Typography>
@@ -197,7 +216,7 @@ const AIBuilder = () => {
           className={classes.subtitle}
           style={{
             fontSize: '1rem',
-            fontWeight: 400,
+            fontWeight: 500,
             lineHeight: 1,
             margin: 0,
           }}>
@@ -211,6 +230,7 @@ const AIBuilder = () => {
           fullWidth
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
+          inputRef={inputRef}
         />
 
         <Box className={classes.templates}>

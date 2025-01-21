@@ -4,9 +4,11 @@ import { AppBar, Toolbar, Button, Typography, Box } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#ffffff',
     boxShadow: 'none',
-    padding: theme.spacing(2, 0),
+    borderBottom: '1px solid #E5E7EB',
+    padding: theme.spacing(1, 0),
+    height: 64,
   },
   toolbar: {
     display: 'flex',
@@ -14,40 +16,44 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     maxWidth: 1200,
     margin: '0 auto',
-    padding: theme.spacing(0, 3),
+    padding: theme.spacing(0, 4),
+    minHeight: 64,
   },
   logo: {
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    color: '#fff',
+    color: '#111827',
     textDecoration: 'none',
     fontWeight: 500,
     '& img': {
-      height: 24,
+      height: 20,
     },
   },
   nav: {
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(4),
+    gap: theme.spacing(6),
   },
   navLink: {
-    color: 'rgba(255,255,255,0.7)',
+    color: '#6B7280',
     textDecoration: 'none',
     fontSize: 14,
+    fontWeight: 500,
     '&:hover': {
-      color: '#fff',
+      color: '#111827',
     },
   },
   actionButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    color: '#fff',
+    backgroundColor: '#F3F4F6',
+    color: '#111827',
     borderRadius: 20,
-    padding: theme.spacing(0.5, 2),
+    padding: theme.spacing(0.75, 2),
+    marginLeft: theme.spacing(4),
     textTransform: 'none',
+    fontWeight: 500,
     '&:hover': {
-      backgroundColor: 'rgba(255,255,255,0.2)',
+      backgroundColor: '#E5E7EB',
     },
   },
 }));
