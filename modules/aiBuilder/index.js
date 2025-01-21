@@ -44,14 +44,14 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     minHeight: 'calc(100vh - 64px)',
     textAlign: 'center',
-    padding: theme.spacing(2, 4),
+    padding: theme.spacing(20, 4),
     position: 'relative',
   },
   heartLogo: {
-    marginBottom: theme.spacing(12),
+    marginBottom: theme.spacing(8),
     zIndex: 1,
     '& img': {
       height: 100,
