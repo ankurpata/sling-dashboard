@@ -20,6 +20,7 @@ import axios from 'axios';
 import Header from './components/Header';
 import CanvasLayout from './components/CanvasLayout';
 import ProcessingView from './components/ProcessingView';
+import GitHubRepoDialog from './components/GitHubRepoDialog';
 import CodeUtils from './utils';
 import { ALLOWED_LIBRARIES } from './config';
 import { useStyles } from './styles';
@@ -39,11 +40,11 @@ const AIBuilder = () => {
   const [titleIndex, setTitleIndex] = useState(0);
   const [searchId, setSearchId] = useState('');
   const [initialResponse, setInitialResponse] = useState('');
-  const classes = useStyles({ showCanvas });
-  const [processingMessages, setProcessingMessages] = useState([]);
   const [generatedCode, setGeneratedCode] = useState('');
   const [codeScope, setCodeScope] = useState({});
   const [activeTab, setActiveTab] = useState('preview');
+  const classes = useStyles({ showCanvas });
+  const [processingMessages, setProcessingMessages] = useState([]);
   const inputRef = useRef(null);
   const processingTimeoutRef = useRef(null);
 
@@ -261,7 +262,7 @@ const AIBuilder = () => {
               startIcon={<GitHubIcon />}
               onClick={handleGitHubConnect}
             >
-              Connect your Repo
+              {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
             </Button>
 
             <TextField
@@ -341,65 +342,13 @@ const AIBuilder = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      {/* Repository Selection Dialog */}
-      <Dialog
+      <GitHubRepoDialog
         open={showRepoDialog}
         onClose={() => setShowRepoDialog(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          className: classes.dialogPaper
-        }}
-      >
-        <DialogTitle>Select a Repository</DialogTitle>
-        <DialogContent className={classes.dialogContent}>
-          {loading ? (
-            <Box display="flex" justifyContent="center" p={3}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <List>
-              {repositories.map((repo) => (
-                <ListItem
-                  key={repo.id}
-                  button
-                  onClick={() => handleRepoSelect(repo)}
-                  className={classes.repoListItem}
-                >
-                  <ListItemText
-                    primary={repo.name}
-                    secondary={
-                      <React.Fragment>
-                        <Typography component="span" variant="body2" color="textSecondary">
-                          {repo.description || 'No description'}
-                        </Typography>
-                        <Box mt={0.5}>
-                          {repo.language && (
-                            <Typography component="span" variant="caption" color="textSecondary">
-                              {repo.language}
-                            </Typography>
-                          )}
-                          <Typography component="span" variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
-                            Updated {new Date(repo.updatedAt).toLocaleDateString()}
-                          </Typography>
-                        </Box>
-                      </React.Fragment>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </DialogContent>
-        <DialogActions className={classes.dialogActions}>
-          <Button 
-            onClick={() => setShowRepoDialog(false)}
-            className={classes.cancelButton}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSelect={handleRepoSelect}
+        repositories={repositories}
+        loading={loading}
+      />
     </Box>
   );
 };
