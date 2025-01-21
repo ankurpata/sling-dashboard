@@ -1,6 +1,16 @@
 import React from 'react';
-import AppPage from '../@sling/hoc/Public/index';
-import asyncComponent from '../@sling/utility/asyncComponent';
+import dynamic from 'next/dynamic';
 
-const SignIn = asyncComponent(() => import('../modules/auth/Signin/index'));
-export default AppPage(() => <SignIn />);
+// Use dynamic import with ssr: false to prevent hydration mismatch
+const AIBuilder = dynamic(() => import('../modules/aiBuilder'), {
+  ssr: false,
+  loading: () => null
+});
+
+export default function AIBuilderPage() {
+  return (
+    <div style={{ height: '100vh', overflow: 'auto' }}>
+      <AIBuilder />
+    </div>
+  );
+}

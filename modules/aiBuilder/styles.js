@@ -204,6 +204,22 @@ export const useStyles = makeStyles((theme) => ({
       fontSize: '1.2rem',
     },
   },
+  repoListItem: {
+    borderRadius: 8,
+    marginBottom: theme.spacing(1),
+    '&:hover': {
+      backgroundColor: 'rgba(0,0,0,0.04)',
+    },
+    '& .MuiListItemText-primary': {
+      fontWeight: 500,
+      color: '#111827',
+      fontSize: '1rem',
+      marginBottom: theme.spacing(0.5),
+    },
+    '& .MuiListItemText-secondary': {
+      color: '#4b5563',
+    },
+  },
   // Dialog styles
   dialogPaper: {
     borderRadius: 8,
