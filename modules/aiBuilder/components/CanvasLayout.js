@@ -768,7 +768,7 @@ const CanvasLayout = ({
                   disableGutters>
                   <ListItemText
                     className={classes.messageContent}
-                    primary='Thinking...'
+                    primary='Thinking... '
                   />
                 </ListItem>
               </Box>
