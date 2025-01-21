@@ -124,17 +124,22 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(8),
     flexWrap: 'wrap',
     justifyContent: 'center',
+    marginTop: theme.spacing(4),
     '& button': {
-      backgroundColor: '#F3F4F6',
+      backgroundColor: 'rgba(255,255,255,0.9)',
       color: '#111827',
       borderRadius: 24,
-      padding: theme.spacing(1, 3),
+      padding: theme.spacing(1.5, 3),
       fontSize: '0.95rem',
       textTransform: 'none',
-      border: '1px solid #E5E7EB',
+      border: '1px solid rgba(0,0,0,0.1)',
+      backdropFilter: 'blur(8px)',
+      fontWeight: 500,
+      transition: 'all 0.2s ease-in-out',
       '&:hover': {
-        backgroundColor: '#E5E7EB',
-        borderColor: '#D1D5DB',
+        backgroundColor: 'rgba(255,255,255,1)',
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
       },
     },
   },
@@ -339,7 +344,20 @@ const AIBuilder = () => {
             inputRef={inputRef}
           />
 
-          <Box className={classes.templates}></Box>
+          <Box className={classes.templates}>
+            <Button onClick={() => setInputValue("Create a crypto portfolio tracker")}>
+              Crypto portfolio tracker ↑
+            </Button>
+            <Button onClick={() => setInputValue("Create a personal website")}>
+              Personal website ↑
+            </Button>
+            <Button onClick={() => setInputValue("Create an AI image generator")}>
+              AI image generator ↑
+            </Button>
+            <Button onClick={() => setInputValue("Create a weather dashboard")}>
+              Weather dashboard ↑
+            </Button>
+          </Box>
         </Box>
       )}
 
