@@ -30,7 +30,10 @@ const AIBuilder = () => {
   const [showCanvas, setShowCanvas] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showRepoDialog, setShowRepoDialog] = useState(false);
-  const [repositories, setRepositories] = useState([]);
+  const [repositories, setRepositories] = useState(() => {
+    const savedRepos = localStorage.getItem('repositories');
+    return savedRepos ? JSON.parse(savedRepos) : [];
+  });
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
@@ -69,6 +72,12 @@ const AIBuilder = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (repositories.length > 0) {
+      localStorage.setItem('repositories', JSON.stringify(repositories));
+    }
+  }, [repositories]);
+
   const fetchRepositories = async (userId) => {
     setLoading(true);
     try {
@@ -83,6 +92,12 @@ const AIBuilder = () => {
       setShowRepoDialog(true);
     } catch (error) {
       console.error('Error fetching repositories:', error);
+      // If API fails, try to use cached repositories
+      const savedRepos = localStorage.getItem('repositories');
+      if (savedRepos) {
+        setRepositories(JSON.parse(savedRepos));
+        setShowRepoDialog(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -193,7 +208,12 @@ const AIBuilder = () => {
   };
 
   const handleGitHubConnect = () => {
-    window.location.href = `https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
+    const savedRepos = localStorage.getItem('repositories');
+    if (savedRepos) {
+      setShowRepoDialog(true);
+    } else {
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
+    }
   };
 
   return (
