@@ -21,6 +21,7 @@ import Header from './components/Header';
 import CanvasLayout from './components/CanvasLayout';
 import ProcessingView from './components/ProcessingView';
 import GitHubRepoDialog from './components/GitHubRepoDialog';
+import ConfirmationDialog from './components/ConfirmationDialog';
 import CodeUtils from './utils';
 import { ALLOWED_LIBRARIES } from './config';
 import { useStyles } from './styles';
@@ -313,35 +314,11 @@ const AIBuilder = () => {
           setIsProcessing={setIsProcessing}
         />
       )}
-      <Dialog
+      <ConfirmationDialog
         open={showConfirm}
         onClose={() => setShowConfirm(false)}
-        maxWidth="xs"
-        PaperProps={{
-          className: classes.dialogPaper
-        }}
-      >
-        <DialogContent className={classes.dialogContent}>
-          <DialogContentText>
-            Do you want to proceed with generating the code?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions className={classes.dialogActions}>
-          <Button 
-            onClick={() => setShowConfirm(false)}
-            className={classes.cancelButton}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleConfirm}
-            className={classes.continueButton}
-            variant="contained"
-          >
-            Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirm}
+      />
       <GitHubRepoDialog
         open={showRepoDialog}
         onClose={() => setShowRepoDialog(false)}
