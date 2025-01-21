@@ -215,6 +215,7 @@ const AIBuilder = () => {
     if (e.key === 'Enter' && inputValue.trim()) {
       setIsProcessing(true);
       setProcessingMessages(['Analyzing your request...']);
+      setShowCanvas(true); // Show canvas immediately
 
       // Set a timeout for processing
       processingTimeoutRef.current = setTimeout(() => {
@@ -278,10 +279,6 @@ const AIBuilder = () => {
         setGeneratedCode(transformed);
         setCodeScope(cleaned.scope);
         setIsProcessing(false);
-
-        // Short delay before showing canvas
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setShowCanvas(true);
       } catch (error) {
         console.error('Error generating page:', error);
         setProcessingMessages((prev) => [
@@ -289,6 +286,7 @@ const AIBuilder = () => {
           'An error occurred. Please try again.',
         ]);
         await new Promise((resolve) => setTimeout(resolve, 2000));
+        setShowCanvas(false); // Return to input on error
       } finally {
         setIsProcessing(false);
       }

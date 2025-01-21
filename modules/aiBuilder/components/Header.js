@@ -76,7 +76,7 @@ const Header = () => {
           <a href="/blog" className={classes.navLink}>Blog</a>
           <a href="/learn" className={classes.navLink}>Learn</a>
           <Button variant="contained" className={classes.actionButton}>
-            Ankur Patanaik
+            Ankur Pata
           </Button>
         </nav>
       </Toolbar>
