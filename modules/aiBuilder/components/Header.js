@@ -4,19 +4,20 @@ import { AppBar, Toolbar, Button, Typography, Box } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'transparent',
     boxShadow: 'none',
-    borderBottom: '1px solid #E5E7EB',
+    borderBottom: '1px solid rgba(229, 231, 235, 0.5)',
     padding: theme.spacing(1, 0),
     height: 64,
+    backdropFilter: 'blur(8px)',
   },
   toolbar: {
     display: 'flex',
     justifyContent: 'space-between',
     width: '100%',
-    maxWidth: 1200,
+    // maxWidth: 1200,
     margin: '0 auto',
-    padding: theme.spacing(0, 4),
+    padding: theme.spacing(4, 4),
     minHeight: 64,
   },
   logo: {

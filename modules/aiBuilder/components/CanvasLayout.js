@@ -30,8 +30,9 @@ import ArrowForwardIosIcon from '@material-ui/icons/ArrowRight';
 import CodeUtils from '../utils';
 import prettier from 'prettier/standalone';
 import parserBabel from 'prettier/parser-babel';
-import PreviewLayout from './PreviewLayout'; // Import PreviewLayout
+import PreviewLayout from './PreviewLayout'; 
 import {useStyles as useSharedStyles} from '../styles';
+import { ALLOWED_LIBRARIES } from '../config';
 
 // Import CodeUtils from index.js
 
@@ -418,15 +419,6 @@ const useStyles = makeStyles((theme) => ({
     color: '#64FFDA',
   },
 }));
-
-// Define allowed libraries
-const ALLOWED_LIBRARIES = [
-  '@mui/material',
-  '@mui/icons-material',
-  'react',
-  'react-dom',
-  'prop-types',
-];
 
 // CanvasLayout component
 const CanvasLayout = ({
