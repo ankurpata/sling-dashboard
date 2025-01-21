@@ -1,12 +1,16 @@
 import React from 'react';
-import AppPage from '../@sling/hoc/AppPage';
-import asyncComponent from '../@sling/utility/asyncComponent';
-import Box from '@material-ui/core/Box';
+import dynamic from 'next/dynamic';
 
-const AIBuilder = asyncComponent(() => import('../modules/aiBuilder'));
+// Use dynamic import with ssr: false to prevent hydration mismatch
+const AIBuilder = dynamic(() => import('../modules/aiBuilder'), {
+  ssr: false,
+  loading: () => null
+});
 
-const AIBuilderPage = () => {
-  return <AIBuilder />;
-};
-
-export default AppPage(() => <AIBuilderPage />);
+export default function AIBuilderPage() {
+  return (
+    <div style={{ height: '100vh', overflow: 'auto' }}>
+      <AIBuilder />
+    </div>
+  );
+}
