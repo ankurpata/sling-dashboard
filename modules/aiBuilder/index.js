@@ -1,9 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {makeStyles} from '@material-ui/core/styles';
 import {
   Box,
-  Container,
-  Grid,
   Typography,
   TextField,
   Button,
@@ -12,209 +9,13 @@ import {
   DialogContent,
   DialogContentText,
 } from '@material-ui/core';
+import GitHubIcon from '@material-ui/icons/GitHub';
 import Header from './components/Header';
 import CanvasLayout from './components/CanvasLayout';
 import ProcessingView from './components/ProcessingView';
 import CodeUtils from './utils';
 import { ALLOWED_LIBRARIES } from './config';
-import GitHubIcon from '@material-ui/icons/GitHub';
-
-const useStyles = makeStyles((theme) => ({
-  '@global': {
-    body: {
-      margin: 0,
-      padding: 0,
-      minHeight: '100vh',
-    },
-  },
-  root: {
-    minHeight: '100vh',
-    position: 'relative',
-    color: '#111827',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'background 0.3s ease-in-out',
-    background: (props) => !props.showCanvas ? 
-      'radial-gradient(circle at center, #ffffff 0%, #f0f9ff 35%, #e0f2fe 50%, #f0f9ff 65%, #ffffff 100%)' : 
-      '#ffffff',
-    '&::before': (props) => !props.showCanvas ? {
-      content: '""',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      opacity: 1,
-      transition: 'opacity 0.3s ease-in-out',
-      background:
-        'radial-gradient(circle at center, rgba(255,255,255,0) 0%, rgba(240,249,255,0.15) 35%, rgba(224,242,254,0.15) 50%, rgba(240,249,255,0.15) 65%, rgba(255,255,255,0) 100%)',
-      pointerEvents: 'none',
-      zIndex: 0,
-    } : {
-      opacity: 0,
-      content: '""',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: 'none',
-    },
-  },
-  main: {
-    position: 'relative',
-    zIndex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    minHeight: 'calc(100vh - 64px)',
-    textAlign: 'center',
-    padding: theme.spacing(20, 4),
-    position: 'relative',
-  },
-  heartLogo: {
-    marginBottom: theme.spacing(8),
-    zIndex: 1,
-    '& img': {
-      height: 100,
-    },
-  },
-  title: {
-    fontSize: '5.6rem',
-    fontWeight: 300,
-    marginBottom: theme.spacing(3),
-    letterSpacing: '-0.02em',
-    lineHeight: 1,
-    minHeight: '1.2em',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#111827',
-  },
-  subtitle: {
-    color: '#6B7280',
-    fontSize: '0.875rem',
-    marginBottom: theme.spacing(8),
-    maxWidth: 600,
-    opacity: 0.9,
-  },
-  fadeIn: {
-    animation: '$fadeIn 0.5s ease-in',
-  },
-  '@keyframes fadeIn': {
-    '0%': {
-      opacity: 0,
-      transform: 'translateY(10px)',
-    },
-    '100%': {
-      opacity: 1,
-      transform: 'translateY(0)',
-    },
-  },
-  searchInput: {
-    width: '100%',
-    maxWidth: 700,
-    marginTop: theme.spacing(8),
-    marginBottom: theme.spacing(6),
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: 'white',
-      borderRadius: 12,
-      height: 64,
-      '& fieldset': {
-        borderColor: '#E5E7EB',
-      },
-      '&:hover fieldset': {
-        borderColor: '#D1D5DB',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#4ECDC4',
-      },
-    },
-    '& .MuiOutlinedInput-input': {
-      color: '#111827',
-      fontSize: '1.1rem',
-      '&::placeholder': {
-        color: '#6B7280',
-        opacity: 1,
-      },
-    },
-  },
-  templates: {
-    display: 'flex',
-    gap: theme.spacing(2),
-    marginBottom: theme.spacing(8),
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: theme.spacing(4),
-    '& button': {
-      backgroundColor: 'rgba(255,255,255,0.9)',
-      color: '#111827',
-      borderRadius: 24,
-      padding: theme.spacing(1.5, 3),
-      fontSize: '0.95rem',
-      textTransform: 'none',
-      border: '1px solid rgba(0,0,0,0.1)',
-      backdropFilter: 'blur(8px)',
-      fontWeight: 500,
-      transition: 'all 0.2s ease-in-out',
-      '&:hover': {
-        backgroundColor: 'rgba(255,255,255,1)',
-        transform: 'translateY(-2px)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      },
-    },
-  },
-  projectTabs: {
-    display: 'flex',
-    gap: theme.spacing(4),
-    marginBottom: theme.spacing(4),
-    '& button': {
-      color: '#6B7280',
-      padding: theme.spacing(1, 0),
-      minWidth: 'auto',
-      textTransform: 'none',
-      fontSize: '0.95rem',
-      '&:hover': {
-        color: '#111827',
-        backgroundColor: 'transparent',
-      },
-    },
-  },
-  inputContainer: {
-    display: 'flex',
-    gap: theme.spacing(2),
-    alignItems: 'center',
-    width: '100%',
-    justifyContent: 'center',
-    marginBottom: theme.spacing(3),
-  },
-  repoButton: {
-    color: "#fff",
-    height: "62px",
-    marginTop: "9px",
-    padding: "0px 12px",
-    fontSize: "1rem",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-    fontWeight: 500,
-    whiteSpace: "nowrap",
-    borderRadius: "8px",
-    textTransform: "none",
-    backgroundColor: "#0b111e",
-    border: "none",
-    transition: "all 0.2s ease-in-out",
-    '&:hover': {
-      backgroundColor: "#1a1f2e",
-      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-    },
-    '& .MuiSvgIcon-root': {
-      marginRight: theme.spacing(1),
-      fontSize: '1.2rem',
-    },
-  },
-}));
+import { useStyles } from './styles';
 
 const AIBuilder = () => {
   const [inputValue, setInputValue] = useState('');
@@ -444,34 +245,24 @@ const AIBuilder = () => {
         onClose={() => setShowConfirm(false)}
         maxWidth="xs"
         PaperProps={{
-          style: {
-            borderRadius: 8,
-            padding: 8,
-          },
+          className: classes.dialogPaper
         }}
       >
-        <DialogContent>
-          <DialogContentText style={{ color: '#4b5563' }}>
+        <DialogContent className={classes.dialogContent}>
+          <DialogContentText>
             Do you want to proceed with generating the code?
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
+        <DialogActions className={classes.dialogActions}>
           <Button 
             onClick={() => setShowConfirm(false)}
-            style={{ 
-              textTransform: 'none',
-              color: '#6b7280',
-            }}
+            className={classes.cancelButton}
           >
             Cancel
           </Button>
           <Button 
             onClick={handleConfirm}
-            style={{ 
-              backgroundColor: '#0b111e',
-              color: '#fff',
-              textTransform: 'none',
-            }}
+            className={classes.continueButton}
             variant="contained"
           >
             Continue
