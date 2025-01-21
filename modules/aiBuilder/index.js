@@ -177,15 +177,15 @@ const AIBuilder = () => {
   const processingTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (inputRef.current) {
+    if (inputRef.current && !showCanvas) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [showCanvas]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setTitleIndex((prev) => (prev + 1) % titles.length);
-    }, 5000);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -336,7 +336,7 @@ const AIBuilder = () => {
           <TextField
             className={classes.searchInput}
             variant='outlined'
-            placeholder='Ask Lovable to create a portfolio website for my...'
+            placeholder='Create and add a new report to dashboard which ...'
             fullWidth
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
