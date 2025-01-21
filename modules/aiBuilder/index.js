@@ -172,7 +172,7 @@ const AIBuilder = () => {
   const [processingMessages, setProcessingMessages] = useState([]);
   const [generatedCode, setGeneratedCode] = useState('');
   const [codeScope, setCodeScope] = useState({});
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('preview');
   const inputRef = useRef(null);
   const processingTimeoutRef = useRef(null);
 

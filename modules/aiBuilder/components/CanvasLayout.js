@@ -554,12 +554,14 @@ const CanvasLayout = ({
   }, [isProcessing]);
 
   const processingSteps = [
-    { icon: '⌨️', text: 'Collaborate at source, via GitHub' },
-    { icon: '🌐', text: 'Deploy when you\'re ready' },
-    { icon: '💬', text: 'Chat with AI in the sidebar' },
-    { icon: '🚀', text: 'Building your components...' },
+    { icon: '🔍', text: 'Analyzing your request...' },
+    { icon: '💡', text: 'Brainstorming ideas...' },
+    { icon: '🎨', text: 'Crafting the perfect solution...' },
+    { icon: '🏗️', text: 'Building components...' },
     { icon: '✨', text: 'Adding some magic...' },
-    { icon: '📦', text: 'Packaging it all up...' }
+    { icon: '⚡️', text: 'Generating preview for you...' },
+    { icon: '🧪', text: 'Testing the changes locally...' },
+    { icon: '🎯', text: 'Fine-tuning the details...' }
   ];
 
   const handleBreakWidgets = async (prompt, options = {}) => {
