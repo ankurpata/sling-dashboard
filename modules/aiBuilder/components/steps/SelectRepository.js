@@ -166,7 +166,7 @@ const SelectRepository = ({
               )}
             </InputAdornment>
           ),
-          placeholder: "Search repositories...",
+          placeholder: selectedRepo ? "" : "Search repositories...",
         }}
         disabled={selectedRepo !== null}
       />
