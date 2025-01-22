@@ -22,22 +22,40 @@ const useStyles = makeStyles((theme) => ({
   searchField: {
     '& .MuiOutlinedInput-root': {
       fontSize: '1.1rem',
+      backgroundColor: 'rgba(0, 0, 0, 0.02)',
+      transition: 'background-color 0.2s',
       '& fieldset': {
-        borderColor: 'rgba(0, 0, 0, 0.23)',
+        borderColor: 'rgba(0, 0, 0, 0.12)',
+        borderWidth: '1px',
       },
-      '&:hover fieldset': {
-        borderColor: '#000',
+      '&:hover': {
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+        '& fieldset': {
+          borderColor: 'rgba(0, 0, 0, 0.23)',
+        },
       },
-      '&.Mui-focused fieldset': {
-        borderColor: '#000',
+      '&.Mui-focused': {
+        backgroundColor: '#fff',
+        '& fieldset': {
+          borderColor: 'rgba(0, 0, 0, 0.23)',
+          borderWidth: '1px',
+        },
+      },
+      '&.Mui-disabled': {
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
       },
     },
-    '& .MuiInputLabel-outlined': {
-      fontSize: '1.1rem',
+    '& .MuiInputAdornment-root': {
+      marginRight: '8px',
+      '& .MuiSvgIcon-root': {
+        fontSize: '20px',
+        color: 'rgba(0, 0, 0, 0.54)',
+      },
     },
   },
   selectedChip: {
     margin: theme.spacing(0.5),
+    padding: '18px 10px',
     backgroundColor: 'rgba(0, 0, 0, 0.06)',
     borderRadius: '4px',
     '& .MuiChip-label': {
@@ -116,6 +134,11 @@ const SelectRepository = ({
         repo.description.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
+  const handleRepoSelect = (repo) => {
+    onRepoSelect(repo);
+    onSearchChange(''); // Clear search text when repo is selected
+  };
+
   const handleClearSelection = () => {
     onRepoSelect(null);
   };
@@ -125,7 +148,6 @@ const SelectRepository = ({
       <TextField
         fullWidth
         variant="outlined"
-        label="Search repositories"
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         className={classes.searchField}
@@ -137,16 +159,16 @@ const SelectRepository = ({
                   label={selectedRepo.name}
                   onDelete={handleClearSelection}
                   className={classes.selectedChip}
-                  size="medium"
+                  size="small"
                 />
               ) : (
                 <SearchIcon />
               )}
             </InputAdornment>
           ),
+          placeholder: "Search repositories...",
         }}
         disabled={selectedRepo !== null}
-        placeholder={selectedRepo ? "" : "Search repositories..."}
       />
 
       <List className={classes.list}>
@@ -160,7 +182,7 @@ const SelectRepository = ({
               key={repo.id}
               button
               selected={selectedRepo?.id === repo.id}
-              onClick={() => onRepoSelect(repo)}
+              onClick={() => handleRepoSelect(repo)}
               className={classes.listItem}>
               <ListItemText
                 primary={
