@@ -47,7 +47,7 @@ const AIBuilder = () => {
   const [generatedCode, setGeneratedCode] = useState('');
   const [codeScope, setCodeScope] = useState({});
   const [activeTab, setActiveTab] = useState('preview');
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState('dummy');
   const classes = useStyles({ showCanvas });
   const [processingMessages, setProcessingMessages] = useState([]);
   const inputRef = useRef(null);

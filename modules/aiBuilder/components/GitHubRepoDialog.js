@@ -199,21 +199,27 @@ const GitHubRepoDialog = ({
         return;
       }
 
+      if (!userId) {
+        setErrors({save: 'User ID is required'});
+        return;
+      }
+
       try {
         setLoading(true);
         // Save the project with initial configuration
         await saveProject({
-          userId,
-          projectId: selectedRepo.id,
+          userId: userId,
+          projectId: selectedRepo.id || selectedRepo.name, // Fallback to name if id is not available
           repository: {
             name: selectedRepo.name,
-            branch: selectedRepo.defaultBranch,
-            framework: null // Will be detected or set later
+            branch: selectedRepo.default_branch || 'main', // GitHub API uses default_branch
+            framework: selectedRepo.framework || null
           }
         });
       } catch (error) {
         console.error('Error saving project:', error);
-        setErrors({save: error.message || 'Failed to save project'});
+        const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message || 'Failed to save project';
+        setErrors({save: errorMessage});
         return;
       } finally {
         setLoading(false);
@@ -223,7 +229,7 @@ const GitHubRepoDialog = ({
       try {
         const repoConfig = {
           name: selectedRepo.name,
-          branch: selectedRepo.defaultBranch || 'main',
+          branch: selectedRepo.default_branch || 'main',
           framework: sandboxConfig?.framework || 'Next.js',
         };
         localStorage.setItem('selectedRepository', JSON.stringify(repoConfig));
@@ -259,7 +265,7 @@ const GitHubRepoDialog = ({
     // Pass the complete configuration including env vars
     const config = {
       ...selectedRepo,
-      branch: selectedRepo.defaultBranch || 'main',
+      branch: selectedRepo.default_branch || 'main',
       framework: sandboxConfig?.framework || 'Next.js',
       environmentVariables: envVars.filter(env => env.key && env.value),
     };
@@ -402,7 +408,7 @@ const GitHubRepoDialog = ({
                 onSelect(selectedRepo);
                 localStorage.setItem('selectedRepository', JSON.stringify({
                   name: selectedRepo.name,
-                  branch: selectedRepo.defaultBranch || 'main',
+                  branch: selectedRepo.default_branch || 'main',
                   framework: 'Next.js',
                 }));
                 handleClose();

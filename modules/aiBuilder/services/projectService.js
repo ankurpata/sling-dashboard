@@ -5,7 +5,6 @@ import apiClient, {apiEndpoints} from '../config/api';
  */
 export const saveProject = async ({userId, projectId, repository}) => {
   try {
-    console.log(apiEndpoints.project.create, 'apiEndpoints.project.create');
     const response = await apiClient.post(apiEndpoints.project.create, {
       userId,
       projectId,
