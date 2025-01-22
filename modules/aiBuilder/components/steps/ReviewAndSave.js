@@ -8,10 +8,14 @@ import {
   List,
   ListItem,
   ListItemText,
+  Tooltip,
+  IconButton,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
 
 const useStyles = makeStyles((theme) => ({
   section: {
@@ -70,10 +74,20 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.secondary,
     fontStyle: 'italic',
   },
+  statusIcon: {
+    fontSize: 20,
+  },
+  statusIconConfigured: {
+    color: '#34C759',
+  },
+  statusIconUnconfigured: {
+    color: theme.palette.grey[400],
+  },
 }));
 
 const ReviewAndSave = ({ selectedRepo, envVars = [], sandboxConfig }) => {
   const classes = useStyles();
+  const isDeploymentConfigured = envVars.length > 0;
 
   if (!selectedRepo) {
     return (
@@ -104,6 +118,25 @@ const ReviewAndSave = ({ selectedRepo, envVars = [], sandboxConfig }) => {
                 variant="outlined"
               />
             )}
+            <Tooltip
+              title={
+                isDeploymentConfigured
+                  ? 'Deployment configured with environment variables'
+                  : 'No deployment configuration'
+              }
+              placement="left">
+              <IconButton size="small">
+                {isDeploymentConfigured ? (
+                  <CheckCircleIcon
+                    className={`${classes.statusIcon} ${classes.statusIconConfigured}`}
+                  />
+                ) : (
+                  <RadioButtonUncheckedIcon
+                    className={`${classes.statusIcon} ${classes.statusIconUnconfigured}`}
+                  />
+                )}
+              </IconButton>
+            </Tooltip>
           </Box>
           <Typography variant="body2" color="textSecondary">
             {selectedRepo.description || 'No description'}

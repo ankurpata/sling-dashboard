@@ -33,10 +33,7 @@ const AIBuilder = () => {
   const [showCanvas, setShowCanvas] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showRepoDialog, setShowRepoDialog] = useState(false);
-  const [repositories, setRepositories] = useState(() => {
-    const savedRepos = localStorage.getItem('repositories');
-    return savedRepos ? JSON.parse(savedRepos) : [];
-  });
+  const [repositories, setRepositories] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoEnvVars, setRepoEnvVars] = useState({});
   const [loading, setLoading] = useState(false);
@@ -68,10 +65,11 @@ const AIBuilder = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const isAuthenticated = params.get('authenticated');
-    const userId = params.get('userId');
+    const userIdParam = params.get('userId');
     
-    if (isAuthenticated && userId) {
-      handleFetchRepositories(userId);
+    if (isAuthenticated && userIdParam) {
+      setUserId(userIdParam);
+      handleFetchRepositories(userIdParam);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -333,9 +331,8 @@ const AIBuilder = () => {
         open={showRepoDialog}
         onClose={() => setShowRepoDialog(false)}
         onSelect={handleRepoSelect}
-        repositories={repositories}
-        loading={loading}
         userId={userId}
+        initialRepo={selectedRepo}
       />
     </Box>
   );

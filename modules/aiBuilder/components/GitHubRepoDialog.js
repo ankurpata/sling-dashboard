@@ -148,16 +148,29 @@ const steps = [
   },
 ];
 
-const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
+const GitHubRepoDialog = ({
+  open,
+  onClose,
+  onSelect,
+  userId,
+  initialRepo,
+}) => {
   const classes = useStyles();
   const [activeStep, setActiveStep] = useState(0);
   const [repositories, setRepositories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [selectedRepo, setSelectedRepo] = useState(initialRepo || null);
   const [envVars, setEnvVars] = useState([{key: '', value: ''}]);
   const [sandboxConfig, setSandboxConfig] = useState(null);
   const [errors, setErrors] = useState({});
+
+  // Reset selected repo when dialog opens with initialRepo
+  useEffect(() => {
+    if (open && initialRepo) {
+      setSelectedRepo(initialRepo);
+    }
+  }, [open, initialRepo]);
 
   useEffect(() => {
     const loadRepositories = async () => {

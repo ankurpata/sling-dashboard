@@ -8,8 +8,11 @@ import {
   CircularProgress,
   Paper,
   ClickAwayListener,
+  Chip,
+  InputAdornment,
 } from '@material-ui/core';
 import {makeStyles} from '@material-ui/core/styles';
+import SearchIcon from '@material-ui/icons/Search';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -47,6 +50,16 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.secondary,
     fontSize: '0.875rem',
   },
+  chip: {
+    margin: theme.spacing(0.5),
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    '& .MuiChip-label': {
+      fontWeight: 500,
+    },
+  },
+  searchIcon: {
+    color: theme.palette.text.secondary,
+  },
 }));
 
 const SelectRepository = ({
@@ -62,7 +75,9 @@ const SelectRepository = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const handleInputClick = () => {
-    setIsOpen(true);
+    if (!selectedRepo) {
+      setIsOpen(true);
+    }
   };
 
   const handleClickAway = () => {
@@ -71,7 +86,14 @@ const SelectRepository = ({
 
   const handleRepoClick = (repo) => {
     onRepoSelect(repo);
+    onSearchChange(''); // Clear search when selecting
     setIsOpen(false);
+  };
+
+  const handleDeleteChip = (e) => {
+    e.stopPropagation(); // Prevent input click handler from firing
+    onRepoSelect(null);
+    onSearchChange('');
   };
 
   const filteredRepos = repositories.filter((repo) =>
@@ -83,14 +105,27 @@ const SelectRepository = ({
       <div className={classes.root}>
         <TextField
           className={classes.searchInput}
-          placeholder="Search repositories..."
-          value={selectedRepo ? selectedRepo.name : searchQuery}
+          placeholder={selectedRepo ? '' : 'Search repositories...'}
+          value={searchQuery}
           onClick={handleInputClick}
           onChange={(e) => onSearchChange(e.target.value)}
           error={!!error}
           helperText={error}
           InputProps={{
             readOnly: !!selectedRepo,
+            startAdornment: selectedRepo ? (
+              <InputAdornment position="start">
+                <Chip
+                  label={selectedRepo.name}
+                  onDelete={handleDeleteChip}
+                  className={classes.chip}
+                />
+              </InputAdornment>
+            ) : (
+              <InputAdornment position="start">
+                <SearchIcon className={classes.searchIcon} />
+              </InputAdornment>
+            ),
             endAdornment: loading && <CircularProgress size={20} />,
           }}
         />
@@ -105,9 +140,7 @@ const SelectRepository = ({
                 }`}>
                 <ListItemText
                   primary={repo.name}
-                  secondary={
-                    repo.description || 'No description available'
-                  }
+                  secondary={repo.description || 'No description available'}
                   classes={{secondary: classes.description}}
                 />
               </ListItem>
