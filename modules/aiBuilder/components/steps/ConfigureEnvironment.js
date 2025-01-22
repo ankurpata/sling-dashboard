@@ -201,57 +201,6 @@ const ConfigureEnvironment = ({
     onEnvVarRemove(index);
   };
 
-  const handleSave = async () => {
-    // Validate all keys before saving
-    const errors = {};
-    envVars.forEach((env, index) => {
-      if (env.key && !isValidEnvKey(env.key)) {
-        errors[index] = 'Invalid key format';
-      }
-    });
-
-    if (Object.keys(errors).length > 0) {
-      setLocalErrors(errors);
-      return;
-    }
-
-    if (!projectId) {
-      setLocalErrors({ general: 'Project ID is required' });
-      return;
-    }
-
-    // Filter out empty entries and transform array to object
-    const validEnvVars = envVars.filter(env => env.key && env.value);
-    if (validEnvVars.length === 0) {
-      setLocalErrors({ general: 'At least one environment variable is required' });
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      // Transform array of env vars into an object with proper format
-      const environmentVariables = validEnvVars.reduce((acc, { key, value }) => {
-        acc[key.trim()] = value.trim();
-        return acc;
-      }, {});
-
-      const response = await saveEnvironmentVariables({
-        projectId,
-        environmentVariables
-      });
-      
-      if (onSave) {
-        onSave(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to save environment variables:', error);
-      const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message;
-      setLocalErrors({ general: errorMessage });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
     <div className={classes.root}>
       {localErrors.general && (
@@ -351,14 +300,6 @@ const ConfigureEnvironment = ({
           />
         </Button>
       </Box>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleSave}
-        disabled={isSaving}
-      >
-        Save Environment Variables
-      </Button>
     </div>
   );
 };

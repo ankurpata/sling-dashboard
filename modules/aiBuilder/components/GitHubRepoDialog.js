@@ -16,7 +16,7 @@ import {
 import {makeStyles} from '@material-ui/core/styles';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import {fetchRepositories} from '../services/repositoryService';
-import {saveProject} from '../services/projectService';
+import {saveProject, saveEnvironmentVariables} from '../services/projectService';
 
 import SelectRepository from './steps/SelectRepository';
 import ConfigureEnvironment from './steps/ConfigureEnvironment';
@@ -199,23 +199,18 @@ const GitHubRepoDialog = ({
         return;
       }
 
-      if (!userId) {
-        setErrors({save: 'User ID is required'});
-        return;
-      }
-
       try {
         setLoading(true);
-        // Save the project with initial configuration
         await saveProject({
-          userId: userId,
-          projectId: selectedRepo.id || selectedRepo.name, // Fallback to name if id is not available
+          userId,
+          projectId: selectedRepo.id || selectedRepo.name,
           repository: {
             name: selectedRepo.name,
-            branch: selectedRepo.default_branch || 'main', // GitHub API uses default_branch
+            branch: selectedRepo.default_branch || 'main',
             framework: selectedRepo.framework || null
           }
         });
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
       } catch (error) {
         console.error('Error saving project:', error);
         const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message || 'Failed to save project';
@@ -224,25 +219,30 @@ const GitHubRepoDialog = ({
       } finally {
         setLoading(false);
       }
-
-      // Store selected repo in localStorage but keep dialog open
+    } else if (activeStep === 1) {
+      // Save environment variables before moving to next step
       try {
-        const repoConfig = {
-          name: selectedRepo.name,
-          branch: selectedRepo.default_branch || 'main',
-          framework: sandboxConfig?.framework || 'Next.js',
-        };
-        localStorage.setItem('selectedRepository', JSON.stringify(repoConfig));
-        // Don't close dialog, just move to next step
-        setActiveStep((prevStep) => prevStep + 1);
-      } catch (error) {
-        console.error('Error storing repository selection:', error);
-        setErrors({
-          save: 'Failed to store repository selection',
+        setLoading(true);
+        await saveEnvironmentVariables({
+          projectId: selectedRepo.id || selectedRepo.name,
+          environmentVariables: envVars.reduce((acc, env) => {
+            if (env.key && env.value) {
+              acc[env.key] = env.value;
+            }
+            return acc;
+          }, {})
         });
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      } catch (error) {
+        console.error('Error saving environment variables:', error);
+        const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message || 'Failed to save environment variables';
+        setErrors({env: errorMessage});
+        return;
+      } finally {
+        setLoading(false);
       }
     } else {
-      setActiveStep((prevStep) => prevStep + 1);
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
   };
 
@@ -359,6 +359,13 @@ const GitHubRepoDialog = ({
     }
   };
 
+  const getStepButtonText = (step) => {
+    if (step === 1) {
+      return 'Save and Next';
+    }
+    return 'Next';
+  };
+
   return (
     <Dialog
       open={open}
@@ -440,7 +447,7 @@ const GitHubRepoDialog = ({
             className={classes.nextButton}
             onClick={activeStep === steps.length - 1 ? handleFinish : handleNext}
             disabled={activeStep === 0 && !selectedRepo}>
-            {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+            {activeStep === steps.length - 1 ? 'Finish' : getStepButtonText(activeStep)}
           </Button>
         </Box>
       </DialogActions>
