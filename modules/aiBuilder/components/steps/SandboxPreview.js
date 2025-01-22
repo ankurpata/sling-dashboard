@@ -139,6 +139,44 @@ const useStyles = makeStyles((theme) => ({
       borderRadius: theme.shape.borderRadius,
     },
   },
+  select: {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 8,
+      backgroundColor: '#fff',
+      height: 60,
+      '& fieldset': {
+        borderColor: '#E5E7EB',
+        borderWidth: '1px',
+        top: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#B0B9C5',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#2563EB',
+      },
+    },
+    '& .MuiSelect-select': {
+      padding: '4px 14px',
+      height: 40,
+      lineHeight: '45px',
+    },
+    '& .MuiOutlinedInput-input': {
+      padding: '4px 14px',
+    },
+  },
+  menuItem: {
+    minHeight: 32,
+    '&:hover': {
+      backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    },
+    '&.Mui-selected': {
+      backgroundColor: 'rgba(37, 99, 235, 0.12)',
+      '&:hover': {
+        backgroundColor: 'rgba(37, 99, 235, 0.16)',
+      },
+    },
+  },
 }));
 
 const frameworks = [
@@ -355,13 +393,33 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                 <InfoIcon className={classes.infoIcon} />
               </Tooltip>
             </Typography>
-            <FormControl className={classes.formControl} fullWidth>
+            <FormControl className={classes.select} fullWidth>
               <InputLabel>Framework</InputLabel>
               <Select
                 value={config.framework}
-                onChange={(e) => handleFrameworkChange(e.target.value)}>
+                onChange={(e) => handleFrameworkChange(e.target.value)}
+                variant="outlined"
+                MenuProps={{
+                  anchorOrigin: {
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  },
+                  transformOrigin: {
+                    vertical: 'top',
+                    horizontal: 'left',
+                  },
+                  getContentAnchorEl: null,
+                  PaperProps: {
+                    elevation: 3,
+                    style: {
+                      borderRadius: 8,
+                      marginTop: 8,
+                    },
+                  },
+                }}
+              >
                 {frameworks.map((framework) => (
-                  <MenuItem key={framework.id} value={framework.id}>
+                  <MenuItem key={framework.id} value={framework.id} className={classes.menuItem}>
                     {framework.name}
                   </MenuItem>
                 ))}
@@ -511,12 +569,33 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                 <FormControl fullWidth>
                   <InputLabel>Node.js Version</InputLabel>
                   <Select
+                    className={classes.select}
                     value={config.nodeVersion}
                     onChange={(e) =>
                       handleConfigChange('nodeVersion', e.target.value)
-                    }>
+                    }
+                    variant="outlined"
+                    MenuProps={{
+                      anchorOrigin: {
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                      },
+                      transformOrigin: {
+                        vertical: 'top',
+                        horizontal: 'left',
+                      },
+                      getContentAnchorEl: null,
+                      PaperProps: {
+                        elevation: 3,
+                        style: {
+                          borderRadius: 8,
+                          marginTop: 8,
+                        },
+                      },
+                    }}
+                  >
                     {nodeVersions.map((version) => (
-                      <MenuItem key={version} value={version}>
+                      <MenuItem key={version} value={version} className={classes.menuItem}>
                         {version}
                       </MenuItem>
                     ))}
@@ -527,12 +606,33 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                 <FormControl fullWidth>
                   <InputLabel>Deployment Region</InputLabel>
                   <Select
+                    className={classes.select}
                     value={config.region}
                     onChange={(e) =>
                       handleConfigChange('region', e.target.value)
-                    }>
+                    }
+                    variant="outlined"
+                    MenuProps={{
+                      anchorOrigin: {
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                      },
+                      transformOrigin: {
+                        vertical: 'top',
+                        horizontal: 'left',
+                      },
+                      getContentAnchorEl: null,
+                      PaperProps: {
+                        elevation: 3,
+                        style: {
+                          borderRadius: 8,
+                          marginTop: 8,
+                        },
+                      },
+                    }}
+                  >
                     {regions.map((region) => (
-                      <MenuItem key={region} value={region}>
+                      <MenuItem key={region} value={region} className={classes.menuItem}>
                         {region === 'all' ? 'All Regions' : region}
                       </MenuItem>
                     ))}
