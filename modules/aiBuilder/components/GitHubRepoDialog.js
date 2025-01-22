@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from 'react';
-import axios from 'axios';
 import {
   Dialog,
   DialogTitle,
@@ -12,9 +11,11 @@ import {
   Step,
   StepLabel,
   StepContent,
+  CircularProgress,
 } from '@material-ui/core';
 import {makeStyles} from '@material-ui/core/styles';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import {saveRepository, fetchRepositories} from '../services/repositoryService';
 
 import SelectRepository from './steps/SelectRepository';
 import ConfigureEnvironment from './steps/ConfigureEnvironment';
@@ -120,55 +121,77 @@ const steps = [
   },
 ];
 
-const GitHubRepoDialog = ({open, onClose, onSelect}) => {
+const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
   const classes = useStyles();
   const [activeStep, setActiveStep] = useState(0);
-  const [repositories, setRepositories] = useState(() => {
-    const savedRepos = localStorage.getItem('repositories');
-    return savedRepos ? JSON.parse(savedRepos) : [];
-  });
+  const [repositories, setRepositories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [envVars, setEnvVars] = useState([{key: '', value: ''}]);
   const [sandboxConfig, setSandboxConfig] = useState(null);
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchRepositories = async () => {
-      setLoading(true);
+    const loadRepositories = async () => {
       try {
-        const response = await axios.get('/api/github/repositories');
-        setRepositories(response.data);
-        localStorage.setItem('repositories', JSON.stringify(response.data));
+        setLoading(true);
+        const data = await fetchRepositories(userId);
+        setRepositories(data);
       } catch (error) {
         console.error('Error fetching repositories:', error);
+        setErrors({fetch: error.message || 'Failed to fetch repositories'});
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    if (open && repositories.length === 0) {
-      fetchRepositories();
+    if (open) {
+      loadRepositories();
     }
-  }, [open]);
+  }, [open, userId]);
 
-  const handleClose = () => {
-    setActiveStep(0);
-    setSearchQuery('');
-    setSelectedRepo(null);
-    setEnvVars([{key: '', value: ''}]);
-    setSandboxConfig(null);
-    setErrors({});
-    onClose();
+  const handleSaveRepository = async () => {
+    try {
+      setSaving(true);
+      setErrors({});
+
+      await saveRepository({
+        userId,
+        projectId,
+        repository: {
+          name: selectedRepo.name,
+          branch: selectedRepo.defaultBranch || 'main',
+          framework: sandboxConfig?.framework || 'Next.js',
+        },
+      });
+    } catch (error) {
+      console.error('Error saving repository:', error);
+      setErrors({
+        save: error.message || 'Failed to save repository configuration',
+      });
+      throw error;
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleNext = () => {
-    if (activeStep === 0 && !selectedRepo) {
-      setErrors({repo: 'Please select a repository'});
-      return;
-    }
+  const handleNext = async () => {
+    if (activeStep === 0) {
+      if (!selectedRepo) {
+        setErrors({repo: 'Please select a repository'});
+        return;
+      }
 
-    if (activeStep === 1) {
+      try {
+        await handleSaveRepository();
+        setActiveStep((prevStep) => prevStep + 1);
+      } catch (error) {
+        // Error is already handled in handleSaveRepository
+        return;
+      }
+    } else if (activeStep === 1) {
       const newErrors = {};
       envVars.forEach((env, index) => {
         if (env.key && !env.value) {
@@ -185,12 +208,22 @@ const GitHubRepoDialog = ({open, onClose, onSelect}) => {
       }
     }
 
-    setErrors({});
     setActiveStep((prevStep) => prevStep + 1);
   };
 
   const handleBack = () => {
-    setActiveStep((prevStep) => prevStep - 1);
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setErrors({});
+  };
+
+  const handleClose = () => {
+    setActiveStep(0);
+    setSearchQuery('');
+    setSelectedRepo(null);
+    setEnvVars([{key: '', value: ''}]);
+    setSandboxConfig(null);
+    setErrors({});
+    onClose();
   };
 
   const handleFinish = () => {
@@ -240,13 +273,13 @@ const GitHubRepoDialog = ({open, onClose, onSelect}) => {
       case 0:
         return (
           <SelectRepository
-            loading={loading}
             repositories={repositories}
             selectedRepo={selectedRepo}
+            onRepoSelect={setSelectedRepo}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            onRepoSelect={setSelectedRepo}
-            error={errors.repo}
+            loading={loading}
+            error={errors.repo || errors.save}
           />
         );
       case 1:
@@ -284,19 +317,22 @@ const GitHubRepoDialog = ({open, onClose, onSelect}) => {
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth='md'
+      maxWidth="md"
       fullWidth
       PaperProps={{
         className: classes.dialogPaper,
       }}>
       <DialogTitle className={classes.dialogTitle}>
-        <Box display='flex' alignItems='center' justifyContent='space-between'>
-          <Typography variant='h6'>Configure Repository</Typography>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Typography variant="h6">Configure Repository</Typography>
           {activeStep > 0 && (
             <Button
               startIcon={<ArrowBackIcon />}
-              onClick={() => setActiveStep(0)}
-              color='primary'>
+              onClick={() => {
+                setActiveStep(0);
+                setErrors({});
+              }}
+              color="primary">
               Back to Repositories
             </Button>
           )}
@@ -305,19 +341,17 @@ const GitHubRepoDialog = ({open, onClose, onSelect}) => {
       <DialogContent>
         <Stepper
           activeStep={activeStep}
-          orientation='vertical'
+          orientation="vertical"
           className={classes.stepper}>
           {steps.map((step, index) => (
             <Step key={step.label}>
               <StepLabel classes={{label: classes.stepLabel}}>
-                <Typography variant='subtitle1'>{step.label}</Typography>
-                <Typography variant='caption' color='textSecondary'>
+                <Typography variant="subtitle1">{step.label}</Typography>
+                <Typography variant="caption" color="textSecondary">
                   {step.description}
                 </Typography>
               </StepLabel>
-              <StepContent className={classes.stepContent}>
-                {getStepContent(index)}
-              </StepContent>
+              <StepContent>{getStepContent(index)}</StepContent>
             </Step>
           ))}
         </Stepper>
@@ -330,19 +364,24 @@ const GitHubRepoDialog = ({open, onClose, onSelect}) => {
           <Button
             disabled={activeStep === 0}
             onClick={handleBack}
-            variant='outlined'
+            variant="outlined"
             className={classes.backButton}>
             Back
           </Button>
           <Button
-            variant='contained'
+            variant="contained"
             className={classes.nextButton}
-            onClick={
-              activeStep === steps.length - 1 ? handleFinish : handleNext
-            }>
-            {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+            onClick={activeStep === steps.length - 1 ? handleFinish : handleNext}
+            disabled={saving}>
+            {saving ? (
+              <CircularProgress size={24} />
+            ) : activeStep === steps.length - 1 ? (
+              'Finish'
+            ) : (
+              'Next'
+            )}
           </Button>
-        </Box>{' '}
+        </Box>
       </DialogActions>
     </Dialog>
   );

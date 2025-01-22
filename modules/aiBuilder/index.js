@@ -23,8 +23,9 @@ import ProcessingView from './components/ProcessingView';
 import GitHubRepoDialog from './components/GitHubRepoDialog';
 import ConfirmationDialog from './components/ConfirmationDialog';
 import CodeUtils from './utils';
-import { ALLOWED_LIBRARIES } from './config';
-import { useStyles } from './styles';
+import {ALLOWED_LIBRARIES} from './config';
+import {useStyles} from './styles';
+import {fetchRepositories} from './services/repositoryService';
 
 const AIBuilder = () => {
   const [inputValue, setInputValue] = useState('');
@@ -45,6 +46,7 @@ const AIBuilder = () => {
   const [generatedCode, setGeneratedCode] = useState('');
   const [codeScope, setCodeScope] = useState({});
   const [activeTab, setActiveTab] = useState('preview');
+  const [userId, setUserId] = useState(null);
   const classes = useStyles({ showCanvas });
   const [processingMessages, setProcessingMessages] = useState([]);
   const inputRef = useRef(null);
@@ -69,7 +71,7 @@ const AIBuilder = () => {
     const userId = params.get('userId');
     
     if (isAuthenticated && userId) {
-      fetchRepositories(userId);
+      handleFetchRepositories(userId);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -81,26 +83,14 @@ const AIBuilder = () => {
     }
   }, [repositories]);
 
-  const fetchRepositories = async (userId) => {
+  const handleFetchRepositories = async (userId) => {
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5001/api/github/repos', {
-        userId
-      }, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      setRepositories(response.data);
+      const data = await fetchRepositories(userId);
+      setRepositories(data);
       setShowRepoDialog(true);
     } catch (error) {
       console.error('Error fetching repositories:', error);
-      // If API fails, try to use cached repositories
-      const savedRepos = localStorage.getItem('repositories');
-      if (savedRepos) {
-        setRepositories(JSON.parse(savedRepos));
-        setShowRepoDialog(true);
-      }
     } finally {
       setLoading(false);
     }
@@ -330,6 +320,7 @@ const AIBuilder = () => {
         onSelect={handleRepoSelect}
         repositories={repositories}
         loading={loading}
+        userId={userId}
       />
     </Box>
   );
