@@ -133,7 +133,7 @@ const ConfigureEnvironment = ({
   return (
     <div className={classes.root}>
       <Box className={classes.header}>
-        <Typography variant="h6" className={classes.title}>
+        {/* <Typography variant="h6" className={classes.title}>
           Configure Environment
           <Tooltip title="Environment variables will be securely stored and available during build and runtime">
             <InfoIcon className={classes.infoIcon} />
@@ -141,7 +141,7 @@ const ConfigureEnvironment = ({
         </Typography>
         <Typography className={classes.description}>
           Add environment variables for your project
-        </Typography>
+        </Typography> */}
       </Box>
 
       <div className={classes.envVarContainer}>

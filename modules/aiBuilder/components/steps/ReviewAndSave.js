@@ -5,6 +5,9 @@ import {
   Paper,
   Chip,
   Divider,
+  List,
+  ListItem,
+  ListItemText,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -46,10 +49,41 @@ const useStyles = makeStyles((theme) => ({
       borderRadius: theme.shape.borderRadius,
     },
   },
+  root: {
+    padding: theme.spacing(2),
+  },
+  sectionTitle: {
+    fontSize: '1rem',
+    fontWeight: 500,
+    marginBottom: theme.spacing(1),
+  },
+  list: {
+    padding: 0,
+  },
+  listItem: {
+    padding: theme.spacing(1, 0),
+  },
+  chip: {
+    marginRight: theme.spacing(1),
+  },
+  noEnvVars: {
+    color: theme.palette.text.secondary,
+    fontStyle: 'italic',
+  },
 }));
 
-const ReviewAndSave = ({ selectedRepo, envVars, sandboxConfig }) => {
+const ReviewAndSave = ({ selectedRepo, envVars = [], sandboxConfig }) => {
   const classes = useStyles();
+
+  if (!selectedRepo) {
+    return (
+      <Box className={classes.root}>
+        <Typography color="error">
+          No repository selected. Please go back and select a repository.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -83,20 +117,22 @@ const ReviewAndSave = ({ selectedRepo, envVars, sandboxConfig }) => {
         </Typography>
         <Paper className={classes.paper}>
           <Box className={classes.envVarList}>
-            {envVars.filter(env => env.key || env.value).map((envVar, index) => (
-              <Box key={index} className={classes.envVarItem}>
-                <Typography variant="subtitle2" gutterBottom>
-                  {envVar.key}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {envVar.value.length > 20 
-                    ? `${envVar.value.substring(0, 20)}...` 
-                    : envVar.value}
-                </Typography>
-              </Box>
-            ))}
+            {envVars
+              .filter((env) => env.key && env.value)
+              .map((envVar, index) => (
+                <Box key={index} className={classes.envVarItem}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    {envVar.key}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {envVar.value.length > 20
+                      ? `${envVar.value.substring(0, 20)}...`
+                      : envVar.value}
+                  </Typography>
+                </Box>
+              ))}
           </Box>
-          {envVars.filter(env => env.key || env.value).length === 0 && (
+          {envVars.filter((env) => env.key && env.value).length === 0 && (
             <Typography variant="body2" color="textSecondary">
               No environment variables configured
             </Typography>

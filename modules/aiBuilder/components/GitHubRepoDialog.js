@@ -28,12 +28,15 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
     maxWidth: '1000px',
     width: '90vw',
+    minHeight: '70vh',
+    maxHeight: '90vh',
   },
   stepper: {
     backgroundColor: 'transparent',
+    padding: 0,
     '& .MuiStepConnector-line': {
       minHeight: 50,
-      marginLeft: 16,
+      // marginLeft: 16,
       borderLeftWidth: 2,
     },
     '& .MuiStepIcon-root': {
@@ -54,6 +57,23 @@ const useStyles = makeStyles((theme) => ({
       },
       '&.MuiStepLabel-completed': {
         color: '#000',
+      },
+    },
+    '& .MuiStepContent-root': {
+      borderLeft: `none`,
+      marginLeft: 22,
+      paddingLeft: theme.spacing(3),
+    },
+    '& .MuiStepLabel-root': {
+      padding: theme.spacing(1, 0),
+    },
+    '& .MuiStepIcon-root': {
+      color: theme.palette.grey[300],
+      '&.MuiStepIcon-active': {
+        color: 'black',
+      },
+      '&.MuiStepIcon-completed': {
+        color: theme.palette.success.main,
       },
     },
   },
@@ -77,6 +97,9 @@ const useStyles = makeStyles((theme) => ({
       fontSize: '1rem',
       color: theme.palette.text.secondary,
     },
+    '& .MuiTypography-root': {
+      margin: 0,
+    },
   },
   backButton: {
     marginRight: theme.spacing(2),
@@ -86,6 +109,7 @@ const useStyles = makeStyles((theme) => ({
       borderColor: '#000',
       backgroundColor: 'rgba(0, 0, 0, 0.04)',
     },
+    marginRight: theme.spacing(1),
   },
   nextButton: {
     backgroundColor: '#000',
@@ -93,8 +117,11 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       backgroundColor: 'rgba(0, 0, 0, 0.9)',
     },
+    marginLeft: theme.spacing(1),
   },
   dialogTitle: {
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    marginBottom: 0,
     '& .MuiTypography-h6': {
       fontSize: '1.5rem',
       fontWeight: 500,
@@ -275,7 +302,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
         return (
           <ReviewAndSave
             selectedRepo={selectedRepo}
-            envVars={envVars}
+            envVars={envVars.filter(env => env.key && env.value)}
             sandboxConfig={sandboxConfig}
           />
         );

@@ -111,8 +111,9 @@ const AIBuilder = () => {
   const handleRepoSelect = (repo) => {
     setSelectedRepo(repo);
     localStorage.setItem('selectedRepository', JSON.stringify(repo));
-    // Store in state for Canvas View
     setShowRepoDialog(false);
+    // Force re-render of components that depend on selectedRepo
+    setRepositories(prev => [...prev]);
   };
 
   const handleTabChange = (event, newValue) => {
