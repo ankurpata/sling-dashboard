@@ -70,6 +70,10 @@ const useStyles = makeStyles((theme) => ({
   },
   switchContainer: {
     marginBottom: theme.spacing(2),
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    justifyContent: 'space-between',
   },
   formControl: {
     minWidth: 200,
@@ -398,7 +402,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
               <Select
                 value={config.framework}
                 onChange={(e) => handleFrameworkChange(e.target.value)}
-                variant="outlined"
+                variant='outlined'
                 MenuProps={{
                   anchorOrigin: {
                     vertical: 'bottom',
@@ -416,10 +420,12 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                       marginTop: 8,
                     },
                   },
-                }}
-              >
+                }}>
                 {frameworks.map((framework) => (
-                  <MenuItem key={framework.id} value={framework.id} className={classes.menuItem}>
+                  <MenuItem
+                    key={framework.id}
+                    value={framework.id}
+                    className={classes.menuItem}>
                     {framework.name}
                   </MenuItem>
                 ))}
@@ -434,17 +440,22 @@ const SandboxPreview = ({repository, onConfigChange}) => {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Box className={classes.switchContainer}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={config.overrides.buildCommand}
-                        onChange={() => handleToggleOverride('buildCommand')}
-                      />
-                    }
-                    label='Override Build Command'
-                  />
+                  <Box style={{width: '30%'}}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.buildCommand}
+                          onChange={() => handleToggleOverride('buildCommand')}
+                        />
+                      }
+                      label='Override Build Command'
+                    />
+                  </Box>
+
                   {config.overrides.buildCommand && (
-                    <Box className={classes.inputContainer}>
+                    <Box
+                      className={classes.inputContainer}
+                      style={{width: '70%'}}>
                       <TextField
                         className={classes.input}
                         variant='outlined'
@@ -453,7 +464,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                           handleConfigChange('buildCommand', e.target.value)
                         }
                         placeholder='next build'
-                        InputLabelProps={{ shrink: false }}
+                        InputLabelProps={{shrink: false}}
                         InputProps={{
                           notched: false,
                         }}
@@ -465,6 +476,8 @@ const SandboxPreview = ({repository, onConfigChange}) => {
 
               <Grid item xs={12}>
                 <Box className={classes.switchContainer}>
+                <Box style={{width: '30%'}}>
+
                   <FormControlLabel
                     control={
                       <Switch
@@ -474,8 +487,11 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     }
                     label='Override Output Directory'
                   />
+                </Box>
                   {config.overrides.outputDirectory && (
-                    <Box className={classes.inputContainer}>
+                    <Box
+                      className={classes.inputContainer}
+                      style={{width: '70%'}}>
                       <TextField
                         className={classes.input}
                         variant='outlined'
@@ -484,7 +500,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                           handleConfigChange('outputDirectory', e.target.value)
                         }
                         placeholder='.next'
-                        InputLabelProps={{ shrink: false }}
+                        InputLabelProps={{shrink: false}}
                         InputProps={{
                           notched: false,
                         }}
@@ -496,6 +512,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
 
               <Grid item xs={12}>
                 <Box className={classes.switchContainer}>
+                <Box style={{width: '30%'}}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -505,8 +522,9 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     }
                     label='Override Install Command'
                   />
+                </Box>
                   {config.overrides.installCommand && (
-                    <Box className={classes.inputContainer}>
+                    <Box className={classes.inputContainer} style={{width: '70%'}}>
                       <TextField
                         className={classes.input}
                         variant='outlined'
@@ -515,7 +533,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                           handleConfigChange('installCommand', e.target.value)
                         }
                         placeholder='npm install'
-                        InputLabelProps={{ shrink: false }}
+                        InputLabelProps={{shrink: false}}
                         InputProps={{
                           notched: false,
                         }}
@@ -527,6 +545,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
 
               <Grid item xs={12}>
                 <Box className={classes.switchContainer}>
+                <Box style={{width: '30%'}}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -538,17 +557,21 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     }
                     label='Override Development Command'
                   />
+                </Box>
                   {config.overrides.developmentCommand && (
-                    <Box className={classes.inputContainer}>
+                    <Box className={classes.inputContainer} style={{width: '70%'}}>
                       <TextField
                         className={classes.input}
                         variant='outlined'
                         value={config.developmentCommand}
                         onChange={(e) =>
-                          handleConfigChange('developmentCommand', e.target.value)
+                          handleConfigChange(
+                            'developmentCommand',
+                            e.target.value,
+                          )
                         }
                         placeholder='next dev'
-                        InputLabelProps={{ shrink: false }}
+                        InputLabelProps={{shrink: false}}
                         InputProps={{
                           notched: false,
                         }}
@@ -574,7 +597,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     onChange={(e) =>
                       handleConfigChange('nodeVersion', e.target.value)
                     }
-                    variant="outlined"
+                    variant='outlined'
                     MenuProps={{
                       anchorOrigin: {
                         vertical: 'bottom',
@@ -592,10 +615,12 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                           marginTop: 8,
                         },
                       },
-                    }}
-                  >
+                    }}>
                     {nodeVersions.map((version) => (
-                      <MenuItem key={version} value={version} className={classes.menuItem}>
+                      <MenuItem
+                        key={version}
+                        value={version}
+                        className={classes.menuItem}>
                         {version}
                       </MenuItem>
                     ))}
@@ -611,7 +636,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     onChange={(e) =>
                       handleConfigChange('region', e.target.value)
                     }
-                    variant="outlined"
+                    variant='outlined'
                     MenuProps={{
                       anchorOrigin: {
                         vertical: 'bottom',
@@ -629,10 +654,12 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                           marginTop: 8,
                         },
                       },
-                    }}
-                  >
+                    }}>
                     {regions.map((region) => (
-                      <MenuItem key={region} value={region} className={classes.menuItem}>
+                      <MenuItem
+                        key={region}
+                        value={region}
+                        className={classes.menuItem}>
                         {region === 'all' ? 'All Regions' : region}
                       </MenuItem>
                     ))}
@@ -651,7 +678,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                   placeholder='.'
                 />
               </Grid>
-              <Grid item xs={12}>
+              {/* <Grid item xs={12}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -663,8 +690,8 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                   }
                   label='Include files outside root directory'
                 />
-              </Grid>
-              <Grid item xs={12}>
+              </Grid> */}
+              {/* <Grid item xs={12}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -676,8 +703,8 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                   }
                   label='Skip deployments if only ignored files are changed'
                 />
-              </Grid>
-              <Grid item xs={12}>
+              </Grid> */}
+              {/* <Grid item xs={12}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -689,7 +716,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                   }
                   label='Enable build cache'
                 />
-              </Grid>
+              </Grid> */}
             </Grid>
           </Paper>
 
