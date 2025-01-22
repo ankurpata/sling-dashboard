@@ -24,6 +24,8 @@ import CodeIcon from '@material-ui/icons/Code';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {tomorrow} from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {getFrameworkDefaults, supportedFrameworks} from '../../utils/frameworkDefaults';
+import {detectFramework} from '../../services/frameworkService';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -183,40 +185,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const frameworks = [
-  {
-    id: 'nextjs',
-    name: 'Next.js',
-    buildCmd: 'next build',
-    devCmd: 'next dev',
-    installCmd: 'npm install',
-    outputDir: '.next',
-  },
-  {
-    id: 'react',
-    name: 'React',
-    buildCmd: 'react-scripts build',
-    devCmd: 'react-scripts start',
-    installCmd: 'npm install',
-    outputDir: 'build',
-  },
-  {
-    id: 'angular',
-    name: 'Angular',
-    buildCmd: 'ng build',
-    devCmd: 'ng serve',
-    installCmd: 'npm install',
-    outputDir: 'dist',
-  },
-  {
-    id: 'vue',
-    name: 'Vue.js',
-    buildCmd: 'vue-cli-service build',
-    devCmd: 'vue-cli-service serve',
-    installCmd: 'npm install',
-    outputDir: 'dist',
-  },
-];
+const frameworks = supportedFrameworks
+  .filter((name) =>
+    ['Next.js', 'React', 'Angular', 'Vue.js', 'Unsupported Framework'].includes(
+      name,
+    ),
+  )
+  .map((name) => ({
+    id: name.toLowerCase().replace(/[\s.()]/g, ''),
+    name: name,
+  }));
 
 const nodeVersions = [
   '20.x', // Iron (Current)
@@ -253,9 +231,27 @@ const SandboxPreview = ({repository, onConfigChange}) => {
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    // Detect framework based on repository content
-    detectFramework(repository);
-  }, [repository]);
+    const detectAndSetFramework = async () => {
+      try {
+        const detectedFramework = await detectFramework(repository.localPath);
+        const framework = frameworks.find((f) => f.name === detectedFramework);
+        if (framework) {
+          handleFrameworkChange(framework.id);
+        } else {
+          // If detected framework is not supported, use Unsupported Framework
+          const unsupportedFramework = frameworks.find(f => f.name === 'Unsupported Framework');
+          handleFrameworkChange(unsupportedFramework.id);
+        }
+      } catch (error) {
+        console.error('Error detecting framework:', error);
+        // Fallback to Unsupported Framework on error
+        const unsupportedFramework = frameworks.find(f => f.name === 'Unsupported Framework');
+        handleFrameworkChange(unsupportedFramework.id);
+      }
+    };
+
+    detectAndSetFramework();
+  }, [repository.localPath]);
 
   useEffect(() => {
     setJsonConfig(generateVercelConfig());
@@ -269,23 +265,20 @@ const SandboxPreview = ({repository, onConfigChange}) => {
     }
   }, [config]);
 
-  const detectFramework = async (repo) => {
-    // TODO: Implement framework detection logic
-    // For now, default to Next.js
-    const defaultFramework = frameworks[0];
-    handleFrameworkChange(defaultFramework.id);
-  };
-
   const handleFrameworkChange = (frameworkId) => {
-    const framework = frameworks.find((f) => f.id === frameworkId);
-    setConfig((prev) => ({
-      ...prev,
-      framework: frameworkId,
-      buildCommand: framework.buildCmd,
-      outputDirectory: framework.outputDir,
-      installCommand: framework.installCmd,
-      developmentCommand: framework.devCmd,
-    }));
+    const frameworkName = frameworks.find((f) => f.id === frameworkId)?.name;
+    const defaults = getFrameworkDefaults(frameworkName);
+
+    if (defaults) {
+      handleConfigChange('framework', frameworkId);
+      handleConfigChange('buildCommand', defaults.buildCommand);
+      handleConfigChange('outputDirectory', defaults.outputDirectory);
+      handleConfigChange('installCommand', defaults.installCommand);
+      handleConfigChange('developmentCommand', defaults.devCommand);
+      handleConfigChange('nodeVersion', defaults.nodeVersion);
+    } else {
+      handleConfigChange('framework', frameworkId);
+    }
   };
 
   const handleToggleOverride = (field) => {
