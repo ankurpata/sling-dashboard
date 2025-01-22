@@ -5,6 +5,12 @@ export const apiEndpoints = {
     save: `${API_BASE_URL}/api/project/repository`,
     list: `${API_BASE_URL}/api/github/repos`,
   },
+  project: {
+    create: `${API_BASE_URL}/api/project`,
+    env: `${API_BASE_URL}/api/project/env`,
+    buildSettings: `${API_BASE_URL}/api/project/build-settings`,
+    deploy: `${API_BASE_URL}/api/project/deploy`,
+  },
 };
 
 // Create axios instance with default config

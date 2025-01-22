@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -10,12 +10,14 @@ import {
   ListItemText,
   Tooltip,
   IconButton,
+  Button,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
+import { deployProject } from '../../services/projectService';
 
 const useStyles = makeStyles((theme) => ({
   section: {
@@ -83,11 +85,38 @@ const useStyles = makeStyles((theme) => ({
   statusIconUnconfigured: {
     color: theme.palette.grey[400],
   },
+  deployButton: {
+    marginTop: theme.spacing(2),
+  },
 }));
 
-const ReviewAndSave = ({ selectedRepo, envVars = [], sandboxConfig }) => {
+const ReviewAndSave = ({
+  projectId,
+  selectedRepo,
+  envVars = [],
+  buildSettings = {},
+  onDeploySuccess,
+  onDeployError,
+}) => {
   const classes = useStyles();
-  const isDeploymentConfigured = envVars.length > 0;
+  const [isDeploying, setIsDeploying] = useState(false);
+
+  const handleDeploy = async () => {
+    try {
+      setIsDeploying(true);
+      const response = await deployProject(projectId);
+      if (onDeploySuccess) {
+        onDeploySuccess(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to deploy project:', error);
+      if (onDeployError) {
+        onDeployError(error);
+      }
+    } finally {
+      setIsDeploying(false);
+    }
+  };
 
   if (!selectedRepo) {
     return (
@@ -120,13 +149,14 @@ const ReviewAndSave = ({ selectedRepo, envVars = [], sandboxConfig }) => {
             )}
             <Tooltip
               title={
-                isDeploymentConfigured
+                envVars.length > 0
                   ? 'Deployment configured with environment variables'
                   : 'No deployment configuration'
               }
-              placement="left">
+              placement="left"
+            >
               <IconButton size="small">
-                {isDeploymentConfigured ? (
+                {envVars.length > 0 ? (
                   <CheckCircleIcon
                     className={`${classes.statusIcon} ${classes.statusIconConfigured}`}
                   />
@@ -173,55 +203,17 @@ const ReviewAndSave = ({ selectedRepo, envVars = [], sandboxConfig }) => {
         </Paper>
       </Box>
 
-      {sandboxConfig && (
-        <Box className={classes.section}>
-          <Typography variant="subtitle1" gutterBottom>
-            Sandbox Configuration
-          </Typography>
-          <Paper className={classes.paper}>
-            <Box mb={2}>
-              <Typography variant="subtitle2" gutterBottom>
-                Framework: {sandboxConfig.framework}
-              </Typography>
-              {sandboxConfig.overrides.buildCommand && (
-                <Typography variant="body2">
-                  Build Command: {sandboxConfig.buildCommand}
-                </Typography>
-              )}
-              {sandboxConfig.overrides.outputDirectory && (
-                <Typography variant="body2">
-                  Output Directory: {sandboxConfig.outputDirectory}
-                </Typography>
-              )}
-              {sandboxConfig.overrides.installCommand && (
-                <Typography variant="body2">
-                  Install Command: {sandboxConfig.installCommand}
-                </Typography>
-              )}
-              {sandboxConfig.overrides.developmentCommand && (
-                <Typography variant="body2">
-                  Development Command: {sandboxConfig.developmentCommand}
-                </Typography>
-              )}
-            </Box>
-            <Divider className={classes.divider} />
-            <Typography variant="subtitle2" gutterBottom>
-              vercel.json Configuration
-            </Typography>
-            <Box className={classes.codePreview}>
-              <SyntaxHighlighter
-                language="json"
-                style={tomorrow}
-                customStyle={{
-                  backgroundColor: '#1a1a1a',
-                }}
-              >
-                {JSON.stringify(sandboxConfig, null, 2)}
-              </SyntaxHighlighter>
-            </Box>
-          </Paper>
-        </Box>
-      )}
+      <Box className={classes.section}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleDeploy}
+          disabled={isDeploying}
+          className={classes.deployButton}
+        >
+          {isDeploying ? 'Deploying...' : 'Deploy Project'}
+        </Button>
+      </Box>
     </Box>
   );
 };

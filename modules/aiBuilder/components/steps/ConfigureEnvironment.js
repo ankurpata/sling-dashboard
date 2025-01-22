@@ -13,6 +13,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import AddIcon from '@material-ui/icons/Add';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import InfoIcon from '@material-ui/icons/Info';
+import { saveEnvironmentVariables } from '../../services/projectService';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -132,14 +133,17 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ConfigureEnvironment = ({
+  projectId,
   envVars,
   onEnvVarChange,
   onEnvVarAdd,
   onEnvVarRemove,
   onEnvFileUpload,
   errors,
+  onSave,
 }) => {
   const classes = useStyles();
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -162,6 +166,23 @@ const ConfigureEnvironment = ({
 
   const handleRemoveEnvVar = (index) => {
     onEnvVarRemove(index);
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const response = await saveEnvironmentVariables({
+        projectId,
+        environmentVariables: envVars
+      });
+      if (onSave) {
+        onSave(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to save environment variables:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -247,6 +268,14 @@ const ConfigureEnvironment = ({
           />
         </Button>
       </Box>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleSave}
+        disabled={isSaving}
+      >
+        Save Environment Variables
+      </Button>
     </div>
   );
 };

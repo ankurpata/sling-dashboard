@@ -16,6 +16,7 @@ import {
 import {makeStyles} from '@material-ui/core/styles';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import {fetchRepositories} from '../services/repositoryService';
+import {saveProject} from '../services/projectService';
 
 import SelectRepository from './steps/SelectRepository';
 import ConfigureEnvironment from './steps/ConfigureEnvironment';
@@ -198,6 +199,26 @@ const GitHubRepoDialog = ({
         return;
       }
 
+      try {
+        setLoading(true);
+        // Save the project with initial configuration
+        await saveProject({
+          userId,
+          projectId: selectedRepo.id,
+          repository: {
+            name: selectedRepo.name,
+            branch: selectedRepo.defaultBranch,
+            framework: null // Will be detected or set later
+          }
+        });
+      } catch (error) {
+        console.error('Error saving project:', error);
+        setErrors({save: error.message || 'Failed to save project'});
+        return;
+      } finally {
+        setLoading(false);
+      }
+
       // Store selected repo in localStorage but keep dialog open
       try {
         const repoConfig = {
@@ -356,8 +377,13 @@ const GitHubRepoDialog = ({
           className={classes.stepper}>
           {steps.map((step, index) => (
             <Step key={step.label}>
-              <StepLabel classes={{label: classes.stepLabel}}>
+              <StepLabel error={!!errors.repo || !!errors.save} classes={{label: classes.stepLabel}}>
                 <Typography variant="subtitle1">{step.label}</Typography>
+                {(errors.repo || errors.save) && (
+                  <Typography color="error" variant="caption" display="block">
+                    {errors.repo || errors.save}
+                  </Typography>
+                )}
                 <Typography variant="caption" color="textSecondary">
                   {step.description}
                 </Typography>
