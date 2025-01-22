@@ -14,8 +14,12 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   CircularProgress,
+  Tooltip,
 } from '@material-ui/core';
 import GitHubIcon from '@material-ui/icons/GitHub';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
+import EditIcon from '@material-ui/icons/Edit';
 import axios from 'axios';
 import Header from './components/Header';
 import CanvasLayout from './components/CanvasLayout';
@@ -264,16 +268,37 @@ const AIBuilder = () => {
             <Button 
               variant="outlined" 
               className={classes.repoButton}
-              startIcon={<GitHubIcon />}
+              startIcon={selectedRepo ? <EditIcon className={classes.editIcon} /> : <GitHubIcon />}
               onClick={handleGitHubConnect}
             >
-              {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
+              <Box display="flex" alignItems="center">
+                {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
+                {selectedRepo && (
+                  <Box style={{padding: 5}}> 
+                    <Tooltip
+                      title={
+                        Object.keys(repoEnvVars).length > 0
+                          ? 'Deployment configured with environment variables'
+                          : 'No deployment configuration'
+                      }
+                      placement="right"
+                    >
+                      <Box className={classes.deploymentStatus}>
+                        {Object.keys(repoEnvVars).length > 0 ? (
+                          <CheckCircleIcon
+                            className={`${classes.statusIcon} ${classes.statusIconConfigured}`}
+                          />
+                        ) : (
+                          <RadioButtonUncheckedIcon
+                            className={`${classes.statusIcon} ${classes.statusIconUnconfigured}`}
+                          />
+                        )}
+                      </Box>
+                    </Tooltip>
+                  </Box>
+                )}
+              </Box>
             </Button>
-            {selectedRepo && (
-              <Typography variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
-                {Object.keys(repoEnvVars).length} environment variables configured
-              </Typography>
-            )}
             <TextField
               className={classes.searchInput}
               variant='outlined'
