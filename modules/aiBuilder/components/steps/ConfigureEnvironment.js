@@ -14,6 +14,7 @@ import AddIcon from '@material-ui/icons/Add';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import InfoIcon from '@material-ui/icons/Info';
 import { saveEnvironmentVariables } from '../../services/projectService';
+import { sanitizeEnvKey, isValidEnvKey } from '../../utils/validation';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -130,6 +131,9 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.secondary,
     verticalAlign: 'middle',
   },
+  errorMessage: {
+    marginBottom: theme.spacing(2),
+  },
 }));
 
 const ConfigureEnvironment = ({
@@ -144,6 +148,29 @@ const ConfigureEnvironment = ({
 }) => {
   const classes = useStyles();
   const [isSaving, setIsSaving] = useState(false);
+  const [localErrors, setLocalErrors] = useState({});
+
+  const handleKeyChange = (index) => (event) => {
+    const rawValue = event.target.value;
+    const sanitizedValue = sanitizeEnvKey(rawValue);
+    
+    // Only update if the sanitized value is different from the raw value
+    if (sanitizedValue !== rawValue) {
+      event.target.value = sanitizedValue;
+    }
+    
+    // Update validation error
+    setLocalErrors(prev => ({
+      ...prev,
+      [index]: !isValidEnvKey(sanitizedValue) ? 'Invalid key format' : ''
+    }));
+    
+    onEnvVarChange(index, 'key', sanitizedValue);
+  };
+
+  const handleValueChange = (index) => (event) => {
+    onEnvVarChange(index, 'value', event.target.value);
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -156,10 +183,6 @@ const ConfigureEnvironment = ({
     }
   };
 
-  const handleEnvVarChange = (index, field, value) => {
-    onEnvVarChange(index, field, value);
-  };
-
   const handleAddEnvVar = () => {
     onEnvVarAdd();
   };
@@ -169,17 +192,51 @@ const ConfigureEnvironment = ({
   };
 
   const handleSave = async () => {
+    // Validate all keys before saving
+    const errors = {};
+    envVars.forEach((env, index) => {
+      if (env.key && !isValidEnvKey(env.key)) {
+        errors[index] = 'Invalid key format';
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setLocalErrors(errors);
+      return;
+    }
+
+    if (!projectId) {
+      setLocalErrors({ general: 'Project ID is required' });
+      return;
+    }
+
+    // Filter out empty entries and transform array to object
+    const validEnvVars = envVars.filter(env => env.key && env.value);
+    if (validEnvVars.length === 0) {
+      setLocalErrors({ general: 'At least one environment variable is required' });
+      return;
+    }
+
     try {
       setIsSaving(true);
+      // Transform array of env vars into an object with proper format
+      const environmentVariables = validEnvVars.reduce((acc, { key, value }) => {
+        acc[key.trim()] = value.trim();
+        return acc;
+      }, {});
+
       const response = await saveEnvironmentVariables({
         projectId,
-        environmentVariables: envVars
+        environmentVariables
       });
+      
       if (onSave) {
         onSave(response.data);
       }
     } catch (error) {
       console.error('Failed to save environment variables:', error);
+      const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message;
+      setLocalErrors({ general: errorMessage });
     } finally {
       setIsSaving(false);
     }
@@ -187,6 +244,11 @@ const ConfigureEnvironment = ({
 
   return (
     <div className={classes.root}>
+      {localErrors.general && (
+        <Typography color="error" className={classes.errorMessage}>
+          {localErrors.general}
+        </Typography>
+      )}
       <Box className={classes.header}>
         {/* <Typography variant="h6" className={classes.title}>
           Configure Environment
@@ -200,25 +262,30 @@ const ConfigureEnvironment = ({
       </Box>
 
       <div className={classes.envVarContainer}>
-        {envVars.map((envVar, index) => (
+        {envVars.map((env, index) => (
           <Box key={index} className={classes.envVarPair}>
             <TextField
               className={classes.keyInput}
-              placeholder="e.g. CLIENT_KEY"
+              label="Key"
               variant="outlined"
-              size="small"
-              value={envVar.key}
-              onChange={(e) => handleEnvVarChange(index, 'key', e.target.value)}
-              error={Boolean(errors?.[`env_${index}_key`])}
-              helperText={errors?.[`env_${index}_key`]}
+              value={env.key}
+              onChange={handleKeyChange(index)}
+              error={!!localErrors[index]}
+              helperText={localErrors[index]}
+              InputProps={{
+                endAdornment: (
+                  <Tooltip title="Only letters, digits, and underscores allowed. Cannot start with a digit.">
+                    <InfoIcon color="action" fontSize="small" />
+                  </Tooltip>
+                ),
+              }}
             />
             <TextField
               className={classes.valueInput}
-              placeholder="Value"
+              label="Value"
               variant="outlined"
-              size="small"
-              value={envVar.value}
-              onChange={(e) => handleEnvVarChange(index, 'value', e.target.value)}
+              value={env.value}
+              onChange={handleValueChange(index)}
               error={Boolean(errors?.[`env_${index}_value`])}
               helperText={errors?.[`env_${index}_value`]}
             />

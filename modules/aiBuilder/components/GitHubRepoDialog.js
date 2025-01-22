@@ -317,18 +317,26 @@ const GitHubRepoDialog = ({
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             loading={loading}
-            error={errors.repo}
+            error={errors.fetch}
           />
         );
       case 1:
         return (
           <ConfigureEnvironment
+            projectId={selectedRepo?.id || selectedRepo?.name}
             envVars={envVars}
             onEnvVarChange={handleEnvVarChange}
             onEnvVarAdd={handleEnvVarAdd}
             onEnvVarRemove={handleEnvVarRemove}
             onEnvFileUpload={handleEnvFileUpload}
             errors={errors}
+            onSave={(data) => {
+              // Update the selected repo with the new environment variables
+              setSelectedRepo(prev => ({
+                ...prev,
+                environmentVariables: data.environmentVariables
+              }));
+            }}
           />
         );
       case 2:
