@@ -15,7 +15,7 @@ import {
 } from '@material-ui/core';
 import {makeStyles} from '@material-ui/core/styles';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
-import {saveRepository, fetchRepositories} from '../services/repositoryService';
+import {fetchRepositories} from '../services/repositoryService';
 
 import SelectRepository from './steps/SelectRepository';
 import ConfigureEnvironment from './steps/ConfigureEnvironment';
@@ -131,7 +131,6 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
   const [envVars, setEnvVars] = useState([{key: '', value: ''}]);
   const [sandboxConfig, setSandboxConfig] = useState(null);
   const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const loadRepositories = async () => {
@@ -152,31 +151,6 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
     }
   }, [open, userId]);
 
-  const handleSaveRepository = async () => {
-    try {
-      setSaving(true);
-      setErrors({});
-
-      await saveRepository({
-        userId,
-        projectId,
-        repository: {
-          name: selectedRepo.name,
-          branch: selectedRepo.defaultBranch || 'main',
-          framework: sandboxConfig?.framework || 'Next.js',
-        },
-      });
-    } catch (error) {
-      console.error('Error saving repository:', error);
-      setErrors({
-        save: error.message || 'Failed to save repository configuration',
-      });
-      throw error;
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleNext = async () => {
     if (activeStep === 0) {
       if (!selectedRepo) {
@@ -184,31 +158,25 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
         return;
       }
 
+      // Store selected repo in localStorage but keep dialog open
       try {
-        await handleSaveRepository();
+        const repoConfig = {
+          name: selectedRepo.name,
+          branch: selectedRepo.defaultBranch || 'main',
+          framework: sandboxConfig?.framework || 'Next.js',
+        };
+        localStorage.setItem('selectedRepository', JSON.stringify(repoConfig));
+        // Don't close dialog, just move to next step
         setActiveStep((prevStep) => prevStep + 1);
       } catch (error) {
-        // Error is already handled in handleSaveRepository
-        return;
+        console.error('Error storing repository selection:', error);
+        setErrors({
+          save: 'Failed to store repository selection',
+        });
       }
-    } else if (activeStep === 1) {
-      const newErrors = {};
-      envVars.forEach((env, index) => {
-        if (env.key && !env.value) {
-          newErrors[`env_${index}_value`] = 'Value is required';
-        }
-        if (env.value && !env.key) {
-          newErrors[`env_${index}_key`] = 'Key is required';
-        }
-      });
-
-      if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
-        return;
-      }
+    } else {
+      setActiveStep((prevStep) => prevStep + 1);
     }
-
-    setActiveStep((prevStep) => prevStep + 1);
   };
 
   const handleBack = () => {
@@ -227,12 +195,15 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
   };
 
   const handleFinish = () => {
-    const validEnvVars = envVars.filter((env) => env.key && env.value);
-    onSelect({
+    // Pass the complete configuration including env vars
+    const config = {
       ...selectedRepo,
-      environmentVariables: validEnvVars,
-      sandboxConfig,
-    });
+      branch: selectedRepo.defaultBranch || 'main',
+      framework: sandboxConfig?.framework || 'Next.js',
+      environmentVariables: envVars.filter(env => env.key && env.value),
+    };
+    onSelect(config);
+    localStorage.setItem('selectedRepository', JSON.stringify(config));
     handleClose();
   };
 
@@ -279,7 +250,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             loading={loading}
-            error={errors.repo || errors.save}
+            error={errors.repo}
           />
         );
       case 1:
@@ -359,6 +330,21 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
       <DialogActions style={{justifyContent: 'space-between'}}>
         <Box>
           <Button onClick={handleClose}>Cancel</Button>
+          {activeStep === 0 && selectedRepo && (
+            <Button
+              onClick={() => {
+                onSelect(selectedRepo);
+                localStorage.setItem('selectedRepository', JSON.stringify({
+                  name: selectedRepo.name,
+                  branch: selectedRepo.defaultBranch || 'main',
+                  framework: 'Next.js',
+                }));
+                handleClose();
+              }}
+              color="primary">
+              Skip Setup
+            </Button>
+          )}
         </Box>
         <Box>
           <Button
@@ -370,16 +356,11 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, projectId}) => {
           </Button>
           <Button
             variant="contained"
+            color="primary"
             className={classes.nextButton}
             onClick={activeStep === steps.length - 1 ? handleFinish : handleNext}
-            disabled={saving}>
-            {saving ? (
-              <CircularProgress size={24} />
-            ) : activeStep === steps.length - 1 ? (
-              'Finish'
-            ) : (
-              'Next'
-            )}
+            disabled={activeStep === 0 && !selectedRepo}>
+            {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
           </Button>
         </Box>
       </DialogActions>

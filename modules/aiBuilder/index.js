@@ -83,6 +83,18 @@ const AIBuilder = () => {
     }
   }, [repositories]);
 
+  useEffect(() => {
+    // Load selected repository from localStorage on mount
+    const savedRepo = localStorage.getItem('selectedRepository');
+    if (savedRepo) {
+      try {
+        setSelectedRepo(JSON.parse(savedRepo));
+      } catch (error) {
+        console.error('Error loading saved repository:', error);
+      }
+    }
+  }, []);
+
   const handleFetchRepositories = async (userId) => {
     setLoading(true);
     try {
@@ -96,9 +108,11 @@ const AIBuilder = () => {
     }
   };
 
-  const handleRepoSelect = (repoData) => {
-    setSelectedRepo(repoData);
-    setRepoEnvVars(repoData.environmentVariables || {});
+  const handleRepoSelect = (repo) => {
+    setSelectedRepo(repo);
+    localStorage.setItem('selectedRepository', JSON.stringify(repo));
+    // Store in state for Canvas View
+    setShowRepoDialog(false);
   };
 
   const handleTabChange = (event, newValue) => {
