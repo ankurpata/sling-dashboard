@@ -16,7 +16,7 @@ import {
 import {makeStyles} from '@material-ui/core/styles';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import {fetchRepositories} from '../services/repositoryService';
-import {saveProject, saveEnvironmentVariables} from '../services/projectService';
+import {saveProject, saveEnvironmentVariables, saveBuildSettings} from '../services/projectService';
 
 import SelectRepository from './steps/SelectRepository';
 import ConfigureEnvironment from './steps/ConfigureEnvironment';
@@ -241,6 +241,30 @@ const GitHubRepoDialog = ({
       } finally {
         setLoading(false);
       }
+    } else if (activeStep === 2) {
+      // Save sandbox preview settings before moving to next step
+      try {
+        setLoading(true);
+        await saveBuildSettings({
+          projectId: selectedRepo.id || selectedRepo.name,
+          buildSettings: {
+            framework: selectedRepo.framework || 'nextjs',
+            buildCommand: sandboxConfig?.buildCommand || 'npm run build',
+            startCommand: sandboxConfig?.startCommand || 'npm start',
+            installCommand: sandboxConfig?.installCommand || 'npm install',
+            outputDirectory: sandboxConfig?.outputDirectory || '.next',
+            nodeVersion: sandboxConfig?.nodeVersion || '18.x'
+          }
+        });
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      } catch (error) {
+        console.error('Error saving build settings:', error);
+        const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message || 'Failed to save build settings';
+        setErrors({sandbox: errorMessage});
+        return;
+      } finally {
+        setLoading(false);
+      }
     } else {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
@@ -361,6 +385,8 @@ const GitHubRepoDialog = ({
 
   const getStepButtonText = (step) => {
     if (step === 1) {
+      return 'Save and Next';
+    } else if (step === 2) {
       return 'Save and Next';
     }
     return 'Next';

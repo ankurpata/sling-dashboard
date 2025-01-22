@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   Box,
   TextField,
@@ -13,8 +13,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import AddIcon from '@material-ui/icons/Add';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import InfoIcon from '@material-ui/icons/Info';
-import { saveEnvironmentVariables } from '../../services/projectService';
-import { sanitizeEnvKey, isValidEnvKey } from '../../utils/validation';
+import {sanitizeEnvKey, isValidEnvKey} from '../../utils/validation';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -163,18 +162,18 @@ const ConfigureEnvironment = ({
   const handleKeyChange = (index) => (event) => {
     const rawValue = event.target.value;
     const sanitizedValue = sanitizeEnvKey(rawValue);
-    
+
     // Only update if the sanitized value is different from the raw value
     if (sanitizedValue !== rawValue) {
       event.target.value = sanitizedValue;
     }
-    
+
     // Update validation error
-    setLocalErrors(prev => ({
+    setLocalErrors((prev) => ({
       ...prev,
-      [index]: !isValidEnvKey(sanitizedValue) ? 'Invalid key format' : ''
+      [index]: !isValidEnvKey(sanitizedValue) ? 'Invalid key format' : '',
     }));
-    
+
     onEnvVarChange(index, 'key', sanitizedValue);
   };
 
@@ -204,20 +203,12 @@ const ConfigureEnvironment = ({
   return (
     <div className={classes.root}>
       {localErrors.general && (
-        <Typography color="error" className={classes.errorMessage}>
+        <Typography color='error' className={classes.errorMessage}>
           {localErrors.general}
         </Typography>
       )}
       <Box className={classes.header}>
-        {/* <Typography variant="h6" className={classes.title}>
-          Configure Environment
-          <Tooltip title="Environment variables will be securely stored and available during build and runtime">
-            <InfoIcon className={classes.infoIcon} />
-          </Tooltip>
-        </Typography>
-        <Typography className={classes.description}>
-          Add environment variables for your project
-        </Typography> */}
+   
       </Box>
 
       <div className={classes.envVarContainer}>
@@ -225,17 +216,17 @@ const ConfigureEnvironment = ({
           <Box key={index} className={classes.envVarPair}>
             <TextField
               className={classes.keyInput}
-              variant="outlined"
+              variant='outlined'
               value={env.key}
               onChange={handleKeyChange(index)}
               error={!!localErrors[index]}
               helperText={localErrors[index]}
-              placeholder="e.g. CLIENT_KEY"
-              InputLabelProps={{ shrink: false }}
+              placeholder='e.g. CLIENT_KEY'
+              InputLabelProps={{shrink: false}}
               InputProps={{
                 endAdornment: (
-                  <Tooltip title="Only letters, digits, and underscores allowed. Cannot start with a digit.">
-                    <InfoIcon color="action" fontSize="small" />
+                  <Tooltip title='Only letters, digits, and underscores allowed. Cannot start with a digit.'>
+                    <InfoIcon color='action' fontSize='small' />
                   </Tooltip>
                 ),
                 notched: false,
@@ -243,11 +234,11 @@ const ConfigureEnvironment = ({
             />
             <TextField
               className={classes.valueInput}
-              variant="outlined"
+              variant='outlined'
               value={env.value}
               onChange={handleValueChange(index)}
-              placeholder="Value"
-              InputLabelProps={{ shrink: false }}
+              placeholder='Value'
+              InputLabelProps={{shrink: false}}
               InputProps={{
                 notched: false,
               }}
@@ -258,9 +249,8 @@ const ConfigureEnvironment = ({
               <IconButton
                 className={classes.deleteButton}
                 onClick={() => handleRemoveEnvVar(index)}
-                size="small"
-                disableRipple
-              >
+                size='small'
+                disableRipple>
                 <DeleteIcon />
               </IconButton>
             )}
@@ -271,33 +261,29 @@ const ConfigureEnvironment = ({
       <Box
         className={classes.addButton}
         onClick={handleAddEnvVar}
-        role="button"
-        tabIndex={0}
-      >
+        role='button'
+        tabIndex={0}>
         <AddIcon className={classes.addIcon} />
-        <Typography className={classes.addText}>Add Environment Variable</Typography>
+        <Typography className={classes.addText}>
+          Add Environment Variable
+        </Typography>
       </Box>
 
       <Box className={classes.uploadSection}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant='h6' gutterBottom>
           Upload .env File
         </Typography>
-        <Typography variant="body1" color="textSecondary" gutterBottom>
-          Or upload an existing .env file to automatically populate the variables
+        <Typography variant='body1' color='textSecondary' gutterBottom>
+          Or upload an existing .env file to automatically populate the
+          variables
         </Typography>
         <Button
-          variant="outlined"
-          component="label"
+          variant='outlined'
+          component='label'
           startIcon={<CloudUploadIcon />}
-          className={classes.uploadButton}
-        >
+          className={classes.uploadButton}>
           Select File
-          <input
-            type="file"
-            hidden
-            accept=".env"
-            onChange={handleFileUpload}
-          />
+          <input type='file' hidden accept='.env' onChange={handleFileUpload} />
         </Button>
       </Box>
     </div>
