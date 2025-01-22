@@ -10,9 +10,11 @@ import {
   ClickAwayListener,
   Chip,
   InputAdornment,
+  Typography,
 } from '@material-ui/core';
 import {makeStyles} from '@material-ui/core/styles';
 import SearchIcon from '@material-ui/icons/Search';
+import GitHubIcon from '@material-ui/icons/GitHub';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -22,6 +24,9 @@ const useStyles = makeStyles((theme) => ({
   searchInput: {
     width: '100%',
     marginBottom: theme.spacing(2),
+    '& .MuiInputBase-root': {
+      paddingBottom: theme.spacing(1),
+    },
   },
   resultsList: {
     position: 'absolute',
@@ -52,13 +57,30 @@ const useStyles = makeStyles((theme) => ({
   },
   chip: {
     margin: theme.spacing(0.5),
+    marginBottom: theme.spacing(1),
     backgroundColor: 'rgba(0, 0, 0, 0.08)',
     '& .MuiChip-label': {
       fontWeight: 500,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
     },
   },
   searchIcon: {
     color: theme.palette.text.secondary,
+  },
+  githubIcon: {
+    fontSize: '1rem',
+    marginRight: theme.spacing(0.5),
+  },
+  branchName: {
+    fontSize: '0.75rem',
+    color: theme.palette.text.secondary,
+    '&::before': {
+      content: '"/"',
+      marginLeft: theme.spacing(0.5),
+      marginRight: theme.spacing(0.5),
+    },
   },
 }));
 
@@ -100,6 +122,16 @@ const SelectRepository = ({
     repo.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const getChipLabel = (repo) => (
+    <Box display="flex" alignItems="center">
+      <GitHubIcon className={classes.githubIcon} />
+      {repo.name}
+      <Typography component="span" className={classes.branchName}>
+        {repo.defaultBranch || 'main'}
+      </Typography>
+    </Box>
+  );
+
   return (
     <ClickAwayListener onClickAway={handleClickAway}>
       <div className={classes.root}>
@@ -116,7 +148,7 @@ const SelectRepository = ({
             startAdornment: selectedRepo ? (
               <InputAdornment position="start">
                 <Chip
-                  label={selectedRepo.name}
+                  label={getChipLabel(selectedRepo)}
                   onDelete={handleDeleteChip}
                   className={classes.chip}
                 />
@@ -139,7 +171,12 @@ const SelectRepository = ({
                   selectedRepo?.name === repo.name ? 'selected' : ''
                 }`}>
                 <ListItemText
-                  primary={repo.name}
+                  primary={
+                    <Box display="flex" alignItems="center">
+                      <GitHubIcon className={classes.githubIcon} />
+                      {repo.name}
+                    </Box>
+                  }
                   secondary={repo.description || 'No description available'}
                   classes={{secondary: classes.description}}
                 />

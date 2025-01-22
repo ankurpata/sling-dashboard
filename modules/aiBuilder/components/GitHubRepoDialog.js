@@ -382,7 +382,7 @@ const GitHubRepoDialog = ({
                 handleClose();
               }}
               color="primary">
-              Skip Setup
+              Skip Preview Setup and move to Editing
             </Button>
           )}
         </Box>
