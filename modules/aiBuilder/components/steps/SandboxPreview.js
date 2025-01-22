@@ -163,7 +163,7 @@ const useStyles = makeStyles((theme) => ({
     '& .MuiSelect-select': {
       padding: '4px 14px',
       height: 40,
-      lineHeight: '45px',
+      lineHeight: '40px',
     },
     '& .MuiOutlinedInput-input': {
       padding: '4px 14px',
@@ -218,7 +218,12 @@ const frameworks = [
   },
 ];
 
-const nodeVersions = ['18.x', '16.x', '14.x', '12.x'];
+const nodeVersions = [
+  '20.x', // Iron (Current)
+  '18.x', // Hydrogen (Active LTS)
+  '16.x', // Gallium (Maintenance)
+  '14.x', // Fermium (End-of-life)
+];
 const regions = ['all', 'us-east-1', 'eu-west-1', 'ap-southeast-1'];
 
 const SandboxPreview = ({repository, onConfigChange}) => {
@@ -440,7 +445,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Box className={classes.switchContainer}>
-                  <Box style={{width: '30%'}}>
+                  <Box style={{width: '40%'}}>
                     <FormControlLabel
                       control={
                         <Switch
@@ -455,7 +460,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                   {config.overrides.buildCommand && (
                     <Box
                       className={classes.inputContainer}
-                      style={{width: '70%'}}>
+                      style={{width: '60%'}}>
                       <TextField
                         className={classes.input}
                         variant='outlined'
@@ -476,22 +481,23 @@ const SandboxPreview = ({repository, onConfigChange}) => {
 
               <Grid item xs={12}>
                 <Box className={classes.switchContainer}>
-                <Box style={{width: '30%'}}>
-
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={config.overrides.outputDirectory}
-                        onChange={() => handleToggleOverride('outputDirectory')}
-                      />
-                    }
-                    label='Override Output Directory'
-                  />
-                </Box>
+                  <Box style={{width: '40%'}}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.outputDirectory}
+                          onChange={() =>
+                            handleToggleOverride('outputDirectory')
+                          }
+                        />
+                      }
+                      label='Override Output Directory'
+                    />
+                  </Box>
                   {config.overrides.outputDirectory && (
                     <Box
                       className={classes.inputContainer}
-                      style={{width: '70%'}}>
+                      style={{width: '60%'}}>
                       <TextField
                         className={classes.input}
                         variant='outlined'
@@ -512,19 +518,23 @@ const SandboxPreview = ({repository, onConfigChange}) => {
 
               <Grid item xs={12}>
                 <Box className={classes.switchContainer}>
-                <Box style={{width: '30%'}}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={config.overrides.installCommand}
-                        onChange={() => handleToggleOverride('installCommand')}
-                      />
-                    }
-                    label='Override Install Command'
-                  />
-                </Box>
+                  <Box style={{width: '40%'}}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.installCommand}
+                          onChange={() =>
+                            handleToggleOverride('installCommand')
+                          }
+                        />
+                      }
+                      label='Override Install Command'
+                    />
+                  </Box>
                   {config.overrides.installCommand && (
-                    <Box className={classes.inputContainer} style={{width: '70%'}}>
+                    <Box
+                      className={classes.inputContainer}
+                      style={{width: '60%'}}>
                       <TextField
                         className={classes.input}
                         variant='outlined'
@@ -545,21 +555,23 @@ const SandboxPreview = ({repository, onConfigChange}) => {
 
               <Grid item xs={12}>
                 <Box className={classes.switchContainer}>
-                <Box style={{width: '30%'}}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={config.overrides.developmentCommand}
-                        onChange={() =>
-                          handleToggleOverride('developmentCommand')
-                        }
-                      />
-                    }
-                    label='Override Development Command'
-                  />
-                </Box>
+                  <Box style={{width: '40%'}}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.developmentCommand}
+                          onChange={() =>
+                            handleToggleOverride('developmentCommand')
+                          }
+                        />
+                      }
+                      label='Override Development Command'
+                    />
+                  </Box>
                   {config.overrides.developmentCommand && (
-                    <Box className={classes.inputContainer} style={{width: '70%'}}>
+                    <Box
+                      className={classes.inputContainer}
+                      style={{width: '60%'}}>
                       <TextField
                         className={classes.input}
                         variant='outlined'
@@ -584,139 +596,111 @@ const SandboxPreview = ({repository, onConfigChange}) => {
           </Paper>
 
           <Paper className={classes.section}>
-            <Typography className={classes.sectionTitle}>
+            <Typography variant='h6' gutterBottom>
               Advanced Settings
+              <Tooltip title='Configure advanced deployment settings'>
+                <InfoIcon className={classes.infoIcon} />
+              </Tooltip>
             </Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Node.js Version</InputLabel>
-                  <Select
-                    className={classes.select}
-                    value={config.nodeVersion}
-                    onChange={(e) =>
-                      handleConfigChange('nodeVersion', e.target.value)
-                    }
-                    variant='outlined'
-                    MenuProps={{
-                      anchorOrigin: {
-                        vertical: 'bottom',
-                        horizontal: 'left',
+              <Grid item xs={6}>
+                <Typography variant='subtitle2' gutterBottom>
+                  Node.js Version
+                </Typography>
+                <Select
+                  className={classes.select}
+                  value={config.nodeVersion}
+                  onChange={(e) =>
+                    handleConfigChange('nodeVersion', e.target.value)
+                  }
+                  variant='outlined'
+                  fullWidth
+                  MenuProps={{
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left',
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left',
+                    },
+                    getContentAnchorEl: null,
+                    PaperProps: {
+                      elevation: 3,
+                      style: {
+                        borderRadius: 8,
+                        marginTop: 8,
                       },
-                      transformOrigin: {
-                        vertical: 'top',
-                        horizontal: 'left',
-                      },
-                      getContentAnchorEl: null,
-                      PaperProps: {
-                        elevation: 3,
-                        style: {
-                          borderRadius: 8,
-                          marginTop: 8,
-                        },
-                      },
-                    }}>
-                    {nodeVersions.map((version) => (
-                      <MenuItem
-                        key={version}
-                        value={version}
-                        className={classes.menuItem}>
-                        {version}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                    },
+                  }}>
+                  {nodeVersions.map((version) => (
+                    <MenuItem
+                      key={version}
+                      value={version}
+                      className={classes.menuItem}>
+                      {version}
+                    </MenuItem>
+                  ))}
+                </Select>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Deployment Region</InputLabel>
-                  <Select
-                    className={classes.select}
-                    value={config.region}
-                    onChange={(e) =>
-                      handleConfigChange('region', e.target.value)
-                    }
-                    variant='outlined'
-                    MenuProps={{
-                      anchorOrigin: {
-                        vertical: 'bottom',
-                        horizontal: 'left',
+              <Grid item xs={6}>
+                <Typography variant='subtitle2' gutterBottom>
+                  Deployment Region
+                </Typography>
+                <Select
+                  className={classes.select}
+                  value={config.region}
+                  onChange={(e) => handleConfigChange('region', e.target.value)}
+                  disabled={true}
+                  variant='outlined'
+                  fullWidth
+                  MenuProps={{
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left',
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left',
+                    },
+                    getContentAnchorEl: null,
+                    PaperProps: {
+                      elevation: 3,
+                      style: {
+                        borderRadius: 8,
+                        marginTop: 8,
                       },
-                      transformOrigin: {
-                        vertical: 'top',
-                        horizontal: 'left',
-                      },
-                      getContentAnchorEl: null,
-                      PaperProps: {
-                        elevation: 3,
-                        style: {
-                          borderRadius: 8,
-                          marginTop: 8,
-                        },
-                      },
-                    }}>
-                    {regions.map((region) => (
-                      <MenuItem
-                        key={region}
-                        value={region}
-                        className={classes.menuItem}>
-                        {region === 'all' ? 'All Regions' : region}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                    },
+                  }}>
+                  {regions.map((region) => (
+                    <MenuItem
+                      key={region}
+                      value={region}
+                      className={classes.menuItem}>
+                      {region === 'all' ? 'All Regions' : region}
+                    </MenuItem>
+                  ))}
+                </Select>
               </Grid>
               <Grid item xs={12}>
+                <Typography variant='subtitle2' gutterBottom>
+                  Root Directory
+                </Typography>
                 <TextField
+                  className={classes.input}
+                  variant='outlined'
                   fullWidth
-                  label='Root Directory'
-                  value={config.rootDirectory}
+                  value={config.rootDirectory || ''}
                   onChange={(e) =>
                     handleConfigChange('rootDirectory', e.target.value)
                   }
-                  variant='outlined'
                   placeholder='.'
+                  InputLabelProps={{shrink: false}}
+                  InputProps={{
+                    notched: false,
+                  }}
                 />
               </Grid>
-              {/* <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.includeFiles}
-                      onChange={(e) =>
-                        handleConfigChange('includeFiles', e.target.checked)
-                      }
-                    />
-                  }
-                  label='Include files outside root directory'
-                />
-              </Grid> */}
-              {/* <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.skipDeployment}
-                      onChange={(e) =>
-                        handleConfigChange('skipDeployment', e.target.checked)
-                      }
-                    />
-                  }
-                  label='Skip deployments if only ignored files are changed'
-                />
-              </Grid> */}
-              {/* <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.buildCache}
-                      onChange={(e) =>
-                        handleConfigChange('buildCache', e.target.checked)
-                      }
-                    />
-                  }
-                  label='Enable build cache'
-                />
-              </Grid> */}
             </Grid>
           </Paper>
 
