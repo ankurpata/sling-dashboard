@@ -4,8 +4,11 @@ import {
   Typography,
   Paper,
   Chip,
+  Divider,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const useStyles = makeStyles((theme) => ({
   section: {
@@ -33,9 +36,19 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: theme.shape.borderRadius,
     border: `1px solid ${theme.palette.divider}`,
   },
+  divider: {
+    margin: theme.spacing(3, 0),
+  },
+  codePreview: {
+    marginTop: theme.spacing(2),
+    '& pre': {
+      margin: 0,
+      borderRadius: theme.shape.borderRadius,
+    },
+  },
 }));
 
-const ReviewAndSave = ({ selectedRepo, envVars }) => {
+const ReviewAndSave = ({ selectedRepo, envVars, sandboxConfig }) => {
   const classes = useStyles();
 
   return (
@@ -90,6 +103,56 @@ const ReviewAndSave = ({ selectedRepo, envVars }) => {
           )}
         </Paper>
       </Box>
+
+      {sandboxConfig && (
+        <Box className={classes.section}>
+          <Typography variant="subtitle1" gutterBottom>
+            Sandbox Configuration
+          </Typography>
+          <Paper className={classes.paper}>
+            <Box mb={2}>
+              <Typography variant="subtitle2" gutterBottom>
+                Framework: {sandboxConfig.framework}
+              </Typography>
+              {sandboxConfig.overrides.buildCommand && (
+                <Typography variant="body2">
+                  Build Command: {sandboxConfig.buildCommand}
+                </Typography>
+              )}
+              {sandboxConfig.overrides.outputDirectory && (
+                <Typography variant="body2">
+                  Output Directory: {sandboxConfig.outputDirectory}
+                </Typography>
+              )}
+              {sandboxConfig.overrides.installCommand && (
+                <Typography variant="body2">
+                  Install Command: {sandboxConfig.installCommand}
+                </Typography>
+              )}
+              {sandboxConfig.overrides.developmentCommand && (
+                <Typography variant="body2">
+                  Development Command: {sandboxConfig.developmentCommand}
+                </Typography>
+              )}
+            </Box>
+            <Divider className={classes.divider} />
+            <Typography variant="subtitle2" gutterBottom>
+              vercel.json Configuration
+            </Typography>
+            <Box className={classes.codePreview}>
+              <SyntaxHighlighter
+                language="json"
+                style={tomorrow}
+                customStyle={{
+                  backgroundColor: '#1a1a1a',
+                }}
+              >
+                {JSON.stringify(sandboxConfig, null, 2)}
+              </SyntaxHighlighter>
+            </Box>
+          </Paper>
+        </Box>
+      )}
     </Box>
   );
 };

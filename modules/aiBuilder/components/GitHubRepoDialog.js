@@ -18,6 +18,7 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 import SelectRepository from './steps/SelectRepository';
 import ConfigureEnvironment from './steps/ConfigureEnvironment';
+import SandboxPreview from './steps/SandboxPreview';
 import ReviewAndSave from './steps/ReviewAndSave';
 
 const useStyles = makeStyles((theme) => ({
@@ -35,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
   },
   stepContent: {
     marginTop: 8,
-    marginLeft: theme.spacing(4),
+    marginLeft: '24px',
     paddingLeft: theme.spacing(3),
     paddingRight: theme.spacing(3),
     borderLeft: `1px solid ${theme.palette.divider}`,
@@ -57,6 +58,10 @@ const steps = [
     description: 'Set up environment variables',
   },
   {
+    label: 'Sandbox Preview',
+    description: 'Configure build and development settings',
+  },
+  {
     label: 'Review and Save',
     description: 'Review your selections and save',
   },
@@ -73,6 +78,7 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
   const [loading, setLoading] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [envVars, setEnvVars] = useState([{ key: '', value: '' }]);
+  const [sandboxConfig, setSandboxConfig] = useState(null);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -98,6 +104,7 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
     setSearchQuery('');
     setSelectedRepo(null);
     setEnvVars([{ key: '', value: '' }]);
+    setSandboxConfig(null);
     setErrors({});
     onClose();
   };
@@ -138,6 +145,7 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
     onSelect({
       ...selectedRepo,
       environmentVariables: validEnvVars,
+      sandboxConfig,
     });
     handleClose();
   };
@@ -170,6 +178,10 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
     setEnvVars(vars.length > 0 ? vars : [{ key: '', value: '' }]);
   };
 
+  const handleSandboxConfigChange = (config) => {
+    setSandboxConfig(config);
+  };
+
   const getStepContent = (step) => {
     switch (step) {
       case 0:
@@ -197,9 +209,17 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
         );
       case 2:
         return (
+          <SandboxPreview
+            repository={selectedRepo}
+            onConfigChange={handleSandboxConfigChange}
+          />
+        );
+      case 3:
+        return (
           <ReviewAndSave
             selectedRepo={selectedRepo}
             envVars={envVars}
+            sandboxConfig={sandboxConfig}
           />
         );
       default:
