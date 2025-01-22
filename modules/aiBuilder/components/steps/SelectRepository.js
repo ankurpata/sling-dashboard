@@ -6,31 +6,20 @@ import {
   ListItem,
   ListItemText,
   Typography,
-  CircularProgress,
   InputAdornment,
-  makeStyles,
+  CircularProgress,
+  Chip,
+  IconButton,
 } from '@material-ui/core';
+import {makeStyles} from '@material-ui/core/styles';
 import SearchIcon from '@material-ui/icons/Search';
+import CloseIcon from '@material-ui/icons/Close';
 
 const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
   },
-  header: {
-    marginBottom: theme.spacing(3),
-  },
-  title: {
-    fontSize: '1.2rem',
-    fontWeight: 500,
-    marginBottom: theme.spacing(1),
-  },
-  description: {
-    fontSize: '1rem',
-    color: theme.palette.text.secondary,
-    marginBottom: theme.spacing(3),
-  },
   searchField: {
-    // marginBottom: theme.spacing(3),
     '& .MuiOutlinedInput-root': {
       fontSize: '1.1rem',
       '& fieldset': {
@@ -45,6 +34,21 @@ const useStyles = makeStyles((theme) => ({
     },
     '& .MuiInputLabel-outlined': {
       fontSize: '1.1rem',
+    },
+  },
+  selectedChip: {
+    margin: theme.spacing(0.5),
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    borderRadius: '4px',
+    '& .MuiChip-label': {
+      fontSize: '0.95rem',
+      color: 'rgba(0, 0, 0, 0.87)',
+    },
+    '& .MuiChip-deleteIcon': {
+      color: 'rgba(0, 0, 0, 0.54)',
+      '&:hover': {
+        color: 'rgba(0, 0, 0, 0.87)',
+      },
     },
   },
   list: {
@@ -87,15 +91,20 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.secondary,
     fontSize: '1.1rem',
   },
+  searchInputContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
 }));
 
 const SelectRepository = ({
-  loading,
   repositories,
   selectedRepo,
+  onRepoSelect,
   searchQuery,
   onSearchChange,
-  onRepoSelect,
+  loading,
   error,
 }) => {
   const classes = useStyles();
@@ -107,27 +116,42 @@ const SelectRepository = ({
         repo.description.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
+  const handleClearSelection = () => {
+    onRepoSelect(null);
+  };
+
   return (
     <div className={classes.root}>
       <TextField
         fullWidth
-        variant='outlined'
-        label='Search repositories'
+        variant="outlined"
+        label="Search repositories"
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         className={classes.searchField}
         InputProps={{
           startAdornment: (
-            <InputAdornment position='start'>
-              <SearchIcon />
+            <InputAdornment position="start">
+              {selectedRepo ? (
+                <Chip
+                  label={selectedRepo.name}
+                  onDelete={handleClearSelection}
+                  className={classes.selectedChip}
+                  size="medium"
+                />
+              ) : (
+                <SearchIcon />
+              )}
             </InputAdornment>
           ),
         }}
+        disabled={selectedRepo !== null}
+        placeholder={selectedRepo ? "" : "Search repositories..."}
       />
 
       <List className={classes.list}>
         {loading ? (
-          <Box display='flex' justifyContent='center' p={3}>
+          <Box display="flex" justifyContent="center" p={3}>
             <CircularProgress />
           </Box>
         ) : filteredRepositories.length > 0 ? (
@@ -140,9 +164,7 @@ const SelectRepository = ({
               className={classes.listItem}>
               <ListItemText
                 primary={
-                  <Typography className={classes.repoName}>
-                    {repo.name}
-                  </Typography>
+                  <Typography className={classes.repoName}>{repo.name}</Typography>
                 }
                 secondary={
                   <Typography className={classes.repoDescription}>
@@ -159,7 +181,7 @@ const SelectRepository = ({
         )}
       </List>
       {error && (
-        <Typography color='error' variant='caption'>
+        <Typography color="error" variant="caption">
           {error}
         </Typography>
       )}
