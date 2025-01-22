@@ -291,7 +291,7 @@ const ConfigureEnvironment = ({
           startIcon={<CloudUploadIcon />}
           className={classes.uploadButton}
         >
-          Upload .env File
+          Select File
           <input
             type="file"
             hidden
