@@ -8,37 +8,84 @@ import {
   Typography,
   CircularProgress,
   InputAdornment,
+  makeStyles,
 } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
 import SearchIcon from '@material-ui/icons/Search';
 
 const useStyles = makeStyles((theme) => ({
-  repoContainer: {
-    height: 400,
-    display: 'flex',
-    flexDirection: 'column',
+  root: {
+    width: '100%',
   },
-  searchBox: {
-    marginBottom: theme.spacing(2),
+  header: {
+    marginBottom: theme.spacing(3),
   },
-  repoList: {
-    overflowY: 'auto',
-    flex: 1,
-    border: `1px solid ${theme.palette.divider}`,
-    borderRadius: 8,
-    padding: theme.spacing(1),
-  },
-  repoListItem: {
-    borderRadius: 8,
+  title: {
+    fontSize: '1.2rem',
+    fontWeight: 500,
     marginBottom: theme.spacing(1),
-    border: '1px solid transparent',
+  },
+  description: {
+    fontSize: '1rem',
+    color: theme.palette.text.secondary,
+    marginBottom: theme.spacing(3),
+  },
+  searchField: {
+    // marginBottom: theme.spacing(3),
+    '& .MuiOutlinedInput-root': {
+      fontSize: '1.1rem',
+      '& fieldset': {
+        borderColor: 'rgba(0, 0, 0, 0.23)',
+      },
+      '&:hover fieldset': {
+        borderColor: '#000',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#000',
+      },
+    },
+    '& .MuiInputLabel-outlined': {
+      fontSize: '1.1rem',
+    },
+  },
+  list: {
+    border: '1px solid rgba(0, 0, 0, 0.12)',
+    borderRadius: theme.shape.borderRadius,
+    maxHeight: '400px',
+    overflow: 'auto',
+    paddingTop: 0,
+    paddingBottom: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
+  listItem: {
+    padding: theme.spacing(2, 3),
+    borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+    '&:last-child': {
+      borderBottom: 'none',
+    },
     '&:hover': {
-      backgroundColor: 'rgba(0,0,0,0.04)',
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
     },
-    '&.selected': {
-      backgroundColor: 'rgba(79, 205, 196, 0.08)',
-      borderColor: '#4ECDC4',
+    '&.Mui-selected': {
+      backgroundColor: 'rgba(0, 0, 0, 0.08)',
+      '&:hover': {
+        backgroundColor: 'rgba(0, 0, 0, 0.12)',
+      },
     },
+  },
+  repoName: {
+    fontSize: '1.1rem',
+    fontWeight: 500,
+  },
+  repoDescription: {
+    fontSize: '1rem',
+    color: theme.palette.text.secondary,
+  },
+  noResults: {
+    padding: theme.spacing(4),
+    textAlign: 'center',
+    color: theme.palette.text.secondary,
+    fontSize: '1.1rem',
   },
 }));
 
@@ -53,81 +100,70 @@ const SelectRepository = ({
 }) => {
   const classes = useStyles();
 
-  const filteredRepositories = repositories.filter(repo => 
-    repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (repo.description && repo.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredRepositories = repositories.filter(
+    (repo) =>
+      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (repo.description &&
+        repo.description.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   return (
-    <Box className={classes.repoContainer}>
+    <div className={classes.root}>
       <TextField
-        className={classes.searchBox}
-        placeholder="Search repositories..."
-        variant="outlined"
-        size="small"
         fullWidth
+        variant='outlined'
+        label='Search repositories'
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
+        className={classes.searchField}
         InputProps={{
           startAdornment: (
-            <InputAdornment position="start">
+            <InputAdornment position='start'>
               <SearchIcon />
             </InputAdornment>
           ),
         }}
       />
-      <Box className={classes.repoList}>
+
+      <List className={classes.list}>
         {loading ? (
-          <Box display="flex" justifyContent="center" p={3}>
+          <Box display='flex' justifyContent='center' p={3}>
             <CircularProgress />
           </Box>
+        ) : filteredRepositories.length > 0 ? (
+          filteredRepositories.map((repo) => (
+            <ListItem
+              key={repo.id}
+              button
+              selected={selectedRepo?.id === repo.id}
+              onClick={() => onRepoSelect(repo)}
+              className={classes.listItem}>
+              <ListItemText
+                primary={
+                  <Typography className={classes.repoName}>
+                    {repo.name}
+                  </Typography>
+                }
+                secondary={
+                  <Typography className={classes.repoDescription}>
+                    {repo.description || 'No description available'}
+                  </Typography>
+                }
+              />
+            </ListItem>
+          ))
         ) : (
-          <List>
-            {filteredRepositories.map((repo) => (
-              <ListItem
-                key={repo.id}
-                button
-                onClick={() => onRepoSelect(repo)}
-                className={`${classes.repoListItem} ${selectedRepo?.id === repo.id ? 'selected' : ''}`}
-              >
-                <ListItemText
-                  primary={repo.name}
-                  secondary={
-                    <React.Fragment>
-                      <Typography component="span" variant="body2" color="textSecondary">
-                        {repo.description || 'No description'}
-                      </Typography>
-                      <Box mt={0.5}>
-                        {repo.language && (
-                          <Typography component="span" variant="caption" color="textSecondary">
-                            {repo.language}
-                          </Typography>
-                        )}
-                        <Typography component="span" variant="caption" color="textSecondary" style={{ marginLeft: 8 }}>
-                          Updated {new Date(repo.updatedAt).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    </React.Fragment>
-                  }
-                />
-              </ListItem>
-            ))}
-            {filteredRepositories.length === 0 && !loading && (
-              <Box p={2} textAlign="center">
-                <Typography color="textSecondary">
-                  No repositories found matching "{searchQuery}"
-                </Typography>
-              </Box>
-            )}
-          </List>
+          <Typography className={classes.noResults}>
+            No repositories found matching "{searchQuery}"
+          </Typography>
         )}
-      </Box>
+      </List>
       {error && (
-        <Typography color="error" variant="caption">
+        <Typography color='error' variant='caption'>
           {error}
         </Typography>
       )}
-    </Box>
+    </div>
   );
 };
 

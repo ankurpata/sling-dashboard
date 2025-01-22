@@ -1,37 +1,99 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   TextField,
+  Typography,
   Button,
   IconButton,
-  Typography,
   Paper,
+  makeStyles,
+  Tooltip,
 } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
 import DeleteIcon from '@material-ui/icons/Delete';
+import AddIcon from '@material-ui/icons/Add';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
+import InfoIcon from '@material-ui/icons/Info';
 
 const useStyles = makeStyles((theme) => ({
-  envVarContainer: {
-    marginTop: theme.spacing(2),
+  root: {
+    width: '100%',
   },
-  envVarPair: {
+  header: {
+    marginBottom: theme.spacing(3),
+  },
+  title: {
+    fontSize: '1.2rem',
+    fontWeight: 500,
+    marginBottom: theme.spacing(1),
+  },
+  description: {
+    fontSize: '1rem',
+    color: theme.palette.text.secondary,
+    marginBottom: theme.spacing(3),
+  },
+  envVarContainer: {
+    marginBottom: theme.spacing(4),
+  },
+  envVarRow: {
     display: 'flex',
     gap: theme.spacing(2),
     marginBottom: theme.spacing(2),
-    alignItems: 'center',
+    '& .MuiTextField-root': {
+      '& .MuiOutlinedInput-root': {
+        fontSize: '1.1rem',
+        '& fieldset': {
+          borderColor: 'rgba(0, 0, 0, 0.23)',
+        },
+        '&:hover fieldset': {
+          borderColor: '#000',
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: '#000',
+        },
+      },
+      '& .MuiInputLabel-outlined': {
+        fontSize: '1.1rem',
+      },
+    },
   },
-  envVarField: {
-    flex: 1,
+  deleteButton: {
+    color: theme.palette.error.main,
+    padding: theme.spacing(1),
+    '&:hover': {
+      backgroundColor: 'rgba(244, 67, 54, 0.04)',
+    },
+  },
+  addButton: {
+    color: '#000',
+    borderColor: '#000',
+    fontSize: '1rem',
+    '&:hover': {
+      borderColor: '#000',
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    },
   },
   uploadSection: {
-    marginTop: theme.spacing(3),
-    padding: theme.spacing(2),
-    backgroundColor: theme.palette.grey[50],
+    marginTop: theme.spacing(4),
+    padding: theme.spacing(3),
+    border: '2px dashed rgba(0, 0, 0, 0.12)',
     borderRadius: theme.shape.borderRadius,
+    textAlign: 'center',
   },
-  hiddenInput: {
-    display: 'none',
+  uploadButton: {
+    color: '#000',
+    borderColor: '#000',
+    marginTop: theme.spacing(2),
+    fontSize: '1.1rem',
+    '&:hover': {
+      borderColor: '#000',
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    },
+  },
+  infoIcon: {
+    fontSize: '1.2rem',
+    marginLeft: theme.spacing(1),
+    color: theme.palette.text.secondary,
+    verticalAlign: 'middle',
   },
 }));
 
@@ -56,80 +118,97 @@ const ConfigureEnvironment = ({
     }
   };
 
+  const handleEnvVarChange = (index, field, value) => {
+    onEnvVarChange(index, field, value);
+  };
+
+  const handleAddEnvVar = () => {
+    onEnvVarAdd();
+  };
+
+  const handleRemoveEnvVar = (index) => {
+    onEnvVarRemove(index);
+  };
+
   return (
-    <Box>
-      <Typography variant="subtitle1" gutterBottom>
-        Environment Variables
-      </Typography>
-      
-      <Box className={classes.envVarContainer}>
+    <div className={classes.root}>
+      <Box className={classes.header}>
+        <Typography variant="h6" className={classes.title}>
+          Configure Environment
+          <Tooltip title="Environment variables will be securely stored and available during build and runtime">
+            <InfoIcon className={classes.infoIcon} />
+          </Tooltip>
+        </Typography>
+        <Typography className={classes.description}>
+          Add environment variables for your project
+        </Typography>
+      </Box>
+
+      <div className={classes.envVarContainer}>
         {envVars.map((envVar, index) => (
-          <Box key={index} className={classes.envVarPair}>
+          <Box key={index} className={classes.envVarRow}>
             <TextField
-              className={classes.envVarField}
               label="Key"
               variant="outlined"
-              size="small"
               value={envVar.key}
-              onChange={(e) => onEnvVarChange(index, 'key', e.target.value)}
+              onChange={(e) => handleEnvVarChange(index, 'key', e.target.value)}
+              fullWidth
               error={Boolean(errors?.[`env_${index}_key`])}
               helperText={errors?.[`env_${index}_key`]}
             />
             <TextField
-              className={classes.envVarField}
               label="Value"
               variant="outlined"
-              size="small"
               value={envVar.value}
-              onChange={(e) => onEnvVarChange(index, 'value', e.target.value)}
+              onChange={(e) => handleEnvVarChange(index, 'value', e.target.value)}
+              fullWidth
               error={Boolean(errors?.[`env_${index}_value`])}
               helperText={errors?.[`env_${index}_value`]}
             />
-            <IconButton 
-              onClick={() => onEnvVarRemove(index)}
-              disabled={envVars.length === 1}
-            >
-              <DeleteIcon />
-            </IconButton>
+            {envVars.length > 1 && (
+              <IconButton
+                className={classes.deleteButton}
+                onClick={() => handleRemoveEnvVar(index)}
+              >
+                <DeleteIcon />
+              </IconButton>
+            )}
           </Box>
         ))}
-        
+
         <Button
           variant="outlined"
-          color="primary"
-          onClick={onEnvVarAdd}
-          style={{ marginTop: 8 }}
+          startIcon={<AddIcon />}
+          onClick={handleAddEnvVar}
+          className={classes.addButton}
         >
           Add Variable
         </Button>
-      </Box>
+      </div>
 
-      <Paper className={classes.uploadSection}>
-        <Typography variant="subtitle2" gutterBottom>
+      <Box className={classes.uploadSection}>
+        <Typography variant="h6" gutterBottom>
           Upload .env File
         </Typography>
-        <Typography variant="body2" color="textSecondary" paragraph>
-          You can upload an existing .env file to automatically populate the variables.
+        <Typography variant="body1" color="textSecondary" gutterBottom>
+          Or upload an existing .env file to automatically populate the variables
         </Typography>
-        <input
-          accept=".env"
-          className={classes.hiddenInput}
-          id="env-file-upload"
-          type="file"
-          onChange={handleFileUpload}
-        />
-        <label htmlFor="env-file-upload">
-          <Button
-            variant="contained"
-            color="primary"
-            component="span"
-            startIcon={<CloudUploadIcon />}
-          >
-            Upload .env File
-          </Button>
-        </label>
-      </Paper>
-    </Box>
+        <Button
+          variant="outlined"
+          component="label"
+          startIcon={<CloudUploadIcon />}
+          className={classes.uploadButton}
+        >
+          Upload .env File
+          <input
+            type="file"
+            hidden
+            accept=".env"
+            onChange={handleFileUpload}
+          />
+        </Button>
+      </Box>
+    </div>
   );
 };
 

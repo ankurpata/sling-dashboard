@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import axios from 'axios';
 import {
   Dialog,
@@ -13,7 +13,7 @@ import {
   StepLabel,
   StepContent,
 } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import {makeStyles} from '@material-ui/core/styles';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 import SelectRepository from './steps/SelectRepository';
@@ -24,26 +24,79 @@ import ReviewAndSave from './steps/ReviewAndSave';
 const useStyles = makeStyles((theme) => ({
   dialogPaper: {
     borderRadius: 8,
-    padding: theme.spacing(2),
-    minHeight: 600,
+    padding: theme.spacing(3),
+    maxWidth: '1000px',
+    width: '90vw',
   },
   stepper: {
     backgroundColor: 'transparent',
     '& .MuiStepConnector-line': {
-      minHeight: 40,
-      marginLeft: 12,
+      minHeight: 50,
+      marginLeft: 16,
+      borderLeftWidth: 2,
+    },
+    '& .MuiStepIcon-root': {
+      width: 32,
+      height: 32,
+      color: '#000',
+      '&.MuiStepIcon-active': {
+        color: '#000',
+      },
+      '&.MuiStepIcon-completed': {
+        color: '#000',
+      },
+    },
+    '& .MuiStepLabel-label': {
+      fontSize: '1.1rem',
+      '&.MuiStepLabel-active': {
+        color: '#000',
+      },
+      '&.MuiStepLabel-completed': {
+        color: '#000',
+      },
     },
   },
   stepContent: {
-    marginTop: 8,
-    marginLeft: '24px',
-    paddingLeft: theme.spacing(3),
-    paddingRight: theme.spacing(3),
-    borderLeft: `1px solid ${theme.palette.divider}`,
+    marginTop: 16,
+    marginLeft: '28px',
+    paddingLeft: theme.spacing(4),
+    paddingRight: theme.spacing(4),
+    borderLeft: `2px solid #000`,
   },
   stepLabel: {
     '& .MuiStepLabel-iconContainer': {
-      paddingRight: theme.spacing(2),
+      paddingRight: theme.spacing(3),
+    },
+    '& .MuiTypography-subtitle1': {
+      fontSize: '1.2rem',
+      fontWeight: 500,
+      marginBottom: theme.spacing(1),
+    },
+    '& .MuiTypography-caption': {
+      fontSize: '1rem',
+      color: theme.palette.text.secondary,
+    },
+  },
+  backButton: {
+    marginRight: theme.spacing(2),
+    color: '#000',
+    borderColor: '#000',
+    '&:hover': {
+      borderColor: '#000',
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    },
+  },
+  nextButton: {
+    backgroundColor: '#000',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    },
+  },
+  dialogTitle: {
+    '& .MuiTypography-h6': {
+      fontSize: '1.5rem',
+      fontWeight: 500,
     },
   },
 }));
@@ -67,7 +120,7 @@ const steps = [
   },
 ];
 
-const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
+const GitHubRepoDialog = ({open, onClose, onSelect}) => {
   const classes = useStyles();
   const [activeStep, setActiveStep] = useState(0);
   const [repositories, setRepositories] = useState(() => {
@@ -77,7 +130,7 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState(null);
-  const [envVars, setEnvVars] = useState([{ key: '', value: '' }]);
+  const [envVars, setEnvVars] = useState([{key: '', value: ''}]);
   const [sandboxConfig, setSandboxConfig] = useState(null);
   const [errors, setErrors] = useState({});
 
@@ -103,7 +156,7 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
     setActiveStep(0);
     setSearchQuery('');
     setSelectedRepo(null);
-    setEnvVars([{ key: '', value: '' }]);
+    setEnvVars([{key: '', value: ''}]);
     setSandboxConfig(null);
     setErrors({});
     onClose();
@@ -111,7 +164,7 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
 
   const handleNext = () => {
     if (activeStep === 0 && !selectedRepo) {
-      setErrors({ repo: 'Please select a repository' });
+      setErrors({repo: 'Please select a repository'});
       return;
     }
 
@@ -141,7 +194,7 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
   };
 
   const handleFinish = () => {
-    const validEnvVars = envVars.filter(env => env.key && env.value);
+    const validEnvVars = envVars.filter((env) => env.key && env.value);
     onSelect({
       ...selectedRepo,
       environmentVariables: validEnvVars,
@@ -152,12 +205,12 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
 
   const handleEnvVarChange = (index, field, value) => {
     const newEnvVars = [...envVars];
-    newEnvVars[index] = { ...newEnvVars[index], [field]: value };
+    newEnvVars[index] = {...newEnvVars[index], [field]: value};
     setEnvVars(newEnvVars);
   };
 
   const handleEnvVarAdd = () => {
-    setEnvVars([...envVars, { key: '', value: '' }]);
+    setEnvVars([...envVars, {key: '', value: ''}]);
   };
 
   const handleEnvVarRemove = (index) => {
@@ -167,15 +220,15 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
   const handleEnvFileUpload = (content) => {
     const vars = content
       .split('\n')
-      .filter(line => line.trim() && !line.startsWith('#'))
-      .map(line => {
+      .filter((line) => line.trim() && !line.startsWith('#'))
+      .map((line) => {
         const [key, ...valueParts] = line.split('=');
         return {
           key: key.trim(),
           value: valueParts.join('=').trim(),
         };
       });
-    setEnvVars(vars.length > 0 ? vars : [{ key: '', value: '' }]);
+    setEnvVars(vars.length > 0 ? vars : [{key: '', value: ''}]);
   };
 
   const handleSandboxConfigChange = (config) => {
@@ -231,33 +284,34 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth="md"
+      maxWidth='md'
       fullWidth
       PaperProps={{
-        className: classes.dialogPaper
-      }}
-    >
-      <DialogTitle>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h6">Configure Repository</Typography>
+        className: classes.dialogPaper,
+      }}>
+      <DialogTitle className={classes.dialogTitle}>
+        <Box display='flex' alignItems='center' justifyContent='space-between'>
+          <Typography variant='h6'>Configure Repository</Typography>
           {activeStep > 0 && (
             <Button
               startIcon={<ArrowBackIcon />}
               onClick={() => setActiveStep(0)}
-              color="primary"
-            >
+              color='primary'>
               Back to Repositories
             </Button>
           )}
         </Box>
       </DialogTitle>
       <DialogContent>
-        <Stepper activeStep={activeStep} orientation="vertical" className={classes.stepper}>
+        <Stepper
+          activeStep={activeStep}
+          orientation='vertical'
+          className={classes.stepper}>
           {steps.map((step, index) => (
             <Step key={step.label}>
-              <StepLabel classes={{ label: classes.stepLabel }}>
-                <Typography variant="subtitle1">{step.label}</Typography>
-                <Typography variant="caption" color="textSecondary">
+              <StepLabel classes={{label: classes.stepLabel}}>
+                <Typography variant='subtitle1'>{step.label}</Typography>
+                <Typography variant='caption' color='textSecondary'>
                   {step.description}
                 </Typography>
               </StepLabel>
@@ -268,30 +322,27 @@ const GitHubRepoDialog = ({ open, onClose, onSelect }) => {
           ))}
         </Stepper>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
-        {activeStep > 0 && (
-          <Button onClick={handleBack}>
+      <DialogActions style={{justifyContent: 'space-between'}}>
+        <Box>
+          <Button onClick={handleClose}>Cancel</Button>
+        </Box>
+        <Box>
+          <Button
+            disabled={activeStep === 0}
+            onClick={handleBack}
+            variant='outlined'
+            className={classes.backButton}>
             Back
           </Button>
-        )}
-        {activeStep === steps.length - 1 ? (
           <Button
-            onClick={handleFinish}
-            variant="contained"
-            color="primary"
-          >
-            Finish
+            variant='contained'
+            className={classes.nextButton}
+            onClick={
+              activeStep === steps.length - 1 ? handleFinish : handleNext
+            }>
+            {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
           </Button>
-        ) : (
-          <Button
-            onClick={handleNext}
-            variant="contained"
-            color="primary"
-          >
-            Next
-          </Button>
-        )}
+        </Box>{' '}
       </DialogActions>
     </Dialog>
   );
