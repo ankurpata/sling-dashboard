@@ -41,6 +41,36 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
   },
+  inputContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+  },
+  input: {
+    flex: 1,
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 8,
+      backgroundColor: '#fff',
+      '& fieldset': {
+        borderColor: '#E5E7EB',
+        borderWidth: '1px',
+        top: 0,
+      },
+      '&:hover fieldset': {
+        borderColor: '#B0B9C5',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#2563EB',
+      },
+      '& input::placeholder': {
+        opacity: 0.7,
+      },
+    },
+  },
+  switchContainer: {
+    marginBottom: theme.spacing(2),
+  },
   formControl: {
     minWidth: 200,
     '& .MuiOutlinedInput-root': {
@@ -345,7 +375,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
             </Typography>
             <Grid container spacing={3}>
               <Grid item xs={12}>
-                <Box className={classes.settingRow}>
+                <Box className={classes.switchContainer}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -355,21 +385,28 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     }
                     label='Override Build Command'
                   />
-                  <TextField
-                    className={classes.settingField}
-                    label='Build Command'
-                    value={config.buildCommand}
-                    onChange={(e) =>
-                      handleConfigChange('buildCommand', e.target.value)
-                    }
-                    disabled={!config.overrides.buildCommand}
-                    variant='outlined'
-                  />
+                  {config.overrides.buildCommand && (
+                    <Box className={classes.inputContainer}>
+                      <TextField
+                        className={classes.input}
+                        variant='outlined'
+                        value={config.buildCommand}
+                        onChange={(e) =>
+                          handleConfigChange('buildCommand', e.target.value)
+                        }
+                        placeholder='next build'
+                        InputLabelProps={{ shrink: false }}
+                        InputProps={{
+                          notched: false,
+                        }}
+                      />
+                    </Box>
+                  )}
                 </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.settingRow}>
+                <Box className={classes.switchContainer}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -379,21 +416,28 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     }
                     label='Override Output Directory'
                   />
-                  <TextField
-                    className={classes.settingField}
-                    label='Output Directory'
-                    value={config.outputDirectory}
-                    onChange={(e) =>
-                      handleConfigChange('outputDirectory', e.target.value)
-                    }
-                    disabled={!config.overrides.outputDirectory}
-                    variant='outlined'
-                  />
+                  {config.overrides.outputDirectory && (
+                    <Box className={classes.inputContainer}>
+                      <TextField
+                        className={classes.input}
+                        variant='outlined'
+                        value={config.outputDirectory}
+                        onChange={(e) =>
+                          handleConfigChange('outputDirectory', e.target.value)
+                        }
+                        placeholder='.next'
+                        InputLabelProps={{ shrink: false }}
+                        InputProps={{
+                          notched: false,
+                        }}
+                      />
+                    </Box>
+                  )}
                 </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.settingRow}>
+                <Box className={classes.switchContainer}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -403,21 +447,28 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     }
                     label='Override Install Command'
                   />
-                  <TextField
-                    className={classes.settingField}
-                    label='Install Command'
-                    value={config.installCommand}
-                    onChange={(e) =>
-                      handleConfigChange('installCommand', e.target.value)
-                    }
-                    disabled={!config.overrides.installCommand}
-                    variant='outlined'
-                  />
+                  {config.overrides.installCommand && (
+                    <Box className={classes.inputContainer}>
+                      <TextField
+                        className={classes.input}
+                        variant='outlined'
+                        value={config.installCommand}
+                        onChange={(e) =>
+                          handleConfigChange('installCommand', e.target.value)
+                        }
+                        placeholder='npm install'
+                        InputLabelProps={{ shrink: false }}
+                        InputProps={{
+                          notched: false,
+                        }}
+                      />
+                    </Box>
+                  )}
                 </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.settingRow}>
+                <Box className={classes.switchContainer}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -429,16 +480,23 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                     }
                     label='Override Development Command'
                   />
-                  <TextField
-                    className={classes.settingField}
-                    label='Development Command'
-                    value={config.developmentCommand}
-                    onChange={(e) =>
-                      handleConfigChange('developmentCommand', e.target.value)
-                    }
-                    disabled={!config.overrides.developmentCommand}
-                    variant='outlined'
-                  />
+                  {config.overrides.developmentCommand && (
+                    <Box className={classes.inputContainer}>
+                      <TextField
+                        className={classes.input}
+                        variant='outlined'
+                        value={config.developmentCommand}
+                        onChange={(e) =>
+                          handleConfigChange('developmentCommand', e.target.value)
+                        }
+                        placeholder='next dev'
+                        InputLabelProps={{ shrink: false }}
+                        InputProps={{
+                          notched: false,
+                        }}
+                      />
+                    </Box>
+                  )}
                 </Box>
               </Grid>
             </Grid>
