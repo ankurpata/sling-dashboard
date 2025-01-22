@@ -268,13 +268,13 @@ const AIBuilder = () => {
             <Button 
               variant="outlined" 
               className={classes.repoButton}
-              startIcon={selectedRepo ? <EditIcon className={classes.editIcon} /> : <GitHubIcon />}
+              startIcon={selectedRepo ? <EditIcon className={classes.editIcon}  style={{marginRight: -5, fontSize: 16}}/> : <GitHubIcon />}
               onClick={handleGitHubConnect}
             >
               <Box display="flex" alignItems="center">
                 {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
                 {selectedRepo && (
-                  <Box style={{padding: 5}}> 
+                  <Box style={{padding: 5, top:0, right: 0, position: 'absolute'}}> 
                     <Tooltip
                       title={
                         Object.keys(repoEnvVars).length > 0

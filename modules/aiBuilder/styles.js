@@ -25,32 +25,36 @@ export const useStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     transition: 'background 0.3s ease-in-out',
-    background: (props) => !props.showCanvas ? 
-      'radial-gradient(circle at center, #ffffff 0%, #f0f9ff 35%, #e0f2fe 50%, #f0f9ff 65%, #ffffff 100%)' : 
-      '#ffffff',
-    '&::before': (props) => !props.showCanvas ? {
-      content: '""',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      opacity: 1,
-      transition: 'opacity 0.3s ease-in-out',
-      background:
-        'radial-gradient(circle at center, rgba(255,255,255,0) 0%, rgba(240,249,255,0.15) 35%, rgba(224,242,254,0.15) 50%, rgba(240,249,255,0.15) 65%, rgba(255,255,255,0) 100%)',
-      pointerEvents: 'none',
-      zIndex: 0,
-    } : {
-      opacity: 0,
-      content: '""',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      pointerEvents: 'none',
-    },
+    background: (props) =>
+      !props.showCanvas
+        ? 'radial-gradient(circle at center, #ffffff 0%, #f0f9ff 35%, #e0f2fe 50%, #f0f9ff 65%, #ffffff 100%)'
+        : '#ffffff',
+    '&::before': (props) =>
+      !props.showCanvas
+        ? {
+            content: '""',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 1,
+            transition: 'opacity 0.3s ease-in-out',
+            background:
+              'radial-gradient(circle at center, rgba(255,255,255,0) 0%, rgba(240,249,255,0.15) 35%, rgba(224,242,254,0.15) 50%, rgba(240,249,255,0.15) 65%, rgba(255,255,255,0) 100%)',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }
+        : {
+            opacity: 0,
+            content: '""',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            pointerEvents: 'none',
+          },
   },
   main: {
     position: 'relative',
@@ -112,7 +116,7 @@ export const useStyles = makeStyles((theme) => ({
     '& .MuiOutlinedInput-root': {
       backgroundColor: 'white',
       borderRadius: 12,
-      height: 64,
+      height: 80,
       '& fieldset': {
         borderColor: '#E5E7EB',
       },
@@ -132,6 +136,7 @@ export const useStyles = makeStyles((theme) => ({
       },
     },
   },
+  editIcon: {marginRight: 0},
   templates: {
     display: 'flex',
     gap: theme.spacing(2),
@@ -182,27 +187,29 @@ export const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(3),
   },
   repoButton: {
-    color: "#fff",
-    height: "62px",
-    marginTop: "9px",
-    padding: "0px 12px",
-    fontSize: "1rem",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+    color: '#fff',
+    
+    height: '62px',
+    marginTop: '9px',
+    padding: '0px 12px',
+    fontSize: '1rem',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
     fontWeight: 500,
-    whiteSpace: "nowrap",
-    borderRadius: "8px",
-    textTransform: "none",
-    backgroundColor: "#0b111e",
-    border: "none",
-    transition: "all 0.2s ease-in-out",
+    whiteSpace: 'nowrap',
+    borderRadius: '8px',
+    textTransform: 'none',
+    backgroundColor: '#0b111e',
+    border: 'none',
+    transition: 'all 0.2s ease-in-out',
     '&:hover': {
-      backgroundColor: "#1a1f2e",
-      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+      backgroundColor: '#1a1f2e',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
     },
     '& .MuiSvgIcon-root': {
       marginRight: theme.spacing(1),
       fontSize: '1.2rem',
     },
+    padding: '40px',
   },
   repoListItem: {
     borderRadius: 8,
