@@ -32,45 +32,79 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(3),
   },
   envVarContainer: {
-    marginBottom: theme.spacing(4),
+    marginBottom: theme.spacing(2),
   },
-  envVarRow: {
+  envVarPair: {
     display: 'flex',
+    alignItems: 'center',
     gap: theme.spacing(2),
     marginBottom: theme.spacing(2),
-    '& .MuiTextField-root': {
-      '& .MuiOutlinedInput-root': {
-        fontSize: '1.1rem',
-        '& fieldset': {
-          borderColor: 'rgba(0, 0, 0, 0.23)',
-        },
-        '&:hover fieldset': {
-          borderColor: '#000',
-        },
-        '&.Mui-focused fieldset': {
-          borderColor: '#000',
-        },
+  },
+  keyInput: {
+    flex: 1,
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 8,
+      backgroundColor: '#fff',
+      '& fieldset': {
+        borderColor: '#E5E7EB',
       },
-      '& .MuiInputLabel-outlined': {
-        fontSize: '1.1rem',
+      '&:hover fieldset': {
+        borderColor: '#B0B9C5',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#2563EB',
+      },
+    },
+  },
+  valueInput: {
+    flex: 2,
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 8,
+      backgroundColor: '#fff',
+      '& fieldset': {
+        borderColor: '#E5E7EB',
+      },
+      '&:hover fieldset': {
+        borderColor: '#B0B9C5',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#2563EB',
       },
     },
   },
   deleteButton: {
-    color: theme.palette.error.main,
-    padding: theme.spacing(1),
+    padding: 4,
+    backgroundColor: '#f3f4f6',
+    border: '1px solid #e5e7eb',
+    borderRadius: '50%',
+    color: theme.palette.text.secondary,
+    width: 24,
+    height: 24,
+    minWidth: 24,
     '&:hover': {
-      backgroundColor: 'rgba(244, 67, 54, 0.04)',
+      backgroundColor: '#e5e7eb',
+    },
+    '& .MuiSvgIcon-root': {
+      fontSize: 16,
     },
   },
   addButton: {
-    color: '#000',
-    borderColor: '#000',
-    fontSize: '1rem',
+    marginTop: theme.spacing(1),
+    color: theme.palette.primary.main,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
     '&:hover': {
-      borderColor: '#000',
-      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+      color: theme.palette.primary.dark,
     },
+  },
+  addIcon: {
+    fontSize: 20,
+  },
+  addText: {
+    fontSize: '0.875rem',
+    fontWeight: 500,
   },
   uploadSection: {
     marginTop: theme.spacing(4),
@@ -146,22 +180,24 @@ const ConfigureEnvironment = ({
 
       <div className={classes.envVarContainer}>
         {envVars.map((envVar, index) => (
-          <Box key={index} className={classes.envVarRow}>
+          <Box key={index} className={classes.envVarPair}>
             <TextField
-              label="Key"
+              className={classes.keyInput}
+              placeholder="e.g. CLIENT_KEY"
               variant="outlined"
+              size="small"
               value={envVar.key}
               onChange={(e) => handleEnvVarChange(index, 'key', e.target.value)}
-              fullWidth
               error={Boolean(errors?.[`env_${index}_key`])}
               helperText={errors?.[`env_${index}_key`]}
             />
             <TextField
-              label="Value"
+              className={classes.valueInput}
+              placeholder="Value"
               variant="outlined"
+              size="small"
               value={envVar.value}
               onChange={(e) => handleEnvVarChange(index, 'value', e.target.value)}
-              fullWidth
               error={Boolean(errors?.[`env_${index}_value`])}
               helperText={errors?.[`env_${index}_value`]}
             />
@@ -169,22 +205,25 @@ const ConfigureEnvironment = ({
               <IconButton
                 className={classes.deleteButton}
                 onClick={() => handleRemoveEnvVar(index)}
+                size="small"
+                disableRipple
               >
                 <DeleteIcon />
               </IconButton>
             )}
           </Box>
         ))}
-
-        <Button
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={handleAddEnvVar}
-          className={classes.addButton}
-        >
-          Add Variable
-        </Button>
       </div>
+
+      <Box
+        className={classes.addButton}
+        onClick={handleAddEnvVar}
+        role="button"
+        tabIndex={0}
+      >
+        <AddIcon className={classes.addIcon} />
+        <Typography className={classes.addText}>Add Environment Variable</Typography>
+      </Box>
 
       <Box className={classes.uploadSection}>
         <Typography variant="h6" gutterBottom>
