@@ -49,12 +49,17 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: '#fff',
       '& fieldset': {
         borderColor: '#E5E7EB',
+        borderWidth: '1px',
+        top: 0,
       },
       '&:hover fieldset': {
         borderColor: '#B0B9C5',
       },
       '&.Mui-focused fieldset': {
         borderColor: '#2563EB',
+      },
+      '& input::placeholder': {
+        opacity: 0.7,
       },
     },
   },
@@ -65,12 +70,17 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: '#fff',
       '& fieldset': {
         borderColor: '#E5E7EB',
+        borderWidth: '1px',
+        top: 0,
       },
       '&:hover fieldset': {
         borderColor: '#B0B9C5',
       },
       '&.Mui-focused fieldset': {
         borderColor: '#2563EB',
+      },
+      '& input::placeholder': {
+        opacity: 0.7,
       },
     },
   },
@@ -266,26 +276,32 @@ const ConfigureEnvironment = ({
           <Box key={index} className={classes.envVarPair}>
             <TextField
               className={classes.keyInput}
-              label="Key"
               variant="outlined"
               value={env.key}
               onChange={handleKeyChange(index)}
               error={!!localErrors[index]}
               helperText={localErrors[index]}
+              placeholder="e.g. CLIENT_KEY"
+              InputLabelProps={{ shrink: false }}
               InputProps={{
                 endAdornment: (
                   <Tooltip title="Only letters, digits, and underscores allowed. Cannot start with a digit.">
                     <InfoIcon color="action" fontSize="small" />
                   </Tooltip>
                 ),
+                notched: false,
               }}
             />
             <TextField
               className={classes.valueInput}
-              label="Value"
               variant="outlined"
               value={env.value}
               onChange={handleValueChange(index)}
+              placeholder="Value"
+              InputLabelProps={{ shrink: false }}
+              InputProps={{
+                notched: false,
+              }}
               error={Boolean(errors?.[`env_${index}_value`])}
               helperText={errors?.[`env_${index}_value`]}
             />
