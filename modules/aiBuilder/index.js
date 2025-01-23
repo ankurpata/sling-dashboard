@@ -73,6 +73,8 @@ const AIBuilder = () => {
     
     if (isAuthenticated && userIdParam) {
       setUserId(userIdParam);
+      //set in localstorage
+      localStorage.setItem('userId', userIdParam);
       handleFetchRepositories(userIdParam);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);

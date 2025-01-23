@@ -1,12 +1,14 @@
-import axios from 'axios';
-import { API_BASE_URL } from '../config/api';
+import apiClient, { apiEndpoints } from '../config/api';
 
-export const detectFramework = async (repoPath) => {
+export const detectFramework = async (repositoryName, userId) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/detect-framework`, {
-      repoPath,
+     
+    const response = await apiClient.post(apiEndpoints.project.detect, {
+      owner: userId,
+      repo: repositoryName,
     });
-    return response.data.framework;
+    
+    return response?.data?.data?.framework;
   } catch (error) {
     console.error('Error detecting framework:', error);
     return 'Unsupported Framework';

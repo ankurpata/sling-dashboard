@@ -229,11 +229,15 @@ const SandboxPreview = ({repository, onConfigChange}) => {
   const [jsonConfig, setJsonConfig] = useState('');
   const [jsonError, setJsonError] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [detectedFramework, setDetectedFramework] = useState('');
 
   useEffect(() => {
     const detectAndSetFramework = async () => {
       try {
-        const detectedFramework = await detectFramework(repository.localPath);
+        const userId = localStorage.getItem('userId') || 'slingbiz';
+        const detectedFramework = await detectFramework(repository.name, userId);
+        const frameworkMatch = detectedFramework.match(/Unsupported Framework \((.*?)\)/);
+        setDetectedFramework(frameworkMatch ? frameworkMatch[1] : detectedFramework);
         const framework = frameworks.find((f) => f.name === detectedFramework);
         if (framework) {
           handleFrameworkChange(framework.id);
@@ -429,6 +433,11 @@ const SandboxPreview = ({repository, onConfigChange}) => {
                 ))}
               </Select>
             </FormControl>
+            {detectedFramework && (
+              <Typography variant='body2' color='textSecondary'>
+                Detected Framework: {detectedFramework}
+              </Typography>
+            )}
           </Paper>
 
           <Paper className={classes.section}>
