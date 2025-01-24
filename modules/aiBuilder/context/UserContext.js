@@ -1,17 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import apiClient, { apiEndpoints } from '../config/api';
 import { v4 as uuidv4 } from 'uuid';
+import { useRouter } from 'next/router';
+import userService from '../services/userService';
 
 const UserContext = createContext();
-
-export const useUser = () => {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
-  return context;
-};
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -30,6 +22,20 @@ export const UserProvider = ({ children }) => {
     }
     setLoading(false);
   }, []);
+
+  const fetchUserInfo = async (userId) => {
+    try {
+      const userInfo = await userService.getUserInfo(userId);
+      if (userInfo) {
+        setUser(userInfo);
+        localStorage.setItem('user', JSON.stringify(userInfo));
+      }
+      return userInfo;
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      return null;
+    }
+  };
 
   const login = async (provider) => {
     try {
@@ -54,51 +60,10 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const handleOAuthCallback = async (code, state, provider) => {
-    try {
-      // Verify state to prevent CSRF
-      const savedState = localStorage.getItem('oauthState');
-      if (state !== savedState) {
-        throw new Error('Invalid OAuth state');
-      }
-
-      // Exchange code for tokens
-      const response = await apiClient.post(`/api/auth/${provider}/callback`, {
-        code,
-        redirectUri: `${window.location.origin}/auth/callback`
-      });
-
-      const { user: userData, token } = response.data;
-
-      // Save auth data
-      localStorage.setItem('token', token);
-      localStorage.setItem('userId', userData.id);
-      localStorage.setItem('userProfile', JSON.stringify(userData));
-      
-      // Update state
-      setUser(userData);
-
-      // Clear OAuth state
-      localStorage.removeItem('oauthState');
-
-      // Redirect back to home
-      router.push('/');
-    } catch (error) {
-      console.error('OAuth callback error:', error);
-      router.push('/signin?error=auth_failed');
-    }
-  };
-
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('oauthState');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userProfile');
-    localStorage.removeItem('repositories');
-    localStorage.removeItem('selectedRepository');
-    localStorage.removeItem('token');
-    // Add any other cleanup needed
     router.push('/');
   };
 
@@ -117,6 +82,7 @@ export const UserProvider = ({ children }) => {
     const userPicture = params.get('picture');
 
     if (userId) {
+      // First set the user data from URL params
       const userData = {
         id: userId,
         name: userName,
@@ -125,14 +91,36 @@ export const UserProvider = ({ children }) => {
       };
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+
+      // Then try to fetch additional user info from API
+      fetchUserInfo(userId).then(userInfo => {
+        if (userInfo) {
+          // If API call successful, update with complete user info
+          setUser(userInfo);
+          localStorage.setItem('user', JSON.stringify(userInfo));
+        }
+      }).catch(console.error);
     }
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, handleOAuthCallback, updateUser }}>
+    <UserContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      logout, 
+      updateUser,
+      fetchUserInfo,
+    }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-export default UserContext;
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
+};

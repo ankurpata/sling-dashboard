@@ -13,6 +13,8 @@ export const apiEndpoints = {
     deploy: `${API_BASE_URL}/api/project/deploy`,
     detect: `${API_BASE_URL}/api/project/detect-framework`,
   },
+  projects: `${API_BASE_URL}/projects`,
+  userInfo: `${API_BASE_URL}/user/info`,
 };
 
 // Create axios instance with default config
