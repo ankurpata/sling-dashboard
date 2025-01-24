@@ -7,17 +7,27 @@ const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
+  const [selectedOrg, setSelectedOrg] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     // Check localStorage for user data on mount
     const storedUser = localStorage.getItem('user');
+    const storedOrg = localStorage.getItem('selectedOrg');
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (error) {
         console.error('Error parsing stored user:', error);
+      }
+    }
+    if (storedOrg) {
+      try {
+        setSelectedOrg(JSON.parse(storedOrg));
+      } catch (error) {
+        console.error('Error parsing stored org:', error);
       }
     }
     setLoading(false);
@@ -29,12 +39,28 @@ export const UserProvider = ({ children }) => {
       if (userInfo) {
         setUser(userInfo);
         localStorage.setItem('user', JSON.stringify(userInfo));
+
+        // Handle organizations if present in response
+        if (userInfo.organizations) {
+          setOrganizations(userInfo.organizations);
+          // If no org is selected, select the first one
+          if (!selectedOrg && userInfo.organizations.length > 0) {
+            const defaultOrg = userInfo.organizations[0];
+            setSelectedOrg(defaultOrg);
+            localStorage.setItem('selectedOrg', JSON.stringify(defaultOrg));
+          }
+        }
       }
       return userInfo;
     } catch (error) {
       console.error('Error fetching user info:', error);
       return null;
     }
+  };
+
+  const selectOrganization = (org) => {
+    setSelectedOrg(org);
+    localStorage.setItem('selectedOrg', JSON.stringify(org));
   };
 
   const login = async (provider) => {
@@ -62,7 +88,10 @@ export const UserProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    setOrganizations([]);
+    setSelectedOrg(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('selectedOrg');
     localStorage.removeItem('oauthState');
     router.push('/');
   };
@@ -85,17 +114,16 @@ export const UserProvider = ({ children }) => {
       // First set the user data from URL params
       const userData = {
         id: userId,
-        name: userName,
+        username: userName,
         email: userEmail,
-        picture: userPicture
+        avatarUrl: userPicture
       };
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // Then try to fetch additional user info from API
+      // Then fetch complete user info including organizations
       fetchUserInfo(userId).then(userInfo => {
         if (userInfo) {
-          // If API call successful, update with complete user info
           setUser(userInfo);
           localStorage.setItem('user', JSON.stringify(userInfo));
         }
@@ -106,7 +134,10 @@ export const UserProvider = ({ children }) => {
   return (
     <UserContext.Provider value={{ 
       user, 
-      loading, 
+      loading,
+      organizations,
+      selectedOrg,
+      selectOrganization,
       login, 
       logout, 
       updateUser,

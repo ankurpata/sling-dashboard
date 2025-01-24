@@ -16,7 +16,7 @@ import {
   CircularProgress,
   Tooltip,
 } from '@material-ui/core';
-import { useRouter } from 'next/router';
+import {useRouter} from 'next/router';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
@@ -32,7 +32,7 @@ import CodeUtils from './utils';
 import {ALLOWED_LIBRARIES} from './config';
 import {useStyles} from './styles';
 import {fetchRepositories} from './services/repositoryService';
-import { UserProvider } from './context/UserContext';
+import {UserProvider} from './context/UserContext';
 
 const AIBuilder = () => {
   const [inputValue, setInputValue] = useState('');
@@ -52,7 +52,7 @@ const AIBuilder = () => {
   const [codeScope, setCodeScope] = useState({});
   const [activeTab, setActiveTab] = useState('preview');
   const [userId, setUserId] = useState('dummy');
-  const classes = useStyles({ showCanvas });
+  const classes = useStyles({showCanvas});
   const [processingMessages, setProcessingMessages] = useState([]);
   const inputRef = useRef(null);
   const processingTimeoutRef = useRef(null);
@@ -75,7 +75,7 @@ const AIBuilder = () => {
     const params = new URLSearchParams(window.location.search);
     const isAuthenticated = params.get('authenticated');
     const userIdParam = params.get('userId');
-    
+
     if (isAuthenticated && userIdParam) {
       setUserId(userIdParam);
       //set in localstorage
@@ -122,7 +122,7 @@ const AIBuilder = () => {
     localStorage.setItem('selectedRepository', JSON.stringify(repo));
     setShowRepoDialog(false);
     // Force re-render of components that depend on selectedRepo
-    setRepositories(prev => [...prev]);
+    setRepositories((prev) => [...prev]);
   };
 
   const handleTabChange = (event, newValue) => {
@@ -174,10 +174,7 @@ const AIBuilder = () => {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 800));
-      setProcessingMessages((prev) => [
-        ...prev,
-        'Preparing canvas layout...',
-      ]);
+      setProcessingMessages((prev) => [...prev, 'Preparing canvas layout...']);
 
       const response = await fetch(
         'http://localhost:5001/api/ai/generate-page',
@@ -235,7 +232,9 @@ const AIBuilder = () => {
     if (savedRepos) {
       setShowRepoDialog(true);
     } else {
-      window.location.href = `https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&scope=repo`;
+      const currentUserId = localStorage.getItem('userId');
+      const state = JSON.stringify({userId: currentUserId});
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&scope=repo&state=${encodeURIComponent(state)}`;
     }
   };
 
@@ -286,24 +285,37 @@ const AIBuilder = () => {
             </Typography>
 
             <Box className={classes.inputContainer}>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant='outlined'
                 className={classes.repoButton}
-                startIcon={selectedRepo ? <EditIcon className={classes.editIcon}  style={{marginRight: -5, fontSize: 16}}/> : <GitHubIcon />}
-                onClick={handleGitHubConnect}
-              >
-                <Box display="flex" alignItems="center">
+                startIcon={
+                  selectedRepo ? (
+                    <EditIcon
+                      className={classes.editIcon}
+                      style={{marginRight: -5, fontSize: 16}}
+                    />
+                  ) : (
+                    <GitHubIcon />
+                  )
+                }
+                onClick={handleGitHubConnect}>
+                <Box display='flex' alignItems='center'>
                   {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
                   {selectedRepo && (
-                    <Box style={{padding: 5, top:0, right: 0, position: 'absolute'}}> 
+                    <Box
+                      style={{
+                        padding: 5,
+                        top: 0,
+                        right: 0,
+                        position: 'absolute',
+                      }}>
                       <Tooltip
                         title={
                           Object.keys(repoEnvVars).length > 0
                             ? 'Deployment configured with environment variables'
                             : 'No deployment configuration'
                         }
-                        placement="right"
-                      >
+                        placement='right'>
                         <Box className={classes.deploymentStatus}>
                           {Object.keys(repoEnvVars).length > 0 ? (
                             <CheckCircleIcon
@@ -333,16 +345,22 @@ const AIBuilder = () => {
             </Box>
 
             <Box className={classes.templates}>
-              <Button onClick={() => setInputValue("Create a crypto portfolio tracker")}>
+              <Button
+                onClick={() =>
+                  setInputValue('Create a crypto portfolio tracker')
+                }>
                 Crypto portfolio tracker ↑
               </Button>
-              <Button onClick={() => setInputValue("Create a personal website")}>
+              <Button
+                onClick={() => setInputValue('Create a personal website')}>
                 Personal website ↑
               </Button>
-              <Button onClick={() => setInputValue("Create an AI image generator")}>
+              <Button
+                onClick={() => setInputValue('Create an AI image generator')}>
                 AI image generator ↑
               </Button>
-              <Button onClick={() => setInputValue("Create a weather dashboard")}>
+              <Button
+                onClick={() => setInputValue('Create a weather dashboard')}>
                 Weather dashboard ↑
               </Button>
             </Box>
@@ -373,7 +391,7 @@ const AIBuilder = () => {
           onClose={() => setShowConfirm(false)}
           onConfirm={handleConfirm}
         />
-        <AuthDialog 
+        <AuthDialog
           open={showAuthDialog}
           onClose={() => setShowAuthDialog(false)}
           onSignIn={handleSignIn}
