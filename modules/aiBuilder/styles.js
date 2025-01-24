@@ -72,7 +72,7 @@ export const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(8),
     zIndex: 1,
     '& img': {
-      height: 100,
+      height: 250,
     },
   },
   title: {

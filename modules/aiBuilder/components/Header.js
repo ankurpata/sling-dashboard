@@ -1,8 +1,9 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Typography, Box, Button } from '@material-ui/core';
-import UserProfile from './UserProfile';
+import UserMenu from './UserMenu';
 import { useUser } from '../context/UserContext';
+import { useRouter } from 'next/router';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -45,21 +46,32 @@ const useStyles = makeStyles((theme) => ({
       color: '#111827',
     },
   },
-  actions: {
+  rightSection: {
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(2),
   },
-  actionButton: {
-    backgroundColor: '#F3F4F6',
+  signInButton: {
+    backgroundColor: 'transparent',
     color: '#111827',
     borderRadius: 20,
     padding: theme.spacing(0.75, 2),
-    marginLeft: theme.spacing(4),
+    textTransform: 'none',
+    fontWeight: 500,
+    border: '1px solid rgba(107, 114, 128, 0.3)',
+    '&:hover': {
+      backgroundColor: 'rgba(107, 114, 128, 0.1)',
+    },
+  },
+  signUpButton: {
+    backgroundColor: '#111827',
+    color: '#fff',
+    borderRadius: 20,
+    padding: theme.spacing(0.75, 2),
     textTransform: 'none',
     fontWeight: 500,
     '&:hover': {
-      backgroundColor: '#E5E7EB',
+      backgroundColor: '#1f2937',
     },
   },
 }));
@@ -67,13 +79,22 @@ const useStyles = makeStyles((theme) => ({
 const Header = () => {
   const classes = useStyles();
   const { user } = useUser();
+  const router = useRouter();
+
+  const handleSignIn = () => {
+    router.push('/signin');
+  };
+
+  const handleSignUp = () => {
+    router.push('/signup');
+  };
 
   return (
     <AppBar position="static" className={classes.appBar}>
       <Toolbar className={classes.toolbar}>
         <a href="/" className={classes.logo}>
-          <img src="/images/sling-fe.png" alt="Logo" />
-          <Typography variant="subtitle1">dev</Typography>
+          <img src="/images/logo.png" alt="Logo" />
+          <Typography variant="subtitle1">Baloon.dev</Typography>
         </a>
         
         <nav className={classes.nav}>
@@ -81,11 +102,28 @@ const Header = () => {
           <a href="/careers" className={classes.navLink}>Careers</a>
           <a href="/blog" className={classes.navLink}>Blog</a>
           <a href="/learn" className={classes.navLink}>Learn</a>
-          
-          <Box className={classes.actions}>
-            {user && <UserProfile />}
-          </Box>
         </nav>
+        
+        <Box className={classes.rightSection}>
+          {user ? (
+            <UserMenu />
+          ) : (
+            <>
+              <Button
+                className={classes.signInButton}
+                onClick={handleSignIn}
+              >
+                Sign in
+              </Button>
+              <Button
+                className={classes.signUpButton}
+                onClick={handleSignUp}
+              >
+                Sign up
+              </Button>
+            </>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );

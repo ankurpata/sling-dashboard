@@ -16,8 +16,7 @@ const useStyles = makeStyles((theme) => ({
   root: {
     minHeight: '100vh',
     display: 'flex',
-    backgroundColor: '#000',
-    color: '#fff',
+    backgroundColor: 'transparent',
   },
   leftSection: {
     flex: 1,
@@ -29,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
   },
   rightSection: {
     flex: 1,
-    background: 'linear-gradient(45deg, #2C1810, #1F1C18)',
+    background: 'linear-gradient(45deg, rgba(44, 24, 16, 0.05), rgba(31, 28, 24, 0.05))',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
@@ -44,9 +43,10 @@ const useStyles = makeStyles((theme) => ({
     fontSize: 24,
     fontWeight: 500,
     marginBottom: theme.spacing(1),
+    color: '#111827',
   },
   subtitle: {
-    color: '#666',
+    color: '#6B7280',
     marginBottom: theme.spacing(4),
   },
   form: {
@@ -57,23 +57,24 @@ const useStyles = makeStyles((theme) => ({
   socialButton: {
     padding: theme.spacing(1.5),
     borderRadius: 8,
-    border: '1px solid #333',
-    color: '#fff',
+    border: '1px solid rgba(107, 114, 128, 0.3)',
+    color: '#111827',
     textTransform: 'none',
     marginBottom: theme.spacing(2),
+    backgroundColor: 'transparent',
     '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      backgroundColor: 'rgba(107, 114, 128, 0.1)',
     },
   },
   divider: {
     display: 'flex',
     alignItems: 'center',
-    color: '#666',
+    color: '#6B7280',
     margin: theme.spacing(2, 0),
     '&::before, &::after': {
       content: '""',
       flex: 1,
-      borderBottom: '1px solid #333',
+      borderBottom: '1px solid rgba(107, 114, 128, 0.3)',
     },
     '& span': {
       padding: theme.spacing(0, 2),
@@ -81,52 +82,53 @@ const useStyles = makeStyles((theme) => ({
   },
   input: {
     '& .MuiOutlinedInput-root': {
-      color: '#fff',
+      color: '#111827',
       '& fieldset': {
-        borderColor: '#333',
+        borderColor: 'rgba(107, 114, 128, 0.3)',
       },
       '&:hover fieldset': {
-        borderColor: '#444',
+        borderColor: 'rgba(107, 114, 128, 0.5)',
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#666',
+        borderColor: '#111827',
       },
     },
     '& .MuiInputLabel-root': {
-      color: '#666',
+      color: '#6B7280',
     },
   },
   signInButton: {
-    backgroundColor: '#fff',
-    color: '#000',
+    backgroundColor: '#111827',
+    color: '#fff',
     padding: theme.spacing(1.5),
     borderRadius: 8,
     textTransform: 'none',
     marginTop: theme.spacing(2),
     '&:hover': {
-      backgroundColor: '#f5f5f5',
+      backgroundColor: '#1f2937',
     },
   },
   link: {
-    color: '#fff',
+    color: '#111827',
     textDecoration: 'underline',
   },
   forgotPassword: {
-    color: '#666',
+    color: '#6B7280',
     textAlign: 'right',
     marginTop: theme.spacing(1),
     cursor: 'pointer',
     '&:hover': {
-      color: '#fff',
+      color: '#111827',
     },
   },
   rightTitle: {
     fontSize: 32,
     fontWeight: 600,
     marginBottom: theme.spacing(2),
+    color: '#111827',
   },
   rightSubtitle: {
-    color: '#999',
+    color: '#6B7280',
   },
   footer: {
     position: 'absolute',
@@ -135,7 +137,7 @@ const useStyles = makeStyles((theme) => ({
     color: '#666',
   },
   error: {
-    color: '#ff4444',
+    color: '#ef4444',
     marginBottom: theme.spacing(2),
   },
 }));
