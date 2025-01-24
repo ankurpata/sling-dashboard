@@ -3,15 +3,15 @@ const API_BASE_URL =
 
 export const apiEndpoints = {
   repository: {
-    save: `${API_BASE_URL}/api/project/repository`,
-    list: `${API_BASE_URL}/api/github/repos`,
+    save: `${API_BASE_URL}/project/repository`,
+    list: `${API_BASE_URL}/github/repos`,
   },
   project: {
-    create: `${API_BASE_URL}/api/project`,
-    env: `${API_BASE_URL}/api/project/env`,
-    buildSettings: `${API_BASE_URL}/api/project/build-settings`,
-    deploy: `${API_BASE_URL}/api/project/deploy`,
-    detect: `${API_BASE_URL}/api/project/detect-framework`,
+    create: `${API_BASE_URL}/project`,
+    env: `${API_BASE_URL}/project/env`,
+    buildSettings: `${API_BASE_URL}/project/build-settings`,
+    deploy: `${API_BASE_URL}/project/deploy`,
+    detect: `${API_BASE_URL}/project/detect-framework`,
   },
   projects: `${API_BASE_URL}/projects`,
   userInfo: `${API_BASE_URL}/user/info`,

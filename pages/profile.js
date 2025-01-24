@@ -1,130 +1,193 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Box,
   Container,
-  Typography,
   Paper,
-  makeStyles,
-  Avatar,
-  Grid,
+  Typography,
   TextField,
   Button,
+  makeStyles,
+  Avatar,
+  IconButton,
+  Grid,
 } from '@material-ui/core';
+import { ArrowBack } from '@material-ui/icons';
+import { useRouter } from 'next/router';
 import { useUser } from '../modules/aiBuilder/context/UserContext';
+import MainLayout from '../components/layout/MainLayout';
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    minHeight: '100vh',
-    backgroundColor: '#000',
-    color: '#fff',
-    paddingTop: theme.spacing(4),
+  container: {
+    paddingTop: theme.spacing(3),
+    paddingBottom: theme.spacing(3),
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: theme.spacing(3),
+  },
+  backButton: {
+    marginRight: theme.spacing(2),
   },
   paper: {
-    backgroundColor: '#1a1a1a',
     padding: theme.spacing(4),
-    borderRadius: 8,
+    borderRadius: 12,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+  },
+  title: {
+    fontWeight: 500,
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(3),
+  },
+  avatarSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: theme.spacing(4),
   },
   avatar: {
     width: 100,
     height: 100,
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(1),
+  },
+  email: {
+    color: theme.palette.text.secondary,
+    marginTop: theme.spacing(0.5),
   },
   input: {
     '& .MuiOutlinedInput-root': {
-      color: '#fff',
-      '& fieldset': {
-        borderColor: '#333',
-      },
-      '&:hover fieldset': {
-        borderColor: '#444',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#666',
-      },
+      backgroundColor: '#fff',
     },
-    '& .MuiInputLabel-root': {
-      color: '#666',
+  },
+  bioField: {
+    '& .MuiOutlinedInput-root': {
+      minHeight: '120px',
     },
   },
   saveButton: {
-    backgroundColor: '#fff',
-    color: '#000',
-    padding: theme.spacing(1.5, 3),
-    borderRadius: 8,
-    textTransform: 'none',
     marginTop: theme.spacing(2),
-    '&:hover': {
-      backgroundColor: '#f5f5f5',
-    },
+    alignSelf: 'flex-start',
+    padding: theme.spacing(1, 3),
   },
 }));
 
 const Profile = () => {
   const classes = useStyles();
-  const { user } = useUser();
+  const router = useRouter();
+  const { user, updateUser } = useUser();
+  const [formData, setFormData] = useState({
+    username: user?.username || '',
+    email: user?.email || '',
+    bio: user?.bio || '',
+  });
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setIsEditing(true);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    try {
+      await updateUser(formData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
+  };
+
+  const handleBack = () => {
+    router.push('/');
+  };
 
   if (!user) return null;
 
   return (
-    <Box className={classes.root}>
-      <Container maxWidth="md">
-        <Typography variant="h4" gutterBottom>
-          Profile
-        </Typography>
+    <MainLayout>
+      <Container maxWidth="md" className={classes.container}>
+        <div className={classes.header}>
+          <IconButton 
+            onClick={handleBack} 
+            className={classes.backButton}
+            size="small"
+          >
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h4" className={classes.title}>
+            Profile
+          </Typography>
+        </div>
+
         <Paper className={classes.paper}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4} style={{ textAlign: 'center' }}>
+          <form onSubmit={handleSubmit} className={classes.form}>
+            <div className={classes.avatarSection}>
               <Avatar 
-                src={user.picture} 
-                alt={user.name} 
+                src={user.avatarUrl} 
+                alt={user.username}
                 className={classes.avatar}
               />
-              <Typography variant="h6">{user.name}</Typography>
-              <Typography color="textSecondary">{user.email}</Typography>
-            </Grid>
-            <Grid item xs={12} md={8}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Name"
-                    variant="outlined"
-                    fullWidth
-                    defaultValue={user.name}
-                    className={classes.input}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Email"
-                    variant="outlined"
-                    fullWidth
-                    defaultValue={user.email}
-                    disabled
-                    className={classes.input}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Bio"
-                    variant="outlined"
-                    fullWidth
-                    multiline
-                    rows={4}
-                    defaultValue={user.bio}
-                    className={classes.input}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Button className={classes.saveButton}>
-                    Save Changes
-                  </Button>
-                </Grid>
+              <Typography variant="subtitle1" className={classes.email}>
+                {user.email}
+              </Typography>
+            </div>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  variant="outlined"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className={classes.input}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  variant="outlined"
+                  value={user.email}
+                  disabled
+                  className={classes.input}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Bio"
+                  variant="outlined"
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  multiline
+                  rows={4}
+                  className={`${classes.input} ${classes.bioField}`}
+                />
               </Grid>
             </Grid>
-          </Grid>
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              className={classes.saveButton}
+              disabled={!isEditing}
+            >
+              Save Changes
+            </Button>
+          </form>
         </Paper>
       </Container>
-    </Box>
+    </MainLayout>
   );
 };
 
