@@ -14,6 +14,7 @@ import AuthRoutes from '../@sling/utility/AuthRoutes';
 import PageMeta from '../@sling/core/PageMeta';
 import 'codemirror/lib/codemirror.css';
 import Script from 'next/script';
+import { UserProvider } from '../modules/aiBuilder/context/UserContext';
 
 const App = ({Component, pageProps, user}) => {
   const store = useStore(pageProps.initialReduxState);
@@ -49,7 +50,9 @@ const App = ({Component, pageProps, user}) => {
                       gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
                     `}
                   </Script>
-                  <Component {...pageProps} />
+                  <UserProvider>
+                    <Component {...pageProps} />
+                  </UserProvider>
                 </AuthRoutes>
               </LocaleProvider>
             </SlingStyleProvider>

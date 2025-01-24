@@ -1,24 +1,24 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Button, Typography, Box } from '@material-ui/core';
+import { AppBar, Toolbar, Typography, Box, Button } from '@material-ui/core';
+import UserProfile from './UserProfile';
+import { useUser } from '../context/UserContext';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
     backgroundColor: 'transparent',
+    color: '#000',
     boxShadow: 'none',
     borderBottom: '1px solid rgba(229, 231, 235, 0.5)',
-    padding: theme.spacing(1, 0),
-    height: 64,
     backdropFilter: 'blur(8px)',
   },
   toolbar: {
     display: 'flex',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing(0, 3),
     width: '100%',
-    // maxWidth: 1200,
     margin: '0 auto',
-    padding: theme.spacing(4, 4),
-    minHeight: 64,
   },
   logo: {
     display: 'flex',
@@ -45,6 +45,11 @@ const useStyles = makeStyles((theme) => ({
       color: '#111827',
     },
   },
+  actions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+  },
   actionButton: {
     backgroundColor: '#F3F4F6',
     color: '#111827',
@@ -61,6 +66,7 @@ const useStyles = makeStyles((theme) => ({
 
 const Header = () => {
   const classes = useStyles();
+  const { user } = useUser();
 
   return (
     <AppBar position="static" className={classes.appBar}>
@@ -75,9 +81,10 @@ const Header = () => {
           <a href="/careers" className={classes.navLink}>Careers</a>
           <a href="/blog" className={classes.navLink}>Blog</a>
           <a href="/learn" className={classes.navLink}>Learn</a>
-          <Button variant="contained" className={classes.actionButton}>
-            Ankur Pata
-          </Button>
+          
+          <Box className={classes.actions}>
+            {user && <UserProfile />}
+          </Box>
         </nav>
       </Toolbar>
     </AppBar>

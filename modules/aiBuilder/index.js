@@ -16,6 +16,7 @@ import {
   CircularProgress,
   Tooltip,
 } from '@material-ui/core';
+import { useRouter } from 'next/router';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
@@ -26,16 +27,19 @@ import CanvasLayout from './components/CanvasLayout';
 import ProcessingView from './components/ProcessingView';
 import GitHubRepoDialog from './components/GitHubRepoDialog';
 import ConfirmationDialog from './components/ConfirmationDialog';
+import AuthDialog from './components/AuthDialog';
 import CodeUtils from './utils';
 import {ALLOWED_LIBRARIES} from './config';
 import {useStyles} from './styles';
 import {fetchRepositories} from './services/repositoryService';
+import { UserProvider } from './context/UserContext';
 
 const AIBuilder = () => {
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showRepoDialog, setShowRepoDialog] = useState(false);
   const [repositories, setRepositories] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null);
@@ -52,6 +56,7 @@ const AIBuilder = () => {
   const [processingMessages, setProcessingMessages] = useState([]);
   const inputRef = useRef(null);
   const processingTimeoutRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (inputRef.current && !showCanvas) {
@@ -144,6 +149,12 @@ const AIBuilder = () => {
 
   const handleInputSubmit = async (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
+      // Check if user is authenticated
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        setShowAuthDialog(true);
+        return;
+      }
       setShowConfirm(true);
     }
   };
@@ -228,140 +239,155 @@ const AIBuilder = () => {
     }
   };
 
+  const handleSignIn = () => {
+    router.push('/signin');
+  };
+
+  const handleSignUp = () => {
+    router.push('/signup');
+  };
+
   return (
-    <Box className={classes.root}>
-      <Header />
+    <UserProvider>
+      <Box className={classes.root}>
+        <Header />
+        {!showCanvas && (
+          <Box className={classes.main}>
+            <Box className={classes.heartLogo}>
+              <img src='/images/logo.png' alt='Logo' />
+            </Box>
 
-      {!showCanvas && (
-        <Box className={classes.main}>
-          <Box className={classes.heartLogo}>
-            <img src='/images/logo.png' alt='Logo' />
-          </Box>
+            <Box className={classes.title}>
+              <Typography
+                component='h1'
+                style={{
+                  fontSize: '3.6rem',
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  zIndex: 23,
+                  color: '#0b111e',
+                  margin: 0,
+                }}
+                key={titleIndex}>
+                {titles[titleIndex].title}
+              </Typography>
+            </Box>
 
-          <Box className={classes.title}>
             <Typography
-              component='h1'
+              variant='h2'
+              className={classes.subtitle}
               style={{
-                fontSize: '3.6rem',
-                fontWeight: 600,
+                fontSize: '1rem',
+                fontWeight: 500,
                 lineHeight: 1,
-                zIndex: 23,
-                color: '#0b111e',
                 margin: 0,
-              }}
-              key={titleIndex}>
-              {titles[titleIndex].title}
+              }}>
+              {titles[titleIndex].subtitle}
             </Typography>
+
+            <Box className={classes.inputContainer}>
+              <Button 
+                variant="outlined" 
+                className={classes.repoButton}
+                startIcon={selectedRepo ? <EditIcon className={classes.editIcon}  style={{marginRight: -5, fontSize: 16}}/> : <GitHubIcon />}
+                onClick={handleGitHubConnect}
+              >
+                <Box display="flex" alignItems="center">
+                  {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
+                  {selectedRepo && (
+                    <Box style={{padding: 5, top:0, right: 0, position: 'absolute'}}> 
+                      <Tooltip
+                        title={
+                          Object.keys(repoEnvVars).length > 0
+                            ? 'Deployment configured with environment variables'
+                            : 'No deployment configuration'
+                        }
+                        placement="right"
+                      >
+                        <Box className={classes.deploymentStatus}>
+                          {Object.keys(repoEnvVars).length > 0 ? (
+                            <CheckCircleIcon
+                              className={`${classes.statusIcon} ${classes.statusIconConfigured}`}
+                            />
+                          ) : (
+                            <RadioButtonUncheckedIcon
+                              className={`${classes.statusIcon} ${classes.statusIconUnconfigured}`}
+                            />
+                          )}
+                        </Box>
+                      </Tooltip>
+                    </Box>
+                  )}
+                </Box>
+              </Button>
+              <TextField
+                className={classes.searchInput}
+                variant='outlined'
+                placeholder='Create and add a new report to dashboard which ...'
+                fullWidth
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleInputSubmit}
+                inputRef={inputRef}
+              />
+            </Box>
+
+            <Box className={classes.templates}>
+              <Button onClick={() => setInputValue("Create a crypto portfolio tracker")}>
+                Crypto portfolio tracker ↑
+              </Button>
+              <Button onClick={() => setInputValue("Create a personal website")}>
+                Personal website ↑
+              </Button>
+              <Button onClick={() => setInputValue("Create an AI image generator")}>
+                AI image generator ↑
+              </Button>
+              <Button onClick={() => setInputValue("Create a weather dashboard")}>
+                Weather dashboard ↑
+              </Button>
+            </Box>
           </Box>
+        )}
 
-          <Typography
-            variant='h2'
-            className={classes.subtitle}
-            style={{
-              fontSize: '1rem',
-              fontWeight: 500,
-              lineHeight: 1,
-              margin: 0,
-            }}>
-            {titles[titleIndex].subtitle}
-          </Typography>
+        {isProcessing && !showCanvas && (
+          <ProcessingView messages={processingMessages} />
+        )}
 
-          <Box className={classes.inputContainer}>
-            <Button 
-              variant="outlined" 
-              className={classes.repoButton}
-              startIcon={selectedRepo ? <EditIcon className={classes.editIcon}  style={{marginRight: -5, fontSize: 16}}/> : <GitHubIcon />}
-              onClick={handleGitHubConnect}
-            >
-              <Box display="flex" alignItems="center">
-                {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
-                {selectedRepo && (
-                  <Box style={{padding: 5, top:0, right: 0, position: 'absolute'}}> 
-                    <Tooltip
-                      title={
-                        Object.keys(repoEnvVars).length > 0
-                          ? 'Deployment configured with environment variables'
-                          : 'No deployment configuration'
-                      }
-                      placement="right"
-                    >
-                      <Box className={classes.deploymentStatus}>
-                        {Object.keys(repoEnvVars).length > 0 ? (
-                          <CheckCircleIcon
-                            className={`${classes.statusIcon} ${classes.statusIconConfigured}`}
-                          />
-                        ) : (
-                          <RadioButtonUncheckedIcon
-                            className={`${classes.statusIcon} ${classes.statusIconUnconfigured}`}
-                          />
-                        )}
-                      </Box>
-                    </Tooltip>
-                  </Box>
-                )}
-              </Box>
-            </Button>
-            <TextField
-              className={classes.searchInput}
-              variant='outlined'
-              placeholder='Create and add a new report to dashboard which ...'
-              fullWidth
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleInputSubmit}
-              inputRef={inputRef}
-            />
-          </Box>
-
-          <Box className={classes.templates}>
-            <Button onClick={() => setInputValue("Create a crypto portfolio tracker")}>
-              Crypto portfolio tracker ↑
-            </Button>
-            <Button onClick={() => setInputValue("Create a personal website")}>
-              Personal website ↑
-            </Button>
-            <Button onClick={() => setInputValue("Create an AI image generator")}>
-              AI image generator ↑
-            </Button>
-            <Button onClick={() => setInputValue("Create a weather dashboard")}>
-              Weather dashboard ↑
-            </Button>
-          </Box>
-        </Box>
-      )}
-
-      {isProcessing && !showCanvas && (
-        <ProcessingView messages={processingMessages} />
-      )}
-
-      {showCanvas && (
-        <CanvasLayout
-          activeTab={activeTab}
-          handleTabChange={handleTabChange}
-          generatedCode={generatedCode}
-          codeScope={codeScope}
-          inputValue={inputValue}
-          isProcessing={isProcessing}
-          searchId={searchId}
-          initialResponse={initialResponse}
-          setGeneratedCode={setGeneratedCode}
-          setCodeScope={setCodeScope}
-          setIsProcessing={setIsProcessing}
+        {showCanvas && (
+          <CanvasLayout
+            activeTab={activeTab}
+            handleTabChange={handleTabChange}
+            generatedCode={generatedCode}
+            codeScope={codeScope}
+            inputValue={inputValue}
+            isProcessing={isProcessing}
+            searchId={searchId}
+            initialResponse={initialResponse}
+            setGeneratedCode={setGeneratedCode}
+            setCodeScope={setCodeScope}
+            setIsProcessing={setIsProcessing}
+          />
+        )}
+        <ConfirmationDialog
+          open={showConfirm}
+          onClose={() => setShowConfirm(false)}
+          onConfirm={handleConfirm}
         />
-      )}
-      <ConfirmationDialog
-        open={showConfirm}
-        onClose={() => setShowConfirm(false)}
-        onConfirm={handleConfirm}
-      />
-      <GitHubRepoDialog
-        open={showRepoDialog}
-        onClose={() => setShowRepoDialog(false)}
-        onSelect={handleRepoSelect}
-        userId={userId}
-        initialRepo={selectedRepo}
-      />
-    </Box>
+        <AuthDialog 
+          open={showAuthDialog}
+          onClose={() => setShowAuthDialog(false)}
+          onSignIn={handleSignIn}
+          onSignUp={handleSignUp}
+        />
+        <GitHubRepoDialog
+          open={showRepoDialog}
+          onClose={() => setShowRepoDialog(false)}
+          onSelect={handleRepoSelect}
+          userId={userId}
+          initialRepo={selectedRepo}
+        />
+      </Box>
+    </UserProvider>
   );
 };
 

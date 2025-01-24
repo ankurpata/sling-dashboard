@@ -26,6 +26,7 @@ import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {tomorrow} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {getFrameworkDefaults, supportedFrameworks} from '../../utils/frameworkDefaults';
 import {detectFramework} from '../../services/frameworkService';
+import AuthDialog from '../AuthDialog';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -230,11 +231,17 @@ const SandboxPreview = ({repository, onConfigChange}) => {
   const [jsonError, setJsonError] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [detectedFramework, setDetectedFramework] = useState('');
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const { user } = useUser();
 
   useEffect(() => {
     const detectAndSetFramework = async () => {
       try {
-        const userId = localStorage.getItem('userId') || 'slingbiz';
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          console.error('No userId found for framework detection');
+          return;
+        }
         const detectedFramework = await detectFramework(repository.name, userId);
         const frameworkMatch = detectedFramework.match(/Unsupported Framework \((.*?)\)/);
         setDetectedFramework(frameworkMatch ? frameworkMatch[1] : detectedFramework);
@@ -255,7 +262,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
     };
 
     detectAndSetFramework();
-  }, [repository.localPath]);
+  }, [repository?.localPath]);
 
   useEffect(() => {
     setJsonConfig(generateVercelConfig());
@@ -377,6 +384,22 @@ const SandboxPreview = ({repository, onConfigChange}) => {
       onConfigChange(parsed);
     } catch (error) {
       setJsonError(`Invalid JSON format: ${error.message}`);
+    }
+  };
+
+  const handleInputSubmit = async (e) => {
+    if (e.key === 'Enter') {
+      if (!user) {
+        setShowAuthDialog(true);
+        return;
+      }
+      
+      // Existing input handling code
+      if (inputValue.trim()) {
+        setIsProcessing(true);
+        setShowCanvas(true);
+        // Rest of the code...
+      }
     }
   };
 
@@ -784,6 +807,10 @@ const SandboxPreview = ({repository, onConfigChange}) => {
           </Box>
         </Paper>
       )}
+      <AuthDialog 
+        open={showAuthDialog} 
+        onClose={() => setShowAuthDialog(false)} 
+      />
     </Box>
   );
 };

@@ -1,16 +1,20 @@
 import apiClient, { apiEndpoints } from '../config/api';
 
-export const detectFramework = async (repositoryName, userId) => {
+export const detectFramework = async (repoName, userId) => {
   try {
-     
     const response = await apiClient.post(apiEndpoints.project.detect, {
       owner: userId,
-      repo: repositoryName,
+      repo: repoName
     });
     
-    return response?.data?.data?.framework;
+    // Preserve original error handling format
+    const framework = response.data.framework;
+    if (!framework || framework === 'unknown') {
+      return `Unsupported Framework (${repoName})`;
+    }
+    return framework;
   } catch (error) {
     console.error('Error detecting framework:', error);
-    return 'Unsupported Framework';
+    return `Unsupported Framework (${repoName})`;
   }
 };
