@@ -524,152 +524,170 @@ const SandboxPreview = forwardRef(({error}, ref) => {
             </Typography>
             <Grid container spacing={3}>
               <Grid item xs={12}>
-                <Box className={classes.switchContainer}>
-                  <Box style={{width: '40%'}}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={config.overrides.buildCommand}
-                          onChange={() => handleToggleOverride('buildCommand')}
-                        />
+                <Box className={classes.row} display="flex" alignItems="center" justifyContent="space-between">
+                  <Box className={classes.labelContainer} style={{width: '20%'}}>
+                    <Typography variant='subtitle1'>Build Command</Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                      className={classes.description}>
+                      Command to build your application
+                    </Typography>
+                  </Box>
+                  <Box style={{width: '50%'}}>
+                    <TextField
+                      fullWidth
+                      className={classes.input}
+                      variant='outlined'
+                      value={config.buildCommand}
+                      onChange={(e) =>
+                        handleConfigChange('buildCommand', e.target.value)
                       }
-                      label='Override Build Command'
+                      placeholder='next build'
+                      disabled={!config.overrides.buildCommand}
+                      InputLabelProps={{shrink: false}}
+                      InputProps={{
+                        notched: false,
+                      }}
                     />
                   </Box>
-
-                  {config.overrides.buildCommand && (
-                    <Box
-                      className={classes.inputContainer}
-                      style={{width: '60%'}}>
-                      <TextField
-                        className={classes.input}
-                        variant='outlined'
-                        value={config.buildCommand}
-                        onChange={(e) =>
-                          handleConfigChange('buildCommand', e.target.value)
-                        }
-                        placeholder='next build'
-                        InputLabelProps={{shrink: false}}
-                        InputProps={{
-                          notched: false,
-                        }}
-                      />
-                    </Box>
-                  )}
+                  <Box display="flex" alignItems="center" style={{width: '20%'}}>
+                    <Typography variant="body2" color="textSecondary" style={{marginRight: 8}}>
+                      Override
+                    </Typography>
+                    <Switch
+                      checked={config.overrides.buildCommand}
+                      onChange={() => handleToggleOverride('buildCommand')}
+                      color='primary'
+                      size='small'
+                    />
+                  </Box>
                 </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.switchContainer}>
-                  <Box style={{width: '40%'}}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={config.overrides.outputDirectory}
-                          onChange={() =>
-                            handleToggleOverride('outputDirectory')
-                          }
-                        />
+                <Box className={classes.row} display="flex" alignItems="center" justifyContent="space-between">
+                  <Box className={classes.labelContainer} style={{width: '20%'}}>
+                    <Typography variant='subtitle1'>Start Command</Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                      className={classes.description}>
+                      Command to start your application
+                    </Typography>
+                  </Box>
+                  <Box style={{width: '50%'}}>
+                    <TextField
+                      fullWidth
+                      className={classes.input}
+                      variant='outlined'
+                      value={config.startCommand}
+                      onChange={(e) =>
+                        handleConfigChange('startCommand', e.target.value)
                       }
-                      label='Override Output Directory'
+                      placeholder='next start'
+                      disabled={!config.overrides.developmentCommand}
+                      InputLabelProps={{shrink: false}}
+                      InputProps={{
+                        notched: false,
+                      }}
                     />
                   </Box>
-                  {config.overrides.outputDirectory && (
-                    <Box
-                      className={classes.inputContainer}
-                      style={{width: '60%'}}>
-                      <TextField
-                        className={classes.input}
-                        variant='outlined'
-                        value={config.outputDirectory}
-                        onChange={(e) =>
-                          handleConfigChange('outputDirectory', e.target.value)
-                        }
-                        placeholder='.next'
-                        InputLabelProps={{shrink: false}}
-                        InputProps={{
-                          notched: false,
-                        }}
-                      />
-                    </Box>
-                  )}
+                  <Box display="flex" alignItems="center" style={{width: '20%'}}>
+                    <Typography variant="body2" color="textSecondary" style={{marginRight: 8}}>
+                      Override
+                    </Typography>
+                    <Switch
+                      checked={config.overrides.developmentCommand}
+                      onChange={() => handleToggleOverride('developmentCommand')}
+                      color='primary'
+                      size='small'
+                    />
+                  </Box>
                 </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.switchContainer}>
-                  <Box style={{width: '40%'}}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={config.overrides.installCommand}
-                          onChange={() =>
-                            handleToggleOverride('installCommand')
-                          }
-                        />
+                <Box className={classes.row} display="flex" alignItems="center" justifyContent="space-between">
+                  <Box className={classes.labelContainer} style={{width: '20%'}}>
+                    <Typography variant='subtitle1'>Install Command</Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                      className={classes.description}>
+                      Command to install dependencies
+                    </Typography>
+                  </Box>
+                  <Box style={{width: '50%'}}>
+                    <TextField
+                      fullWidth
+                      className={classes.input}
+                      variant='outlined'
+                      value={config.installCommand}
+                      onChange={(e) =>
+                        handleConfigChange('installCommand', e.target.value)
                       }
-                      label='Override Install Command'
+                      placeholder='npm install'
+                      disabled={!config.overrides.installCommand}
+                      InputLabelProps={{shrink: false}}
+                      InputProps={{
+                        notched: false,
+                      }}
                     />
                   </Box>
-                  {config.overrides.installCommand && (
-                    <Box
-                      className={classes.inputContainer}
-                      style={{width: '60%'}}>
-                      <TextField
-                        className={classes.input}
-                        variant='outlined'
-                        value={config.installCommand}
-                        onChange={(e) =>
-                          handleConfigChange('installCommand', e.target.value)
-                        }
-                        placeholder='npm install'
-                        InputLabelProps={{shrink: false}}
-                        InputProps={{
-                          notched: false,
-                        }}
-                      />
-                    </Box>
-                  )}
+                  <Box display="flex" alignItems="center" style={{width: '20%'}}>
+                    <Typography variant="body2" color="textSecondary" style={{marginRight: 8}}>
+                      Override
+                    </Typography>
+                    <Switch
+                      checked={config.overrides.installCommand}
+                      onChange={() => handleToggleOverride('installCommand')}
+                      color='primary'
+                      size='small'
+                    />
+                  </Box>
                 </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.switchContainer}>
-                  <Box style={{width: '40%'}}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={config.overrides.developmentCommand}
-                          onChange={() =>
-                            handleToggleOverride('developmentCommand')
-                          }
-                        />
+                <Box className={classes.row} display="flex" alignItems="center" justifyContent="space-between">
+                  <Box className={classes.labelContainer} style={{width: '20%'}}>
+                    <Typography variant='subtitle1'>Output Directory</Typography>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                      className={classes.description}>
+                      Directory containing the build output
+                    </Typography>
+                  </Box>
+                  <Box style={{width: '50%'}}>
+                    <TextField
+                      fullWidth
+                      className={classes.input}
+                      variant='outlined'
+                      value={config.outputDirectory}
+                      onChange={(e) =>
+                        handleConfigChange('outputDirectory', e.target.value)
                       }
-                      label='Override Development Command'
+                      placeholder='.next'
+                      disabled={!config.overrides.outputDirectory}
+                      InputLabelProps={{shrink: false}}
+                      InputProps={{
+                        notched: false,
+                      }}
                     />
                   </Box>
-                  {config.overrides.developmentCommand && (
-                    <Box
-                      className={classes.inputContainer}
-                      style={{width: '60%'}}>
-                      <TextField
-                        className={classes.input}
-                        variant='outlined'
-                        value={config.developmentCommand}
-                        onChange={(e) =>
-                          handleConfigChange(
-                            'developmentCommand',
-                            e.target.value,
-                          )
-                        }
-                        placeholder='next dev'
-                        InputLabelProps={{shrink: false}}
-                        InputProps={{
-                          notched: false,
-                        }}
-                      />
-                    </Box>
-                  )}
+                  <Box display="flex" alignItems="center" style={{width: '20%'}}>
+                    <Typography variant="body2" color="textSecondary" style={{marginRight: 8}}>
+                      Override
+                    </Typography>
+                    <Switch
+                      checked={config.overrides.outputDirectory}
+                      onChange={() => handleToggleOverride('outputDirectory')}
+                      color='primary'
+                      size='small'
+                    />
+                  </Box>
                 </Box>
               </Grid>
             </Grid>

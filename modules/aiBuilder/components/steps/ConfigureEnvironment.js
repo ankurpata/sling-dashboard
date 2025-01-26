@@ -156,13 +156,12 @@ const ConfigureEnvironment = forwardRef(({error}, ref) => {
 
   // Initialize envVars from project context
   useEffect(() => {
-    if (currentProject?.environmentVariables) {
-      const existingVars = Object.entries(currentProject.environmentVariables).map(
-        ([key, value]) => ({key, value})
-      );
-      setEnvVars(existingVars.length ? existingVars : [{key: '', value: ''}]);
+    if (currentProject?.environment?.variables?.length) {
+      setEnvVars(currentProject.environment.variables);
+    } else {
+      setEnvVars([{key: '', value: ''}]);
     }
-  }, [currentProject?.environmentVariables]);
+  }, [currentProject?.environment?.variables]);
 
   useImperativeHandle(ref, () => ({
     handleSave: async () => {
@@ -187,20 +186,18 @@ const ConfigureEnvironment = forwardRef(({error}, ref) => {
           return false;
         }
 
-        // Convert env vars to object format
-        const variables = envVars.reduce((acc, env) => {
-          if (env.key && env.value) {
-            acc[env.key] = env.value;
-          }
-          return acc;
-        }, {});
+        // Filter out empty entries
+        const variables = envVars.filter(env => env.key && env.value);
 
         await updateEnvironmentVariables(currentProject._id, variables);
         
         // Update project in context with new env vars
         setProject({
           ...currentProject,
-          environmentVariables: variables
+          environment: {
+            ...currentProject.environment,
+            variables
+          }
         });
         
         return true;

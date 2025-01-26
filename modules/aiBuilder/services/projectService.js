@@ -219,7 +219,7 @@ export async function updateEnvironmentVariables(projectId, variables) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({environmentVariables: variables, projectId}),
+      body: JSON.stringify({environment: {variables}, projectId}),
     });
 
     if (!response.ok) {
