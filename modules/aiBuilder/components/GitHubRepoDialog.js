@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, {useState, useEffect, useContext, useRef} from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,9 +12,9 @@ import {
   StepLabel,
   StepContent,
   CircularProgress,
-  ArrowBackIcon,
 } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import {makeStyles} from '@material-ui/core/styles';
 import {fetchRepositories} from '../services/repositoryService';
 import {
@@ -144,7 +144,6 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState(initialRepo || null);
-  const [envVars, setEnvVars] = useState([{key: '', value: ''}]);
   const [sandboxConfig, setSandboxConfig] = useState(null);
   const [stepErrors, setStepErrors] = useState({
     0: null,
@@ -158,6 +157,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
     2: null,
     3: null,
   });
+  const configEnvRef = useRef();
 
   // Reset errors when moving between steps
   const clearStepError = (step) => {
@@ -270,14 +270,11 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
 
       try {
         setLoading(true);
-        const variables = envVars.reduce((acc, env) => {
-          if (env.key && env.value) {
-            acc[env.key] = env.value;
-          }
-          return acc;
-        }, {});
-        await updateEnvironmentVariables(currentProject._id, variables);
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        // Call ConfigureEnvironment's handleSave
+        const success = await configEnvRef.current?.handleSave();
+        if (success) {
+          setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        }
       } catch (error) {
         console.error('Error updating environment variables:', error);
         setStepError(
@@ -341,8 +338,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
       description: 'Set up environment variables',
       content: (
         <ConfigureEnvironment
-          envVars={envVars}
-          setEnvVars={setEnvVars}
+          ref={configEnvRef}
           error={stepErrors[1]}
         />
       ),
@@ -364,7 +360,6 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
       content: (
         <ReviewAndSave
           repository={selectedRepo}
-          envVars={envVars}
           sandboxConfig={sandboxConfig}
           error={stepErrors[3]}
         />
@@ -373,7 +368,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   ];
 
   const getStepContent = (step) => {
-    return steps[step].content;
+    return steps[step]?.content || null;
   };
 
   const getStepButtonText = (step) => {
@@ -388,7 +383,6 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   const handleClose = () => {
     setActiveStep(0);
     setSelectedRepo(null);
-    setEnvVars([{key: '', value: ''}]);
     setSandboxConfig(null);
     setStepErrors({
       0: null,
@@ -410,43 +404,10 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
       ...selectedRepo,
       branch: selectedRepo.default_branch || 'main',
       framework: sandboxConfig?.framework || 'Next.js',
-      environmentVariables: envVars.filter((env) => env.key && env.value),
     };
     onSelect(config);
     localStorage.setItem('selectedRepository', JSON.stringify(config));
     handleClose();
-  };
-
-  const handleEnvVarChange = (index, field, value) => {
-    const newEnvVars = [...envVars];
-    newEnvVars[index] = {...newEnvVars[index], [field]: value};
-    setEnvVars(newEnvVars);
-  };
-
-  const handleEnvVarAdd = () => {
-    setEnvVars([...envVars, {key: '', value: ''}]);
-  };
-
-  const handleEnvVarRemove = (index) => {
-    setEnvVars(envVars.filter((_, i) => i !== index));
-  };
-
-  const handleEnvFileUpload = (content) => {
-    const vars = content
-      .split('\n')
-      .filter((line) => line.trim() && !line.startsWith('#'))
-      .map((line) => {
-        const [key, ...valueParts] = line.split('=');
-        return {
-          key: key.trim(),
-          value: valueParts.join('=').trim(),
-        };
-      });
-    setEnvVars(vars.length > 0 ? vars : [{key: '', value: ''}]);
-  };
-
-  const handleSandboxConfigChange = (config) => {
-    setSandboxConfig(config);
   };
 
   return (

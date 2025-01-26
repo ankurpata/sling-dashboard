@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, forwardRef, useImperativeHandle} from 'react';
 import {
   Box,
   TextField,
@@ -14,6 +14,8 @@ import AddIcon from '@material-ui/icons/Add';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import InfoIcon from '@material-ui/icons/Info';
 import {sanitizeEnvKey, isValidEnvKey} from '../../utils/validation';
+import {updateEnvironmentVariables} from '../../services/projectService';
+import {useProject} from '../../context/ProjectContext';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -145,19 +147,64 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ConfigureEnvironment = ({
-  projectId,
-  envVars,
-  onEnvVarChange,
-  onEnvVarAdd,
-  onEnvVarRemove,
-  onEnvFileUpload,
-  errors,
-  onSave,
-}) => {
+const ConfigureEnvironment = forwardRef(({error}, ref) => {
   const classes = useStyles();
-  const [isSaving, setIsSaving] = useState(false);
+  const {currentProject, setProject} = useProject();
+  const [envVars, setEnvVars] = useState([{key: '', value: ''}]);
+  const [loading, setLoading] = useState(false);
   const [localErrors, setLocalErrors] = useState({});
+
+  useImperativeHandle(ref, () => ({
+    handleSave: async () => {
+      if (!currentProject?._id) {
+        setLocalErrors((prev) => ({...prev, general: 'No active project found'}));
+        return false;
+      }
+
+      try {
+        setLoading(true);
+        setLocalErrors({});
+
+        // Validate env vars
+        const invalidVars = envVars.filter(
+          (env) => (env.key && !env.value) || (!env.key && env.value),
+        );
+        if (invalidVars.length > 0) {
+          setLocalErrors((prev) => ({
+            ...prev,
+            general: 'All environment variables must have both key and value',
+          }));
+          return false;
+        }
+
+        // Convert env vars to object format
+        const variables = envVars.reduce((acc, env) => {
+          if (env.key && env.value) {
+            acc[env.key] = env.value;
+          }
+          return acc;
+        }, {});
+
+        await updateEnvironmentVariables(currentProject._id, variables);
+        
+        // Update project in context with new env vars
+        setProject({
+          ...currentProject,
+          environmentVariables: variables
+        });
+        
+        return true;
+      } catch (error) {
+        setLocalErrors((prev) => ({
+          ...prev,
+          general: error.message || 'Failed to update environment variables',
+        }));
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    }
+  }));
 
   const handleKeyChange = (index) => (event) => {
     const rawValue = event.target.value;
@@ -174,11 +221,15 @@ const ConfigureEnvironment = ({
       [index]: !isValidEnvKey(sanitizedValue) ? 'Invalid key format' : '',
     }));
 
-    onEnvVarChange(index, 'key', sanitizedValue);
+    const newEnvVars = [...envVars];
+    newEnvVars[index] = {...newEnvVars[index], key: sanitizedValue};
+    setEnvVars(newEnvVars);
   };
 
   const handleValueChange = (index) => (event) => {
-    onEnvVarChange(index, 'value', event.target.value);
+    const newEnvVars = [...envVars];
+    newEnvVars[index] = {...newEnvVars[index], value: event.target.value};
+    setEnvVars(newEnvVars);
   };
 
   const handleFileUpload = (event) => {
@@ -186,18 +237,29 @@ const ConfigureEnvironment = ({
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        onEnvFileUpload(e.target.result);
+        const content = e.target.result;
+        const vars = content
+          .split('\n')
+          .filter((line) => line.trim() && !line.startsWith('#'))
+          .map((line) => {
+            const [key, ...valueParts] = line.split('=');
+            return {
+              key: key.trim(),
+              value: valueParts.join('=').trim(),
+            };
+          });
+        setEnvVars(vars.length > 0 ? vars : [{key: '', value: ''}]);
       };
       reader.readAsText(file);
     }
   };
 
   const handleAddEnvVar = () => {
-    onEnvVarAdd();
+    setEnvVars([...envVars, {key: '', value: ''}]);
   };
 
   const handleRemoveEnvVar = (index) => {
-    onEnvVarRemove(index);
+    setEnvVars(envVars.filter((_, i) => i !== index));
   };
 
   return (
@@ -207,9 +269,7 @@ const ConfigureEnvironment = ({
           {localErrors.general}
         </Typography>
       )}
-      <Box className={classes.header}>
-   
-      </Box>
+      <Box className={classes.header}></Box>
 
       <div className={classes.envVarContainer}>
         {envVars.map((env, index) => (
@@ -242,8 +302,6 @@ const ConfigureEnvironment = ({
               InputProps={{
                 notched: false,
               }}
-              error={Boolean(errors?.[`env_${index}_value`])}
-              helperText={errors?.[`env_${index}_value`]}
             />
             {envVars.length > 1 && (
               <IconButton
@@ -281,13 +339,14 @@ const ConfigureEnvironment = ({
           variant='outlined'
           component='label'
           startIcon={<CloudUploadIcon />}
-          className={classes.uploadButton}>
+          className={classes.uploadButton}
+          disabled={loading}>
           Select File
           <input type='file' hidden accept='.env' onChange={handleFileUpload} />
         </Button>
       </Box>
     </div>
   );
-};
+});
 
 export default ConfigureEnvironment;

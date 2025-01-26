@@ -214,12 +214,12 @@ export async function updateBuildSettings(projectId, settings) {
 
 export async function updateEnvironmentVariables(projectId, variables) {
   try {
-    const response = await fetch(`${apiEndpoints.project.env}/${projectId}`, {
-      method: 'PUT',
+    const response = await fetch(`${apiEndpoints.project.env}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({variables}),
+      body: JSON.stringify({environmentVariables: variables, projectId}),
     });
 
     if (!response.ok) {

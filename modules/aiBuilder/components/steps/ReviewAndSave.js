@@ -18,6 +18,7 @@ import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
 import { deployProject } from '../../services/projectService';
+import { useProject } from '../../context/ProjectContext';
 
 const useStyles = makeStyles((theme) => ({
   section: {
@@ -93,13 +94,13 @@ const useStyles = makeStyles((theme) => ({
 const ReviewAndSave = ({
   projectId,
   selectedRepo,
-  envVars = [],
   buildSettings = {},
   onDeploySuccess,
   onDeployError,
 }) => {
   const classes = useStyles();
   const [isDeploying, setIsDeploying] = useState(false);
+  const { currentProject } = useProject();
 
   const handleDeploy = async () => {
     try {
@@ -149,14 +150,14 @@ const ReviewAndSave = ({
             )}
             <Tooltip
               title={
-                envVars.length > 0
+                currentProject?.environmentVariables
                   ? 'Deployment configured with environment variables'
                   : 'No deployment configuration'
               }
               placement="left"
             >
               <IconButton size="small">
-                {envVars.length > 0 ? (
+                {currentProject?.environmentVariables ? (
                   <CheckCircleIcon
                     className={`${classes.statusIcon} ${classes.statusIconConfigured}`}
                   />
@@ -180,26 +181,23 @@ const ReviewAndSave = ({
         </Typography>
         <Paper className={classes.paper}>
           <Box className={classes.envVarList}>
-            {envVars
-              .filter((env) => env.key && env.value)
-              .map((envVar, index) => (
-                <Box key={index} className={classes.envVarItem}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    {envVar.key}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {envVar.value.length > 20
-                      ? `${envVar.value.substring(0, 20)}...`
-                      : envVar.value}
-                  </Typography>
-                </Box>
-              ))}
+            {currentProject?.environmentVariables
+              ? Object.entries(currentProject.environmentVariables).map(([key, value], index) => (
+                  <Box key={index} className={classes.envVarItem}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      {key}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {value.replace(/./g, '*')} // Mask the value for security
+                    </Typography>
+                  </Box>
+                ))
+              : (
+                <Typography variant="body2" color="textSecondary">
+                  No environment variables configured
+                </Typography>
+              )}
           </Box>
-          {envVars.filter((env) => env.key && env.value).length === 0 && (
-            <Typography variant="body2" color="textSecondary">
-              No environment variables configured
-            </Typography>
-          )}
         </Paper>
       </Box>
 

@@ -27,6 +27,8 @@ import {tomorrow} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {getFrameworkDefaults, supportedFrameworks} from '../../utils/frameworkDefaults';
 import {detectFramework} from '../../services/frameworkService';
 import AuthDialog from '../AuthDialog';
+import {useProject} from '../../context/ProjectContext';
+import {useUser} from '../../context/UserContext';\
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -233,6 +235,7 @@ const SandboxPreview = ({repository, onConfigChange}) => {
   const [detectedFramework, setDetectedFramework] = useState('');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { user } = useUser();
+  const { currentProject, setProject } = useProject();
 
   useEffect(() => {
     const detectAndSetFramework = async () => {
