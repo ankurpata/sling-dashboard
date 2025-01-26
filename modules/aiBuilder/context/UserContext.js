@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/router';
@@ -5,7 +7,7 @@ import userService from '../services/userService';
 
 const UserContext = createContext();
 
-export const UserProvider = ({ children }) => {
+function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState(null);
@@ -102,13 +104,28 @@ export const UserProvider = ({ children }) => {
     }
   }, [router.query]);
 
-  const login = async () => {
-    const state = uuidv4();
-    localStorage.setItem('oauth_state', state);
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const redirectUri = 'http://localhost:5001/auth/google/callback';
+  const login = async (provider = 'google') => {
+    const state = {
+      provider,
+      nonce: uuidv4(),
+      timestamp: Date.now()
+    };
+    const stateStr = JSON.stringify(state);
+    localStorage.setItem('oauth_state', stateStr);
     
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&state=${state}`;
+    if (provider === 'github') {
+      const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+      const redirectUri = 'http://localhost:5001/auth/github/callback';
+      const scope = 'repo read:user user:email';
+      const encodedState = encodeURIComponent(stateStr);
+      
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${encodedState}`;
+    } else {
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      const redirectUri = 'http://localhost:5001/auth/google/callback';
+      
+      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&state=${state}`;
+    }
   };
 
   const logout = () => {
@@ -138,12 +155,17 @@ export const UserProvider = ({ children }) => {
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
-};
+}
 
-export const useUser = () => {
+function useUser() {
   const context = useContext(UserContext);
   if (!context) {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;
-};
+}
+
+module.exports = {
+  UserProvider,
+  useUser,
+}

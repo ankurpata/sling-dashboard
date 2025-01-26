@@ -23,6 +23,7 @@ import {
   updateBuildSettings,
 } from '../services/projectService';
 import {useProject} from '../context/ProjectContext';
+const {useUser} = require('../context/UserContext');
 
 import SelectRepository from './steps/SelectRepository';
 import ConfigureEnvironment from './steps/ConfigureEnvironment';
@@ -136,9 +137,10 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
+const GitHubRepoDialog = ({open, onClose, onSelect, initialRepo}) => {
   const classes = useStyles();
   const {currentProject, setProject} = useProject();
+  const {user, login} = useUser();
   const [activeStep, setActiveStep] = useState(() => {
     // Initialize from localStorage if exists
     const savedStep = localStorage.getItem(
@@ -190,12 +192,21 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
     }
   }, [open, initialRepo]);
 
+  // Check GitHub connection on open
+  useEffect(() => {
+    if (open && !user?.isGithubConnected) {
+      login('github');
+      onClose(); // Close dialog as we're redirecting
+      return;
+    }
+  }, [open, user?.isGithubConnected]);
+
   // Load repositories when dialog opens
   useEffect(() => {
     const loadRepositories = async () => {
       try {
         setLoading(true);
-        const data = await fetchRepositories(userId);
+        const data = await fetchRepositories(user.id);
         if (data && Array.isArray(data)) {
           setRepositories(data);
         } else {
@@ -209,10 +220,10 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
       }
     };
 
-    if (open && userId) {
+    if (open && user?.id && user?.isGithubConnected) {
       loadRepositories();
     }
-  }, [open, userId]);
+  }, [open, user?.id, user?.isGithubConnected]);
 
   // Show warning if project exists and opened from home
   useEffect(() => {
@@ -246,11 +257,10 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
         default_branch: repo.defaultBranch || 'main',
         organization: repo.organization,
         orgId: repo.orgId,
-        userId,
+        userId: user.id,
       });
 
       setProject(createdProject);
-      // Remove onSelect call to prevent dialog from closing
     } catch (error) {
       console.error('Error creating project:', error);
       setStepError(0, error.message || 'Failed to create project');
@@ -261,13 +271,19 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   };
 
   const handleNext = async () => {
+    if (!user?.isGithubConnected) {
+      login('github');
+      return;
+    }
+
+    if (activeStep === 0 && !selectedRepo) {
+      setStepError(activeStep, 'Please select a repository');
+      return;
+    }
+
     clearStepError(activeStep);
 
     if (activeStep === 0) {
-      if (!selectedRepo) {
-        setStepError(0, 'Please select a repository');
-        return;
-      }
       setActiveStep((prevActiveStep) => {
         const newStep = prevActiveStep + 1;
         // Save to localStorage when moving forward
@@ -447,7 +463,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
 
   return (
     <Dialog
-      open={open}
+      open={open && user?.isGithubConnected}
       onClose={onClose}
       maxWidth='md'
       fullWidth
