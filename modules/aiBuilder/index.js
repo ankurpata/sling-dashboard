@@ -33,6 +33,7 @@ import {ALLOWED_LIBRARIES} from './config';
 import {useStyles} from './styles';
 import {fetchRepositories} from './services/repositoryService';
 import {UserProvider} from './context/UserContext';
+import {useUser} from './context/UserContext';
 
 const AIBuilder = () => {
   const [inputValue, setInputValue] = useState('');
@@ -57,6 +58,7 @@ const AIBuilder = () => {
   const inputRef = useRef(null);
   const processingTimeoutRef = useRef(null);
   const router = useRouter();
+  const { user } = useUser();
 
   useEffect(() => {
     if (inputRef.current && !showCanvas) {
@@ -228,14 +230,18 @@ const AIBuilder = () => {
   };
 
   const handleGitHubConnect = () => {
-    const savedRepos = localStorage.getItem('repositories');
-    if (savedRepos) {
+    // If already connected, just show repo dialog
+    if (user?.isGithubConnected) {
+      console.log('GitHub already connected, showing repo dialog');
       setShowRepoDialog(true);
-    } else {
-      const currentUserId = localStorage.getItem('userId');
-      const state = JSON.stringify({userId: currentUserId});
-      window.location.href = `https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&scope=repo&state=${encodeURIComponent(state)}`;
+      return;
     }
+
+    // If not connected, redirect to GitHub OAuth
+    console.log('Redirecting to GitHub OAuth');
+    const currentUserId = localStorage.getItem('userId');
+    const state = JSON.stringify({userId: currentUserId});
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&scope=repo&state=${encodeURIComponent(state)}`;
   };
 
   const handleSignIn = () => {
@@ -299,8 +305,43 @@ const AIBuilder = () => {
                   )
                 }
                 onClick={handleGitHubConnect}>
-                <Box display='flex' alignItems='center'>
-                  {selectedRepo ? selectedRepo.name : 'Connect your Repo'}
+                <Box display='flex' alignItems='center' position="relative" width="100%">
+                  {user?.isGithubConnected && !selectedRepo && (
+                    <Box 
+                      position="absolute"
+                      top={-21}
+                      right={-33}
+                      display="flex" 
+                      alignItems="center" 
+                      sx={{ 
+                        fontSize: '0.6rem',
+                        color: '#10B981', // green-500
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)', // light green background
+                        padding: '2px 6px',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(16, 185, 129, 0.2)'
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          backgroundColor: '#10B981',
+                          marginRight: 0.5,
+                          display: 'inline-block'
+                        }}
+                      /> &nbsp;
+                      Connected
+                    </Box>
+                  )}
+                  {selectedRepo 
+                    ? selectedRepo.name 
+                    : user?.isGithubConnected 
+                      ? 'Select Repository'
+                      : 'Connect your Repo'
+                  }
                   {selectedRepo && (
                     <Box
                       style={{
