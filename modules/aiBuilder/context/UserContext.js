@@ -15,6 +15,7 @@ export const UserProvider = ({ children }) => {
   const fetchUserInfo = async (userId) => {
     try {
       setLoading(true);
+      console.log('Fetching user info for userId:', userId);
       const response = await userService.getUserInfo(userId);
       console.log('API Response:', response);
       
@@ -29,7 +30,7 @@ export const UserProvider = ({ children }) => {
         organizations: response.organizations || []
       };
       
-      console.log('Transformed User Data:', userData);
+      console.log('Setting user data:', userData);
       setUser(userData);
       setOrganizations(response.organizations || []);
       
@@ -51,33 +52,55 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // Initialize user from localStorage
   useEffect(() => {
-    // Check URL parameters for userId
+    console.log('Initializing user from localStorage');
+    const storedUser = localStorage.getItem('user');
+    const storedOrg = localStorage.getItem('selectedOrg');
+    
+    console.log('Stored user from localStorage:', storedUser);
+    
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        console.log('Parsed user data:', userData);
+        
+        // Set the user state
+        setUser(userData);
+        
+        // If we have a userId, fetch fresh data
+        if (userData.id) {
+          console.log('Found userId, fetching fresh data:', userData.id);
+          fetchUserInfo(userData.id);
+        }
+        
+        // Set organization if available
+        if (storedOrg) {
+          try {
+            setSelectedOrg(JSON.parse(storedOrg));
+          } catch (error) {
+            console.error('Error parsing stored org:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+      }
+    } else {
+      console.log('No stored user found');
+      setLoading(false);
+    }
+  }, []);
+
+  // Handle URL parameters
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('userId');
     
     if (userId) {
+      console.log('Found userId in URL:', userId);
       fetchUserInfo(userId);
-    } else {
-      // Check localStorage for stored userId
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          if (userData.id) {
-            fetchUserInfo(userData.id);
-          } else {
-            setLoading(false);
-          }
-        } catch (error) {
-          console.error('Error parsing stored user:', error);
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
     }
-  }, []);
+  }, [router.query]);
 
   const login = async () => {
     const state = uuidv4();
@@ -89,10 +112,12 @@ export const UserProvider = ({ children }) => {
   };
 
   const logout = () => {
+    console.log('Logging out, clearing user data');
     setUser(null);
     setSelectedOrg(null);
     localStorage.removeItem('user');
     localStorage.removeItem('selectedOrg');
+    localStorage.removeItem('oauth_state');
     router.push('/');
   };
 
