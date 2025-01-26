@@ -164,6 +164,8 @@ const UserMenu = () => {
   const isProfileActive = router.pathname === '/profile';
   const isSettingsActive = router.pathname === '/settings';
 
+  console.log('UserMenu - Current user:', user);
+
   return (
     <Box className={classes.container}>
       {organizations?.length > 0 && (
@@ -199,27 +201,31 @@ const UserMenu = () => {
               <MenuItem
                 key={org.id}
                 onClick={() => handleOrgSelect(org)}
-                className={`${classes.menuItem} ${selectedOrg?.id === org.id ? classes.activeMenuItem : ''}`}
+                selected={selectedOrg?.id === org.id}
               >
-                <BusinessIcon className={classes.icon} />
-                <ListItemText primary={org.name} className={classes.orgMenuItem} />
+                {org.name}
               </MenuItem>
             ))}
           </Menu>
         </>
       )}
-
       <Button
         className={classes.button}
         onClick={handleClick}
         endIcon={<KeyboardArrowDownIcon />}
       >
-        <Avatar 
-          src={user.avatarUrl} 
-          alt={user.username}
-          className={classes.avatar}
-        />
-        <Typography className={classes.userName}>{user.username || 'User'}</Typography>
+        {user.avatar ? (
+          <Avatar
+            src={user.avatar}
+            alt={user.name || user.email}
+            className={classes.avatar}
+          />
+        ) : (
+          <AccountCircleIcon className={classes.avatar} />
+        )}
+        <Typography variant="body2" className={classes.userName}>
+          {user.name || user.email}
+        </Typography>
       </Button>
       <Menu
         anchorEl={anchorEl}
@@ -239,28 +245,33 @@ const UserMenu = () => {
           vertical: 'top',
           horizontal: 'right',
         }}
-        elevation={0}
       >
-        <MenuItem 
-          onClick={handleProfile} 
-          className={`${classes.menuItem} ${isProfileActive ? classes.activeMenuItem : ''}`}
+        <MenuItem
+          onClick={handleProfile}
+          selected={isProfileActive}
+          className={classes.menuItem}
         >
-          <AccountCircleIcon className={classes.icon} />
-          Profile
-          <span className={classes.shortcut}>⌘P</span>
+          <ListItemIcon>
+            <AccountCircleIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Profile" />
         </MenuItem>
-        <MenuItem 
-          onClick={handleSettings} 
-          className={`${classes.menuItem} ${isSettingsActive ? classes.activeMenuItem : ''}`}
+        <MenuItem
+          onClick={handleSettings}
+          selected={isSettingsActive}
+          className={classes.menuItem}
         >
-          <SettingsIcon className={classes.icon} />
-          Settings
-          <span className={classes.shortcut}>⌘,</span>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Settings" />
         </MenuItem>
-        <Divider className={classes.divider} />
+        <Divider />
         <MenuItem onClick={handleLogout} className={classes.menuItem}>
-          <ExitToAppIcon className={classes.icon} />
-          Sign out
+          <ListItemIcon>
+            <ExitToAppIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
         </MenuItem>
       </Menu>
     </Box>

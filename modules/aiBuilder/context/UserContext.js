@@ -12,50 +12,88 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    // Check localStorage for user data on mount
-    const storedUser = localStorage.getItem('user');
-    const storedOrg = localStorage.getItem('selectedOrg');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-      }
-    }
-    if (storedOrg) {
-      try {
-        setSelectedOrg(JSON.parse(storedOrg));
-      } catch (error) {
-        console.error('Error parsing stored org:', error);
-      }
-    }
-    setLoading(false);
-  }, []);
-
   const fetchUserInfo = async (userId) => {
     try {
-      const userInfo = await userService.getUserInfo(userId);
-      if (userInfo) {
-        setUser(userInfo);
-        localStorage.setItem('user', JSON.stringify(userInfo));
-
-        // Handle organizations if present in response
-        if (userInfo.organizations) {
-          setOrganizations(userInfo.organizations);
-          // If no org is selected, select the first one
-          if (!selectedOrg && userInfo.organizations.length > 0) {
-            const defaultOrg = userInfo.organizations[0];
-            setSelectedOrg(defaultOrg);
-            localStorage.setItem('selectedOrg', JSON.stringify(defaultOrg));
-          }
-        }
+      setLoading(true);
+      const response = await userService.getUserInfo(userId);
+      console.log('API Response:', response);
+      
+      const userData = {
+        id: response.googleId || response._id,
+        name: response.displayName || response.googleName,
+        email: response.email,
+        avatar: response.avatarUrl,
+        isGithubConnected: response.isGithubConnected,
+        isGoogleConnected: response.isGoogleConnected,
+        githubUsername: response.githubUsername,
+        organizations: response.organizations || []
+      };
+      
+      console.log('Transformed User Data:', userData);
+      setUser(userData);
+      setOrganizations(response.organizations || []);
+      
+      // Store in localStorage
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      if (response.organizations?.length > 0 && !selectedOrg) {
+        const defaultOrg = response.organizations[0];
+        setSelectedOrg(defaultOrg);
+        localStorage.setItem('selectedOrg', JSON.stringify(defaultOrg));
       }
-      return userInfo;
+      
+      setLoading(false);
+      return userData;
     } catch (error) {
       console.error('Error fetching user info:', error);
+      setLoading(false);
       return null;
     }
+  };
+
+  useEffect(() => {
+    // Check URL parameters for userId
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
+    
+    if (userId) {
+      fetchUserInfo(userId);
+    } else {
+      // Check localStorage for stored userId
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          if (userData.id) {
+            fetchUserInfo(userData.id);
+          } else {
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  const login = async () => {
+    const state = uuidv4();
+    localStorage.setItem('oauth_state', state);
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const redirectUri = 'http://localhost:5001/auth/google/callback';
+    
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&state=${state}`;
+  };
+
+  const logout = () => {
+    setUser(null);
+    setSelectedOrg(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('selectedOrg');
+    router.push('/');
   };
 
   const selectOrganization = (org) => {
@@ -63,89 +101,18 @@ export const UserProvider = ({ children }) => {
     localStorage.setItem('selectedOrg', JSON.stringify(org));
   };
 
-  const login = async (provider) => {
-    try {
-      const state = uuidv4();
-      localStorage.setItem('oauthState', state);
-
-      // Construct OAuth URL based on provider
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      const redirectUri = 'http://localhost:5001/auth/google/callback';
-      const scope = 'email profile';
-      
-      let authUrl;
-      if (provider === 'google') {
-        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}`;
-      } else if (provider === 'github') {
-        authUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&state=${state}`;
-      }
-
-      window.location.href = authUrl;
-    } catch (error) {
-      console.error('Login error:', error);
-    }
+  const value = {
+    user,
+    loading,
+    organizations,
+    selectedOrg,
+    login,
+    logout,
+    fetchUserInfo,
+    selectOrganization,
   };
 
-  const logout = () => {
-    setUser(null);
-    setOrganizations([]);
-    setSelectedOrg(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('selectedOrg');
-    localStorage.removeItem('oauthState');
-    router.push('/');
-  };
-
-  const updateUser = (userData) => {
-    const updatedUser = { ...user, ...userData };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-  };
-
-  useEffect(() => {
-    // Handle OAuth callback
-    const params = new URLSearchParams(window.location.search);
-    const userId = params.get('userId');
-    const userName = params.get('name');
-    const userEmail = params.get('email');
-    const userPicture = params.get('picture');
-
-    if (userId) {
-      // First set the user data from URL params
-      const userData = {
-        id: userId,
-        username: userName,
-        email: userEmail,
-        avatarUrl: userPicture
-      };
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-
-      // Then fetch complete user info including organizations
-      fetchUserInfo(userId).then(userInfo => {
-        if (userInfo) {
-          setUser(userInfo);
-          localStorage.setItem('user', JSON.stringify(userInfo));
-        }
-      }).catch(console.error);
-    }
-  }, []);
-
-  return (
-    <UserContext.Provider value={{ 
-      user, 
-      loading,
-      organizations,
-      selectedOrg,
-      selectOrganization,
-      login, 
-      logout, 
-      updateUser,
-      fetchUserInfo,
-    }}>
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
 export const useUser = () => {
