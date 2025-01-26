@@ -1,4 +1,9 @@
-import React, {useState, useEffect, forwardRef, useImperativeHandle} from 'react';
+import React, {
+  useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import {
   Box,
   TextField,
@@ -24,11 +29,14 @@ import CodeIcon from '@material-ui/icons/Code';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {tomorrow} from 'react-syntax-highlighter/dist/esm/styles/prism';
-import {getFrameworkDefaults, supportedFrameworks} from '../../utils/frameworkDefaults';
-import {detectFramework} from '../../services/frameworkService';
+import {
+  getFrameworkDefaults,
+  supportedFrameworks,
+} from '../../utils/frameworkDefaults';
 import AuthDialog from '../AuthDialog';
 import {useProject} from '../../context/ProjectContext';
 import {useUser} from '../../context/UserContext';
+import {updateBuildSettings} from '../../services/projectService';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -195,7 +203,7 @@ const frameworks = supportedFrameworks
     ),
   )
   .map((name) => ({
-    id: name.toLowerCase().replace(/[\s.()]/g, ''),
+    id: name,
     name: name,
   }));
 
@@ -209,7 +217,7 @@ const regions = ['all', 'us-east-1', 'eu-west-1', 'ap-southeast-1'];
 
 const SandboxPreview = forwardRef(({error}, ref) => {
   const classes = useStyles();
-  const { currentProject } = useProject();
+  const {currentProject} = useProject();
   const [activeTab, setActiveTab] = useState('form');
   const [config, setConfig] = useState({
     framework: '',
@@ -229,13 +237,41 @@ const SandboxPreview = forwardRef(({error}, ref) => {
     skipDeployment: false,
     region: 'all',
   });
+  console.log(config, 'coniggg');
+
+  // Initialize config from project's buildSettings
+  useEffect(() => {
+    if (currentProject?.buildSettings) {
+      const settings = currentProject.buildSettings;
+      setConfig((prev) => ({
+        ...prev,
+        framework: settings.framework || '',
+        buildCommand: settings.buildCommand || '',
+        startCommand: settings.startCommand || '',
+        installCommand: settings.installCommand || '',
+        outputDirectory: settings.outputDirectory || '',
+        nodeVersion: settings.nodeVersion || '18.x',
+        rootDirectory: settings.rootDirectory || '',
+        includeFiles: settings.includeFiles || false,
+        skipDeployment: settings.skipDeployment || false,
+        region: settings.region || 'all',
+        overrides: {
+          buildCommand: !!settings.buildCommand,
+          outputDirectory: !!settings.outputDirectory,
+          installCommand: !!settings.installCommand,
+          developmentCommand: !!settings.startCommand,
+        },
+      }));
+    }
+  }, [currentProject?.buildSettings]);
+
   const [jsonConfig, setJsonConfig] = useState('');
   const [jsonError, setJsonError] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [detectedFramework, setDetectedFramework] = useState('');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { user } = useUser();
+  const {user} = useUser();
 
   useImperativeHandle(ref, () => ({
     handleSave: async () => {
@@ -268,13 +304,13 @@ const SandboxPreview = forwardRef(({error}, ref) => {
         };
 
         await updateBuildSettings(currentProject._id, settings);
-        
+
         // Update project in context with new settings
         setProject({
           ...currentProject,
-          buildSettings: settings
+          buildSettings: settings,
         });
-        
+
         return true;
       } catch (error) {
         console.error('Error updating build settings:', error);
@@ -282,31 +318,8 @@ const SandboxPreview = forwardRef(({error}, ref) => {
       } finally {
         setLoading(false);
       }
-    }
+    },
   }));
-
-  useEffect(() => {
-    const detectAndSetFramework = async () => {
-      try {
-        if (currentProject?.repository?.localPath) {
-          const framework = await detectFramework(currentProject.repository.localPath);
-          setDetectedFramework(framework);
-          if (framework) {
-            const defaults = getFrameworkDefaults(framework);
-            setConfig(prev => ({
-              ...prev,
-              framework,
-              ...defaults
-            }));
-          }
-        }
-      } catch (error) {
-        console.error('Error detecting framework:', error);
-      }
-    };
-
-    detectAndSetFramework();
-  }, [currentProject?.repository?.localPath]);
 
   useEffect(() => {
     setJsonConfig(generateVercelConfig());
@@ -435,7 +448,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
         setShowAuthDialog(true);
         return;
       }
-      
+
       // Existing input handling code
       if (inputValue.trim()) {
         setIsProcessing(true);
@@ -849,9 +862,9 @@ const SandboxPreview = forwardRef(({error}, ref) => {
           </Box>
         </Paper>
       )}
-      <AuthDialog 
-        open={showAuthDialog} 
-        onClose={() => setShowAuthDialog(false)} 
+      <AuthDialog
+        open={showAuthDialog}
+        onClose={() => setShowAuthDialog(false)}
       />
     </Box>
   );
