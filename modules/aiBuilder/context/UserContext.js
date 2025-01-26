@@ -116,7 +116,7 @@ function UserProvider({ children }) {
     if (provider === 'github') {
       const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
       const redirectUri = 'http://localhost:5001/auth/github/callback';
-      const scope = 'repo read:user user:email';
+      const scope = 'repo read:user user:email read:org';
       const encodedState = encodeURIComponent(stateStr);
       
       window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${encodedState}`;
