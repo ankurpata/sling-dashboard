@@ -369,7 +369,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
     if (step === 1) {
       return 'Save and Next';
     } else if (step === 2) {
-      return 'Save and Next';
+      return 'Build and Deploy';
     }
     return 'Next';
   };

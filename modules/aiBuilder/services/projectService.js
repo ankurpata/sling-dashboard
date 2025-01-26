@@ -190,16 +190,16 @@ export async function getDeploymentStatus(projectId, deploymentId) {
 
 export async function updateBuildSettings(projectId, settings) {
   try {
-    const response = await fetch(
-      `${apiEndpoints.project.buildSettings}/${projectId}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings),
+    const response = await fetch(`${apiEndpoints.project.buildSettings}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        projectId,
+        buildSettings: settings
+      }),
+    });
 
     if (!response.ok) {
       throw new Error('Failed to update build settings');
