@@ -386,7 +386,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   const steps = [
     {
       label: 'Select Repository',
-      description: 'Choose a repository to connect',
+      description: selectedRepo ? `Selected Repository: ${selectedRepo.name}` : 'Choose a repository to connect',
       content: (
         <SelectRepository
           repositories={repositories}
@@ -396,7 +396,6 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
           onSearchChange={setSearchQuery}
           loading={loading}
           error={stepErrors[0]}
-          warning={stepWarnings[0]}
         />
       ),
     },
@@ -429,6 +428,14 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
     return steps[step]?.content || null;
   };
 
+  const getStepTitle = (step) => {
+    return steps[step]?.label || '';
+  };
+
+  const getStepDescription = (step) => {
+    return steps[step]?.description || '';
+  };
+
   const getStepButtonText = (step) => {
     if (step === 1) {
       return 'Save and Next';
@@ -449,9 +456,9 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
       <DialogTitle className={classes.dialogTitle}>
         <Box display='flex' alignItems='center' justifyContent='space-between'>
           <Typography variant='h6'>Configure Repository</Typography>
-          {activeStep > 0 && (
-            <Button
-              startIcon={<ArrowBackIcon />}
+            {activeStep > 0 && (
+              <Button
+                startIcon={<ArrowBackIcon />}
               onClick={() => {
                 setActiveStep(0);
                 setStepErrors({
@@ -469,8 +476,9 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
               }}
               color='primary'>
               Back to Repositories
-            </Button>
-          )}
+              </Button>
+            )}
+           
         </Box>
       </DialogTitle>
       <DialogContent>
