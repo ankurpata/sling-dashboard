@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, forwardRef, useImperativeHandle} from 'react';
 import {
   Box,
   TextField,
@@ -28,7 +28,7 @@ import {getFrameworkDefaults, supportedFrameworks} from '../../utils/frameworkDe
 import {detectFramework} from '../../services/frameworkService';
 import AuthDialog from '../AuthDialog';
 import {useProject} from '../../context/ProjectContext';
-import {useUser} from '../../context/UserContext';\
+import {useUser} from '../../context/UserContext';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -207,65 +207,106 @@ const nodeVersions = [
 ];
 const regions = ['all', 'us-east-1', 'eu-west-1', 'ap-southeast-1'];
 
-const SandboxPreview = ({repository, onConfigChange}) => {
+const SandboxPreview = forwardRef(({error}, ref) => {
   const classes = useStyles();
+  const { currentProject } = useProject();
   const [activeTab, setActiveTab] = useState('form');
   const [config, setConfig] = useState({
     framework: '',
     buildCommand: '',
-    outputDirectory: '',
+    startCommand: '',
     installCommand: '',
-    developmentCommand: '',
-    rootDirectory: '',
+    outputDirectory: '',
     nodeVersion: '18.x',
-    includeFiles: false,
-    skipDeployment: false,
-    buildCache: true,
-    region: 'all',
     overrides: {
       buildCommand: false,
       outputDirectory: false,
       installCommand: false,
       developmentCommand: false,
     },
+    rootDirectory: '',
+    includeFiles: false,
+    skipDeployment: false,
+    region: 'all',
   });
   const [jsonConfig, setJsonConfig] = useState('');
   const [jsonError, setJsonError] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [detectedFramework, setDetectedFramework] = useState('');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { user } = useUser();
-  const { currentProject, setProject } = useProject();
+
+  useImperativeHandle(ref, () => ({
+    handleSave: async () => {
+      if (!currentProject?._id) {
+        return false;
+      }
+
+      try {
+        setLoading(true);
+
+        const settings = {
+          framework: config.framework || '',
+          buildCommand: config.overrides.buildCommand
+            ? config.buildCommand
+            : undefined,
+          outputDirectory: config.overrides.outputDirectory
+            ? config.outputDirectory
+            : undefined,
+          installCommand: config.overrides.installCommand
+            ? config.installCommand
+            : undefined,
+          developmentCommand: config.overrides.developmentCommand
+            ? config.developmentCommand
+            : undefined,
+          rootDirectory: config.rootDirectory || undefined,
+          nodeVersion: config.nodeVersion || '18.x',
+          includeFiles: config.includeFiles ? ['**/*'] : undefined,
+          skipDeployment: config.skipDeployment,
+          region: config.region === 'all' ? undefined : [config.region],
+        };
+
+        await updateBuildSettings(currentProject._id, settings);
+        
+        // Update project in context with new settings
+        setProject({
+          ...currentProject,
+          buildSettings: settings
+        });
+        
+        return true;
+      } catch (error) {
+        console.error('Error updating build settings:', error);
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    }
+  }));
 
   useEffect(() => {
     const detectAndSetFramework = async () => {
       try {
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-          console.error('No userId found for framework detection');
-          return;
-        }
-        const detectedFramework = await detectFramework(repository.name, userId);
-        const frameworkMatch = detectedFramework.match(/Unsupported Framework \((.*?)\)/);
-        setDetectedFramework(frameworkMatch ? frameworkMatch[1] : detectedFramework);
-        const framework = frameworks.find((f) => f.name === detectedFramework);
-        if (framework) {
-          handleFrameworkChange(framework.id);
-        } else {
-          // If detected framework is not supported, use Unsupported Framework
-          const unsupportedFramework = frameworks.find(f => f.name === 'Unsupported Framework');
-          handleFrameworkChange(unsupportedFramework.id);
+        if (currentProject?.repository?.localPath) {
+          const framework = await detectFramework(currentProject.repository.localPath);
+          setDetectedFramework(framework);
+          if (framework) {
+            const defaults = getFrameworkDefaults(framework);
+            setConfig(prev => ({
+              ...prev,
+              framework,
+              ...defaults
+            }));
+          }
         }
       } catch (error) {
         console.error('Error detecting framework:', error);
-        // Fallback to Unsupported Framework on error
-        const unsupportedFramework = frameworks.find(f => f.name === 'Unsupported Framework');
-        handleFrameworkChange(unsupportedFramework.id);
       }
     };
 
     detectAndSetFramework();
-  }, [repository?.localPath]);
+  }, [currentProject?.repository?.localPath]);
 
   useEffect(() => {
     setJsonConfig(generateVercelConfig());
@@ -310,7 +351,6 @@ const SandboxPreview = ({repository, onConfigChange}) => {
       ...prev,
       [field]: value,
     }));
-    onConfigChange({...config, [field]: value});
   };
 
   const generateVercelConfig = () => {
@@ -384,7 +424,6 @@ const SandboxPreview = ({repository, onConfigChange}) => {
       setConfig(updatedConfig);
       setJsonConfig(newJson);
       setJsonError(null);
-      onConfigChange(parsed);
     } catch (error) {
       setJsonError(`Invalid JSON format: ${error.message}`);
     }
@@ -816,6 +855,6 @@ const SandboxPreview = ({repository, onConfigChange}) => {
       />
     </Box>
   );
-};
+});
 
 export default SandboxPreview;

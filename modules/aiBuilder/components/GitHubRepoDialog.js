@@ -144,6 +144,8 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState(initialRepo || null);
+  const configEnvRef = useRef();
+  const sandboxRef = useRef();
   const [sandboxConfig, setSandboxConfig] = useState(null);
   const [stepErrors, setStepErrors] = useState({
     0: null,
@@ -157,7 +159,6 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
     2: null,
     3: null,
   });
-  const configEnvRef = useRef();
 
   // Reset errors when moving between steps
   const clearStepError = (step) => {
@@ -292,16 +293,10 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
 
       try {
         setLoading(true);
-        const settings = {
-          framework: selectedRepo.framework || 'nextjs',
-          buildCommand: sandboxConfig?.buildCommand || 'npm run build',
-          startCommand: sandboxConfig?.startCommand || 'npm start',
-          installCommand: sandboxConfig?.installCommand || 'npm install',
-          outputDirectory: sandboxConfig?.outputDirectory || '.next',
-          nodeVersion: sandboxConfig?.nodeVersion || '18.x',
-        };
-        await updateBuildSettings(currentProject._id, settings);
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        const success = await sandboxRef.current?.handleSave();
+        if (success) {
+          setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        }
       } catch (error) {
         console.error('Error updating build settings:', error);
         setStepError(2, error.message || 'Failed to update build settings');
@@ -348,8 +343,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
       description: 'Configure sandbox settings',
       content: (
         <SandboxPreview
-          config={sandboxConfig}
-          onChange={setSandboxConfig}
+          ref={sandboxRef}
           error={stepErrors[2]}
         />
       ),
