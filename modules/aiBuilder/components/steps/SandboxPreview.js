@@ -289,7 +289,7 @@ const regions = ['all', 'us-east-1', 'eu-west-1', 'ap-southeast-1'];
 
 const SandboxPreview = forwardRef(({error}, ref) => {
   const classes = useStyles();
-  const {currentProject} = useProject();
+  const {currentProject, setProject} = useProject();
   const [activeTab, setActiveTab] = useState('form');
   const [config, setConfig] = useState({
     framework: '',
@@ -383,6 +383,8 @@ const SandboxPreview = forwardRef(({error}, ref) => {
           buildSettings: settings,
         });
 
+        // Save step 4 in localStorage and trigger parent step update
+        localStorage.setItem(`project_step_${currentProject._id}`, '3'); // 0-based index, so step 4 is 3
         return true;
       } catch (error) {
         console.error('Error updating build settings:', error);

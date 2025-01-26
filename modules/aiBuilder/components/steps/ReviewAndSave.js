@@ -1,217 +1,222 @@
-import React, { useState } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   Box,
   Typography,
   Paper,
-  Chip,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  Tooltip,
-  IconButton,
   Button,
+  IconButton,
+  Tooltip,
+  CircularProgress,
 } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
-import { deployProject } from '../../services/projectService';
-import { useProject } from '../../context/ProjectContext';
+import {makeStyles} from '@material-ui/core/styles';
+import FileCopyIcon from '@material-ui/icons/FileCopy';
+import LaunchIcon from '@material-ui/icons/Launch';
+import {deployProject} from '../../services/projectService';
+import {useProject} from '../../context/ProjectContext';
 
 const useStyles = makeStyles((theme) => ({
+  root: {
+    padding: theme.spacing(3),
+  },
   section: {
     marginBottom: theme.spacing(3),
   },
   paper: {
     padding: theme.spacing(2),
-    backgroundColor: theme.palette.grey[50],
-    marginTop: theme.spacing(1),
+    backgroundColor: theme.palette.background.paper,
+    borderRadius: theme.shape.borderRadius,
   },
-  repoInfo: {
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing(3),
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    marginRight: theme.spacing(1),
+  },
+  statusContainer: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  statusPending: {
+    backgroundColor: '#FFC107',
+  },
+  statusInProgress: {
+    backgroundColor: '#2196F3',
+  },
+  statusCompleted: {
+    backgroundColor: '#4CAF50',
+  },
+  statusFailed: {
+    backgroundColor: '#F44336',
+  },
+  infoGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+  },
+  infoItem: {
+    '& > h6': {
+      color: theme.palette.text.secondary,
+      marginBottom: theme.spacing(0.5),
+    },
+  },
+  logsContainer: {
+    backgroundColor: '#1E1E1E',
+    color: '#fff',
+    padding: theme.spacing(2),
+    borderRadius: theme.shape.borderRadius,
+    fontFamily: 'monospace',
+    height: 300,
+    overflowY: 'auto',
+    marginTop: theme.spacing(2),
+  },
+  logLine: {
+    margin: 0,
+    fontSize: '0.875rem',
+    lineHeight: 1.5,
+  },
+  actions: {
+    display: 'flex',
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(2),
+  },
+  urlContainer: {
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    marginBottom: theme.spacing(2),
-  },
-  envVarList: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-    gap: theme.spacing(1),
-  },
-  envVarItem: {
-    padding: theme.spacing(1),
-    backgroundColor: theme.palette.background.paper,
-    borderRadius: theme.shape.borderRadius,
-    border: `1px solid ${theme.palette.divider}`,
-  },
-  divider: {
-    margin: theme.spacing(3, 0),
-  },
-  codePreview: {
-    marginTop: theme.spacing(2),
-    '& pre': {
-      margin: 0,
-      borderRadius: theme.shape.borderRadius,
-    },
-  },
-  root: {
-    padding: theme.spacing(2),
-  },
-  sectionTitle: {
-    fontSize: '1rem',
-    fontWeight: 500,
-    marginBottom: theme.spacing(1),
-  },
-  list: {
-    padding: 0,
-  },
-  listItem: {
-    padding: theme.spacing(1, 0),
-  },
-  chip: {
-    marginRight: theme.spacing(1),
-  },
-  noEnvVars: {
-    color: theme.palette.text.secondary,
-    fontStyle: 'italic',
-  },
-  statusIcon: {
-    fontSize: 20,
-  },
-  statusIconConfigured: {
-    color: '#34C759',
-  },
-  statusIconUnconfigured: {
-    color: theme.palette.grey[400],
-  },
-  deployButton: {
-    marginTop: theme.spacing(2),
   },
 }));
 
-const ReviewAndSave = ({
-  projectId,
-  selectedRepo,
-  buildSettings = {},
-  onDeploySuccess,
-  onDeployError,
-}) => {
+const ReviewAndSave = () => {
   const classes = useStyles();
-  const [isDeploying, setIsDeploying] = useState(false);
-  const { currentProject } = useProject();
+  const {currentProject} = useProject();
+  const [deploymentStatus, setDeploymentStatus] = useState('pending');
+  const [previewUrl, setPreviewUrl] = useState('');
 
-  const handleDeploy = async () => {
-    try {
-      setIsDeploying(true);
-      const response = await deployProject(projectId);
-      if (onDeploySuccess) {
-        onDeploySuccess(response.data);
+  useEffect(() => {
+    const initiateDeployment = async () => {
+      try {
+        const response = await deployProject(currentProject._id);
+        // Update status based on response
+        if (response?.deploymentUrl) {
+          setPreviewUrl(response.deploymentUrl);
+        }
+        if (response?.status) {
+          setDeploymentStatus(response.status);
+        }
+      } catch (error) {
+        console.error('Deployment failed:', error);
+        setDeploymentStatus('failed');
       }
-    } catch (error) {
-      console.error('Failed to deploy project:', error);
-      if (onDeployError) {
-        onDeployError(error);
-      }
-    } finally {
-      setIsDeploying(false);
+    };
+
+    initiateDeployment();
+  }, [currentProject._id]);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending':
+        return classes.statusPending;
+      case 'in_progress':
+        return classes.statusInProgress;
+      case 'completed':
+        return classes.statusCompleted;
+      case 'failed':
+        return classes.statusFailed;
+      default:
+        return classes.statusPending;
     }
   };
 
-  if (!selectedRepo) {
-    return (
-      <Box className={classes.root}>
-        <Typography color="error">
-          No repository selected. Please go back and select a repository.
-        </Typography>
-      </Box>
-    );
-  }
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(previewUrl);
+  };
+
+  // Sample build logs - will be replaced with real-time logs
+  const buildLogs = [
+    '23:25:20.995 ○ /profile           4.72 kB     328 kB',
+    '23:25:20.995 ○ /routes           3.22 kB     481 kB',
+    '23:25:20.996 ○ /routes/[...all]  3.23 kB     481 kB',
+    '23:25:20.996 ○ /settings         3.21 kB     481 kB',
+    '23:25:20.996 ○ /settings/[...all] 3.21 kB    481 kB',
+    '23:25:20.996 ○ /signup           1.69 kB     326 kB',
+  ];
 
   return (
-    <Box>
-      <Box className={classes.section}>
-        <Typography variant="subtitle1" gutterBottom>
-          Selected Repository
-        </Typography>
-        <Paper className={classes.paper}>
-          <Box className={classes.repoInfo}>
-            <Typography variant="h6">
-              {selectedRepo.name}
-            </Typography>
-            {selectedRepo.language && (
-              <Chip
-                label={selectedRepo.language}
-                size="small"
-                color="primary"
-                variant="outlined"
-              />
-            )}
-            <Tooltip
-              title={
-                currentProject?.environmentVariables
-                  ? 'Deployment configured with environment variables'
-                  : 'No deployment configuration'
-              }
-              placement="left"
-            >
-              <IconButton size="small">
-                {currentProject?.environmentVariables ? (
-                  <CheckCircleIcon
-                    className={`${classes.statusIcon} ${classes.statusIconConfigured}`}
-                  />
-                ) : (
-                  <RadioButtonUncheckedIcon
-                    className={`${classes.statusIcon} ${classes.statusIconUnconfigured}`}
-                  />
-                )}
-              </IconButton>
-            </Tooltip>
-          </Box>
-          <Typography variant="body2" color="textSecondary">
-            {selectedRepo.description || 'No description'}
+    <Box className={classes.root}>
+      <Box className={classes.header}>
+        <Box className={classes.statusContainer}>
+          <span
+            className={`${classes.statusDot} ${getStatusColor(deploymentStatus)}`}
+          />
+          <Typography variant="body1">
+            {deploymentStatus.charAt(0).toUpperCase() + deploymentStatus.slice(1)}
           </Typography>
-        </Paper>
+        </Box>
+        <Box className={classes.urlContainer}>
+          {previewUrl && (
+            <>
+              <Typography variant="body2">{previewUrl}</Typography>
+              <Tooltip title="Copy URL">
+                <IconButton size="small" onClick={handleCopyUrl}>
+                  <FileCopyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Visit">
+                <IconButton
+                  size="small"
+                  component="a"
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <LaunchIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
       </Box>
 
-      <Box className={classes.section}>
-        <Typography variant="subtitle1" gutterBottom>
-          Environment Variables
-        </Typography>
+      <Box className={classes.infoGrid}>
         <Paper className={classes.paper}>
-          <Box className={classes.envVarList}>
-            {currentProject?.environmentVariables
-              ? Object.entries(currentProject.environmentVariables).map(([key, value], index) => (
-                  <Box key={index} className={classes.envVarItem}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      {key}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      {value.replace(/./g, '*')} // Mask the value for security
-                    </Typography>
-                  </Box>
-                ))
-              : (
-                <Typography variant="body2" color="textSecondary">
-                  No environment variables configured
-                </Typography>
-              )}
+          <Box className={classes.infoItem}>
+            <Typography variant="h6">Environment</Typography>
+            <Typography>Preview</Typography>
+          </Box>
+        </Paper>
+        <Paper className={classes.paper}>
+          <Box className={classes.infoItem}>
+            <Typography variant="h6">Source</Typography>
+            <Typography>{currentProject?.repository?.name || 'N/A'}</Typography>
+          </Box>
+        </Paper>
+        <Paper className={classes.paper}>
+          <Box className={classes.infoItem}>
+            <Typography variant="h6">Duration</Typography>
+            <Typography>2m 12s</Typography>
           </Box>
         </Paper>
       </Box>
 
-      <Box className={classes.section}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleDeploy}
-          disabled={isDeploying}
-          className={classes.deployButton}
-        >
-          {isDeploying ? 'Deploying...' : 'Deploy Project'}
-        </Button>
-      </Box>
+      <Paper className={classes.paper}>
+        <Typography variant="h6" gutterBottom>
+          Build Logs
+        </Typography>
+        <Box className={classes.logsContainer}>
+          {buildLogs.map((log, index) => (
+            <pre key={index} className={classes.logLine}>
+              {log}
+            </pre>
+          ))}
+        </Box>
+      </Paper>
     </Box>
   );
 };

@@ -147,21 +147,20 @@ export async function detectFramework(repoUrl) {
   }
 }
 
-export async function deployProject(projectId, deploymentData) {
+export async function deployProject(projectId) {
   try {
-    const response = await fetch(
-      `${apiEndpoints.project.deploy}/${projectId}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(deploymentData),
+    const response = await fetch(`${apiEndpoints.project.deploy}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        projectId,
+      }),
+    });
 
     if (!response.ok) {
-      throw new Error('Failed to deploy project');
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     return await response.json();
@@ -203,7 +202,7 @@ export async function updateBuildSettings(projectId, settings, initiateDeploymen
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update build settings');
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     return await response.json();

@@ -11,6 +11,7 @@ export const apiEndpoints = {
     env: `${API_BASE_URL}/project/env`,
     buildSettings: `${API_BASE_URL}/project/build-settings`,
     deploy: `${API_BASE_URL}/project/deploy`,
+  deploymentStatus: `${API_BASE_URL}/project/deployment/status`,
     detect: `${API_BASE_URL}/project/detect-framework`,
   },
   projects: `${API_BASE_URL}/projects`,
