@@ -34,6 +34,7 @@ import {useStyles} from './styles';
 import {fetchRepositories} from './services/repositoryService';
 import {UserProvider} from './context/UserContext';
 import {useUser} from './context/UserContext';
+import {useProject} from './context/ProjectContext';
 
 const AIBuilder = () => {
   const [inputValue, setInputValue] = useState('');
@@ -43,7 +44,6 @@ const AIBuilder = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showRepoDialog, setShowRepoDialog] = useState(false);
   const [repositories, setRepositories] = useState([]);
-  const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoEnvVars, setRepoEnvVars] = useState({});
   const [loading, setLoading] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
@@ -52,13 +52,14 @@ const AIBuilder = () => {
   const [generatedCode, setGeneratedCode] = useState('');
   const [codeScope, setCodeScope] = useState({});
   const [activeTab, setActiveTab] = useState('preview');
-  const [userId, setUserId] = useState('dummy');
+  const [userId, setUserId] = useState();
+  const { currentProject, setProject } = useProject();
+  const { user } = useUser();
   const classes = useStyles({showCanvas});
   const [processingMessages, setProcessingMessages] = useState([]);
   const inputRef = useRef(null);
   const processingTimeoutRef = useRef(null);
   const router = useRouter();
-  const { user } = useUser();
 
   useEffect(() => {
     if (inputRef.current && !showCanvas) {
@@ -77,14 +78,20 @@ const AIBuilder = () => {
     const params = new URLSearchParams(window.location.search);
     const isAuthenticated = params.get('authenticated');
     const userIdParam = params.get('userId');
-
+    
+    // Case 1: Redirected from auth with userId in params
     if (isAuthenticated && userIdParam) {
       setUserId(userIdParam);
-      //set in localstorage
       localStorage.setItem('userId', userIdParam);
-      handleFetchRepositories(userIdParam);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    // Case 2: Check for existing userId in localStorage
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      setUserId(storedUserId);
     }
   }, []);
 
@@ -94,24 +101,13 @@ const AIBuilder = () => {
     }
   }, [repositories]);
 
-  useEffect(() => {
-    // Load selected repository from localStorage on mount
-    const savedRepo = localStorage.getItem('selectedRepository');
-    if (savedRepo) {
-      try {
-        setSelectedRepo(JSON.parse(savedRepo));
-      } catch (error) {
-        console.error('Error loading saved repository:', error);
-      }
-    }
-  }, []);
-
-  const handleFetchRepositories = async (userId) => {
+  const loadRepositories = async () => {
+    if (!userId) return;
+    
     setLoading(true);
     try {
       const data = await fetchRepositories(userId);
       setRepositories(data);
-      setShowRepoDialog(true);
     } catch (error) {
       console.error('Error fetching repositories:', error);
     } finally {
@@ -119,11 +115,15 @@ const AIBuilder = () => {
     }
   };
 
+  useEffect(() => {
+    loadRepositories();
+  }, [userId]);
+
   const handleRepoSelect = (repo) => {
-    setSelectedRepo(repo);
+    setProject(repo);
     localStorage.setItem('selectedRepository', JSON.stringify(repo));
     setShowRepoDialog(false);
-    // Force re-render of components that depend on selectedRepo
+    // Force re-render of components that depend on repo
     setRepositories((prev) => [...prev]);
   };
 
@@ -230,18 +230,15 @@ const AIBuilder = () => {
   };
 
   const handleGitHubConnect = () => {
-    // If already connected, just show repo dialog
-    if (user?.isGithubConnected) {
-      console.log('GitHub already connected, showing repo dialog');
-      setShowRepoDialog(true);
-      return;
-    }
+    setShowRepoDialog(true);
+  };
 
-    // If not connected, redirect to GitHub OAuth
-    console.log('Redirecting to GitHub OAuth');
-    const currentUserId = localStorage.getItem('userId');
-    const state = JSON.stringify({userId: currentUserId});
-    window.location.href = `https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&scope=repo&state=${encodeURIComponent(state)}`;
+  const handleOpenRepoDialog = () => {
+    setShowRepoDialog(true);
+  };
+
+  const handleCloseRepoDialog = () => {
+    setShowRepoDialog(false);
   };
 
   const handleSignIn = () => {
@@ -295,7 +292,7 @@ const AIBuilder = () => {
                 variant='outlined'
                 className={classes.repoButton}
                 startIcon={
-                  selectedRepo ? (
+                  currentProject ? (
                     <EditIcon
                       className={classes.editIcon}
                       style={{marginRight: -5, fontSize: 16}}
@@ -306,7 +303,7 @@ const AIBuilder = () => {
                 }
                 onClick={handleGitHubConnect}>
                 <Box display='flex' alignItems='center' position="relative" width="100%">
-                  {user?.isGithubConnected && !selectedRepo && (
+                  {user?.isGithubConnected && !currentProject && (
                     <Box 
                       position="absolute"
                       top={-21}
@@ -336,18 +333,18 @@ const AIBuilder = () => {
                       Connected
                     </Box>
                   )}
-                  {selectedRepo 
-                    ? selectedRepo.name 
+                  {currentProject 
+                    ? currentProject.name 
                     : user?.isGithubConnected 
                       ? 'Select Repository'
                       : 'Connect your Repo'
                   }
-                  {selectedRepo && (
+                  {currentProject && (
                     <Box
                       style={{
                         padding: 5,
-                        top: 0,
-                        right: 0,
+                        top: -24,
+                        right: -40,
                         position: 'absolute',
                       }}>
                       <Tooltip
@@ -428,22 +425,22 @@ const AIBuilder = () => {
           />
         )}
         <ConfirmationDialog
-          open={showConfirm}
+          open={false}
           onClose={() => setShowConfirm(false)}
           onConfirm={handleConfirm}
         />
         <AuthDialog
-          open={showAuthDialog}
+          open={false}
           onClose={() => setShowAuthDialog(false)}
           onSignIn={handleSignIn}
           onSignUp={handleSignUp}
         />
         <GitHubRepoDialog
           open={showRepoDialog}
-          onClose={() => setShowRepoDialog(false)}
+          onClose={handleCloseRepoDialog}
           onSelect={handleRepoSelect}
           userId={userId}
-          initialRepo={selectedRepo}
+          initialRepo={currentProject}
         />
       </Box>
     </UserProvider>

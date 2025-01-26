@@ -15,6 +15,7 @@ import {
 import {makeStyles} from '@material-ui/core/styles';
 import SearchIcon from '@material-ui/icons/Search';
 import GitHubIcon from '@material-ui/icons/GitHub';
+import WarningIcon from '@material-ui/icons/Warning';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -82,16 +83,32 @@ const useStyles = makeStyles((theme) => ({
       marginRight: theme.spacing(0.5),
     },
   },
+  warningText: {
+    color: theme.palette.warning.main,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1),
+    fontSize: '0.75rem',
+  },
+  warningIcon: {
+    color: theme.palette.warning.main,
+    fontSize: '1rem',
+  },
+  errorText: {
+    color: theme.palette.error.main,
+  },
 }));
 
 const SelectRepository = ({
   repositories,
   selectedRepo,
-  onRepoSelect,
+  onSelect,
   searchQuery,
   onSearchChange,
   loading,
   error,
+  warning,
 }) => {
   const classes = useStyles();
   const [isOpen, setIsOpen] = useState(false);
@@ -107,15 +124,28 @@ const SelectRepository = ({
   };
 
   const handleRepoClick = (repo) => {
-    onRepoSelect(repo);
-    onSearchChange(''); // Clear search when selecting
-    setIsOpen(false);
+    if (repo) {
+      onSelect(repo);
+      onSearchChange('');
+      setIsOpen(false);
+    }
   };
 
-  const handleDeleteChip = (e) => {
-    e.stopPropagation(); // Prevent input click handler from firing
-    onRepoSelect(null);
+  const handleDeleteChip = () => {
+    if (onSelect) {
+      onSelect(null);
+    }
     onSearchChange('');
+    setIsOpen(true);
+  };
+
+  const handleInputChange = (e) => {
+    if (!selectedRepo) {
+      onSearchChange(e.target.value);
+      if (!isOpen) {
+        setIsOpen(true);
+      }
+    }
   };
 
   const filteredRepos = repositories.filter((repo) =>
@@ -137,20 +167,30 @@ const SelectRepository = ({
       <div className={classes.root}>
         <TextField
           className={classes.searchInput}
-          placeholder={selectedRepo ? '' : 'Search repositories...'}
-          value={searchQuery}
+          placeholder="Search repositories..."
+          value={selectedRepo ? '' : searchQuery}
           onClick={handleInputClick}
-          onChange={(e) => onSearchChange(e.target.value)}
-          error={!!error}
-          helperText={error}
+          onChange={handleInputChange}
+          error={!!error && !warning}
+          helperText={
+            (error || warning) && (
+              <Typography 
+                className={warning ? classes.warningText : classes.errorText}
+                component="span"
+              >
+                {warning && <WarningIcon className={classes.warningIcon} />}
+                {error || warning}
+              </Typography>
+            )
+          }
           InputProps={{
-            readOnly: !!selectedRepo,
             startAdornment: selectedRepo ? (
               <InputAdornment position="start">
                 <Chip
                   label={getChipLabel(selectedRepo)}
                   onDelete={handleDeleteChip}
                   className={classes.chip}
+                  deleteIcon={<span style={{ cursor: 'pointer' }}>✕</span>}
                 />
               </InputAdornment>
             ) : (

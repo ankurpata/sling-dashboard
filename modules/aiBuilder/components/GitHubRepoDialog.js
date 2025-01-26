@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,11 +12,17 @@ import {
   StepLabel,
   StepContent,
   CircularProgress,
+  ArrowBackIcon,
 } from '@material-ui/core';
+import CloseIcon from '@material-ui/icons/Close';
 import {makeStyles} from '@material-ui/core/styles';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import {fetchRepositories} from '../services/repositoryService';
-import {saveProject, saveEnvironmentVariables, saveBuildSettings} from '../services/projectService';
+import {
+  createProject,
+  updateEnvironmentVariables,
+  updateBuildSettings,
+} from '../services/projectService';
+import {useProject} from '../context/ProjectContext';
 
 import SelectRepository from './steps/SelectRepository';
 import ConfigureEnvironment from './steps/ConfigureEnvironment';
@@ -130,33 +136,9 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const steps = [
-  {
-    label: 'Select Repository',
-    description: 'Choose a repository to connect',
-  },
-  {
-    label: 'Configure Environment',
-    description: 'Set up environment variables',
-  },
-  {
-    label: 'Sandbox Preview',
-    description: 'Configure build and development settings',
-  },
-  {
-    label: 'Review and Save',
-    description: 'Review your selections and save',
-  },
-];
-
-const GitHubRepoDialog = ({
-  open,
-  onClose,
-  onSelect,
-  userId,
-  initialRepo,
-}) => {
+const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   const classes = useStyles();
+  const {currentProject, setProject} = useProject();
   const [activeStep, setActiveStep] = useState(0);
   const [repositories, setRepositories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -164,7 +146,35 @@ const GitHubRepoDialog = ({
   const [selectedRepo, setSelectedRepo] = useState(initialRepo || null);
   const [envVars, setEnvVars] = useState([{key: '', value: ''}]);
   const [sandboxConfig, setSandboxConfig] = useState(null);
-  const [errors, setErrors] = useState({});
+  const [stepErrors, setStepErrors] = useState({
+    0: null,
+    1: null,
+    2: null,
+    3: null,
+  });
+  const [stepWarnings, setStepWarnings] = useState({
+    0: null,
+    1: null,
+    2: null,
+    3: null,
+  });
+
+  // Reset errors when moving between steps
+  const clearStepError = (step) => {
+    setStepErrors((prev) => ({...prev, [step]: null}));
+  };
+
+  // Set error for current step
+  const setStepError = (step, error) => {
+    setStepErrors((prev) => ({...prev, [step]: error}));
+    setStepWarnings((prev) => ({...prev, [step]: null})); // Clear warning when setting error
+  };
+
+  // Set warning for current step
+  const setStepWarning = (step, warning) => {
+    setStepWarnings((prev) => ({...prev, [step]: warning}));
+    setStepErrors((prev) => ({...prev, [step]: null})); // Clear error when setting warning
+  };
 
   // Reset selected repo when dialog opens with initialRepo
   useEffect(() => {
@@ -173,125 +183,234 @@ const GitHubRepoDialog = ({
     }
   }, [open, initialRepo]);
 
+  // Load repositories when dialog opens
   useEffect(() => {
     const loadRepositories = async () => {
       try {
         setLoading(true);
         const data = await fetchRepositories(userId);
-        setRepositories(data);
+        if (data && Array.isArray(data)) {
+          setRepositories(data);
+        } else {
+          setStepError(0, 'No repositories found');
+        }
       } catch (error) {
         console.error('Error fetching repositories:', error);
-        setErrors({fetch: error.message || 'Failed to fetch repositories'});
+        setStepError(0, 'Failed to fetch repositories');
       } finally {
         setLoading(false);
       }
     };
 
-    if (open) {
+    if (open && userId) {
       loadRepositories();
     }
   }, [open, userId]);
 
+  // Show warning if project exists and opened from home
+  useEffect(() => {
+    if (open && currentProject?._id && !selectedRepo) {
+      setStepWarning(
+        0,
+        'Warning: You already have an active project. Selecting a new one repo will replace it.',
+      );
+    } else {
+      setStepWarning(0, null);
+    }
+  }, [open, currentProject, selectedRepo]);
+
+  const handleRepoSelect = async (repo) => {
+    if (!repo) {
+      setSelectedRepo(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setSelectedRepo(repo);
+
+      const createdProject = await createProject({
+        repoId: repo.repoId,
+        name: repo.name,
+        full_name: repo.fullName,
+        private: repo.private,
+        html_url: repo.htmlUrl,
+        language: repo.language,
+        default_branch: repo.defaultBranch || 'main',
+        organization: repo.organization,
+        orgId: repo.orgId,
+        userId,
+      });
+
+      setProject(createdProject);
+      // Remove onSelect call to prevent dialog from closing
+    } catch (error) {
+      console.error('Error creating project:', error);
+      setStepError(0, error.message || 'Failed to create project');
+      setSelectedRepo(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNext = async () => {
+    clearStepError(activeStep);
+
     if (activeStep === 0) {
       if (!selectedRepo) {
-        setErrors({repo: 'Please select a repository'});
+        setStepError(0, 'Please select a repository');
+        return;
+      }
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    } else if (activeStep === 1) {
+      if (!currentProject?._id) {
+        setStepError(1, 'No active project found');
         return;
       }
 
       try {
         setLoading(true);
-        await saveProject({
-          userId,
-          projectId: selectedRepo.id || selectedRepo.name,
-          repository: {
-            name: selectedRepo.name,
-            branch: selectedRepo.default_branch || 'main',
-            framework: selectedRepo.framework || null
+        const variables = envVars.reduce((acc, env) => {
+          if (env.key && env.value) {
+            acc[env.key] = env.value;
           }
-        });
+          return acc;
+        }, {});
+        await updateEnvironmentVariables(currentProject._id, variables);
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
       } catch (error) {
-        console.error('Error saving project:', error);
-        const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message || 'Failed to save project';
-        setErrors({save: errorMessage});
-        return;
-      } finally {
-        setLoading(false);
-      }
-    } else if (activeStep === 1) {
-      // Save environment variables before moving to next step
-      try {
-        setLoading(true);
-        await saveEnvironmentVariables({
-          projectId: selectedRepo.id || selectedRepo.name,
-          environmentVariables: envVars.reduce((acc, env) => {
-            if (env.key && env.value) {
-              acc[env.key] = env.value;
-            }
-            return acc;
-          }, {})
-        });
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-      } catch (error) {
-        console.error('Error saving environment variables:', error);
-        const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message || 'Failed to save environment variables';
-        setErrors({env: errorMessage});
-        return;
+        console.error('Error updating environment variables:', error);
+        setStepError(
+          1,
+          error.message || 'Failed to update environment variables',
+        );
       } finally {
         setLoading(false);
       }
     } else if (activeStep === 2) {
-      // Save sandbox preview settings before moving to next step
+      if (!currentProject?._id) {
+        setStepError(2, 'No active project found');
+        return;
+      }
+
       try {
         setLoading(true);
-        await saveBuildSettings({
-          projectId: selectedRepo.id || selectedRepo.name,
-          buildSettings: {
-            framework: selectedRepo.framework || 'nextjs',
-            buildCommand: sandboxConfig?.buildCommand || 'npm run build',
-            startCommand: sandboxConfig?.startCommand || 'npm start',
-            installCommand: sandboxConfig?.installCommand || 'npm install',
-            outputDirectory: sandboxConfig?.outputDirectory || '.next',
-            nodeVersion: sandboxConfig?.nodeVersion || '18.x'
-          }
-        });
+        const settings = {
+          framework: selectedRepo.framework || 'nextjs',
+          buildCommand: sandboxConfig?.buildCommand || 'npm run build',
+          startCommand: sandboxConfig?.startCommand || 'npm start',
+          installCommand: sandboxConfig?.installCommand || 'npm install',
+          outputDirectory: sandboxConfig?.outputDirectory || '.next',
+          nodeVersion: sandboxConfig?.nodeVersion || '18.x',
+        };
+        await updateBuildSettings(currentProject._id, settings);
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
       } catch (error) {
-        console.error('Error saving build settings:', error);
-        const errorMessage = error.response?.data?.errors?.[0]?.msg || error.message || 'Failed to save build settings';
-        setErrors({sandbox: errorMessage});
-        return;
+        console.error('Error updating build settings:', error);
+        setStepError(2, error.message || 'Failed to update build settings');
       } finally {
         setLoading(false);
       }
-    } else {
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
   };
 
   const handleBack = () => {
+    clearStepError(activeStep);
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
-    setErrors({});
+  };
+
+  const steps = [
+    {
+      label: 'Select Repository',
+      description: 'Choose a repository to connect',
+      content: (
+        <SelectRepository
+          repositories={repositories}
+          selectedRepo={selectedRepo}
+          onSelect={handleRepoSelect}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          loading={loading}
+          error={stepErrors[0]}
+          warning={stepWarnings[0]}
+        />
+      ),
+    },
+    {
+      label: 'Configure Environment',
+      description: 'Set up environment variables',
+      content: (
+        <ConfigureEnvironment
+          envVars={envVars}
+          setEnvVars={setEnvVars}
+          error={stepErrors[1]}
+        />
+      ),
+    },
+    {
+      label: 'Sandbox Preview',
+      description: 'Configure sandbox settings',
+      content: (
+        <SandboxPreview
+          config={sandboxConfig}
+          onChange={setSandboxConfig}
+          error={stepErrors[2]}
+        />
+      ),
+    },
+    {
+      label: 'Review and Save',
+      description: 'Review your configuration',
+      content: (
+        <ReviewAndSave
+          repository={selectedRepo}
+          envVars={envVars}
+          sandboxConfig={sandboxConfig}
+          error={stepErrors[3]}
+        />
+      ),
+    },
+  ];
+
+  const getStepContent = (step) => {
+    return steps[step].content;
+  };
+
+  const getStepButtonText = (step) => {
+    if (step === 1) {
+      return 'Save and Next';
+    } else if (step === 2) {
+      return 'Save and Next';
+    }
+    return 'Next';
   };
 
   const handleClose = () => {
     setActiveStep(0);
-    setSearchQuery('');
     setSelectedRepo(null);
     setEnvVars([{key: '', value: ''}]);
     setSandboxConfig(null);
-    setErrors({});
+    setStepErrors({
+      0: null,
+      1: null,
+      2: null,
+      3: null,
+    });
+    setStepWarnings({
+      0: null,
+      1: null,
+      2: null,
+      3: null,
+    });
     onClose();
   };
 
   const handleFinish = () => {
-    // Pass the complete configuration including env vars
     const config = {
       ...selectedRepo,
       branch: selectedRepo.default_branch || 'main',
       framework: sandboxConfig?.framework || 'Next.js',
-      environmentVariables: envVars.filter(env => env.key && env.value),
+      environmentVariables: envVars.filter((env) => env.key && env.value),
     };
     onSelect(config);
     localStorage.setItem('selectedRepository', JSON.stringify(config));
@@ -330,88 +449,36 @@ const GitHubRepoDialog = ({
     setSandboxConfig(config);
   };
 
-  const getStepContent = (step) => {
-    switch (step) {
-      case 0:
-        return (
-          <SelectRepository
-            repositories={repositories}
-            selectedRepo={selectedRepo}
-            onRepoSelect={setSelectedRepo}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            loading={loading}
-            error={errors.fetch}
-          />
-        );
-      case 1:
-        return (
-          <ConfigureEnvironment
-            projectId={selectedRepo?.id || selectedRepo?.name}
-            envVars={envVars}
-            onEnvVarChange={handleEnvVarChange}
-            onEnvVarAdd={handleEnvVarAdd}
-            onEnvVarRemove={handleEnvVarRemove}
-            onEnvFileUpload={handleEnvFileUpload}
-            errors={errors}
-            onSave={(data) => {
-              // Update the selected repo with the new environment variables
-              setSelectedRepo(prev => ({
-                ...prev,
-                environmentVariables: data.environmentVariables
-              }));
-            }}
-          />
-        );
-      case 2:
-        return (
-          <SandboxPreview
-            repository={selectedRepo}
-            onConfigChange={handleSandboxConfigChange}
-          />
-        );
-      case 3:
-        return (
-          <ReviewAndSave
-            selectedRepo={selectedRepo}
-            envVars={envVars.filter(env => env.key && env.value)}
-            sandboxConfig={sandboxConfig}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getStepButtonText = (step) => {
-    if (step === 1) {
-      return 'Save and Next';
-    } else if (step === 2) {
-      return 'Save and Next';
-    }
-    return 'Next';
-  };
-
   return (
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth="md"
+      maxWidth='md'
       fullWidth
-      PaperProps={{
-        className: classes.dialogPaper,
-      }}>
+      classes={{paper: classes.dialogPaper}}
+      disableEscapeKeyDown>
       <DialogTitle className={classes.dialogTitle}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h6">Configure Repository</Typography>
+        <Box display='flex' alignItems='center' justifyContent='space-between'>
+          <Typography variant='h6'>Configure Repository</Typography>
           {activeStep > 0 && (
             <Button
               startIcon={<ArrowBackIcon />}
               onClick={() => {
                 setActiveStep(0);
-                setErrors({});
+                setStepErrors({
+                  0: null,
+                  1: null,
+                  2: null,
+                  3: null,
+                });
+                setStepWarnings({
+                  0: null,
+                  1: null,
+                  2: null,
+                  3: null,
+                });
               }}
-              color="primary">
+              color='primary'>
               Back to Repositories
             </Button>
           )}
@@ -420,18 +487,20 @@ const GitHubRepoDialog = ({
       <DialogContent>
         <Stepper
           activeStep={activeStep}
-          orientation="vertical"
+          orientation='vertical'
           className={classes.stepper}>
           {steps.map((step, index) => (
             <Step key={step.label}>
-              <StepLabel error={!!errors.repo || !!errors.save} classes={{label: classes.stepLabel}}>
-                <Typography variant="subtitle1">{step.label}</Typography>
-                {(errors.repo || errors.save) && (
-                  <Typography color="error" variant="caption" display="block">
-                    {errors.repo || errors.save}
+              <StepLabel
+                error={!!stepErrors[index]}
+                classes={{label: classes.stepLabel}}>
+                <Typography variant='subtitle1'>{step.label}</Typography>
+                {stepErrors[index] && (
+                  <Typography color='error' variant='caption' display='block'>
+                    {stepErrors[index]}
                   </Typography>
                 )}
-                <Typography variant="caption" color="textSecondary">
+                <Typography variant='caption' color='textSecondary'>
                   {step.description}
                 </Typography>
               </StepLabel>
@@ -447,14 +516,17 @@ const GitHubRepoDialog = ({
             <Button
               onClick={() => {
                 onSelect(selectedRepo);
-                localStorage.setItem('selectedRepository', JSON.stringify({
-                  name: selectedRepo.name,
-                  branch: selectedRepo.default_branch || 'main',
-                  framework: 'Next.js',
-                }));
+                localStorage.setItem(
+                  'selectedRepository',
+                  JSON.stringify({
+                    name: selectedRepo.name,
+                    branch: selectedRepo.default_branch || 'main',
+                    framework: 'Next.js',
+                  }),
+                );
                 handleClose();
               }}
-              color="primary">
+              color='primary'>
               Skip Preview Setup and move to Editing
             </Button>
           )}
@@ -463,17 +535,21 @@ const GitHubRepoDialog = ({
           <Button
             disabled={activeStep === 0}
             onClick={handleBack}
-            variant="outlined"
+            variant='outlined'
             className={classes.backButton}>
             Back
           </Button>
           <Button
-            variant="contained"
-            color="primary"
+            variant='contained'
+            color='primary'
             className={classes.nextButton}
-            onClick={activeStep === steps.length - 1 ? handleFinish : handleNext}
+            onClick={
+              activeStep === steps.length - 1 ? handleFinish : handleNext
+            }
             disabled={activeStep === 0 && !selectedRepo}>
-            {activeStep === steps.length - 1 ? 'Finish' : getStepButtonText(activeStep)}
+            {activeStep === steps.length - 1
+              ? 'Finish'
+              : getStepButtonText(activeStep)}
           </Button>
         </Box>
       </DialogActions>
