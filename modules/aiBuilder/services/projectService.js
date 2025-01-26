@@ -172,12 +172,19 @@ export async function deployProject(projectId) {
 
 export async function getDeploymentStatus(projectId, deploymentId) {
   try {
-    const response = await fetch(
-      `${apiEndpoints.project.deploy}/${projectId}/status/${deploymentId}`,
-    );
+    const response = await fetch(`${apiEndpoints.project.deploymentStatus}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        projectId,
+        deploymentId: deploymentId,
+      }),
+    });
 
     if (!response.ok) {
-      throw new Error('Failed to get deployment status');
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     return await response.json();

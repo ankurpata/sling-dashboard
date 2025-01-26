@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   Box,
   Typography,
@@ -11,7 +11,7 @@ import {
 import {makeStyles} from '@material-ui/core/styles';
 import FileCopyIcon from '@material-ui/icons/FileCopy';
 import LaunchIcon from '@material-ui/icons/Launch';
-import {deployProject} from '../../services/projectService';
+import {deployProject, getDeploymentStatus} from '../../services/projectService';
 import {useProject} from '../../context/ProjectContext';
 
 const useStyles = makeStyles((theme) => ({
@@ -78,8 +78,15 @@ const useStyles = makeStyles((theme) => ({
   },
   logLine: {
     margin: 0,
-    fontSize: '0.875rem',
-    lineHeight: 1.5,
+    padding: '4px 8px',
+    fontFamily: 'monospace',
+    fontSize: '0.9rem',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-all',
+    '&[data-error="true"]': {
+      color: theme.palette.error.main,
+      backgroundColor: theme.palette.error.light + '20',
+    },
   },
   actions: {
     display: 'flex',
@@ -93,22 +100,113 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const POLL_INTERVAL = 5000; // 5 seconds
+const MAX_POLL_TIME = 5 * 60 * 1000; // 5 minutes
+
 const ReviewAndSave = () => {
   const classes = useStyles();
   const {currentProject} = useProject();
   const [deploymentStatus, setDeploymentStatus] = useState('pending');
   const [previewUrl, setPreviewUrl] = useState('');
+  const [buildLogs, setBuildLogs] = useState([]);
+  const [deploymentId, setDeploymentId] = useState(null);
+  const pollTimeoutRef = useRef(null);
+  const startTimeRef = useRef(null);
+
+  const stopPolling = () => {
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+      pollTimeoutRef.current = null;
+    }
+  };
+
+  const pollDeploymentStatus = async () => {
+    if (!deploymentId) {
+      console.error('No deployment ID available');
+      stopPolling();
+      return;
+    }
+
+    try {
+      const now = Date.now();
+      if (now - startTimeRef.current > MAX_POLL_TIME) {
+        console.log('Polling timeout reached');
+        stopPolling();
+        return;
+      }
+
+      console.log('Polling deployment status...', { deploymentId, projectId: currentProject._id });
+      const response = await getDeploymentStatus(currentProject._id, deploymentId);
+      
+      if (response) {
+        const {status, logs, deploymentUrl, error, step} = response;
+        console.log('Received status:', status);
+        setDeploymentStatus(status);
+        
+        // Update logs array with any new logs
+        const updatedLogs = [...buildLogs];
+        if (logs && logs.length > 0) {
+          updatedLogs.push(...logs);
+        }
+        
+        // If there's an error, add it to the logs with error formatting
+        if (error) {
+          updatedLogs.push(
+            `\n[ERROR] Deployment failed during ${step || 'deployment'} step:`,
+            error
+          );
+        }
+        
+        setBuildLogs(updatedLogs);
+        
+        if (deploymentUrl) {
+          setPreviewUrl(deploymentUrl);
+        }
+
+        // Stop polling if deployment is complete or failed
+        if (status === 'completed' || status === 'failed') {
+          console.log('Deployment finished, stopping poll');
+          stopPolling();
+          return;
+        }
+      }
+
+      // Schedule next poll
+      pollTimeoutRef.current = setTimeout(pollDeploymentStatus, POLL_INTERVAL);
+    } catch (error) {
+      console.error('Error polling deployment status:', error);
+      stopPolling();
+    }
+  };
+
+  useEffect(() => {
+    if (deploymentId) {
+      console.log('Starting deployment status polling');
+      startTimeRef.current = Date.now();
+      pollDeploymentStatus();
+    }
+
+    return () => {
+      stopPolling();
+    };
+  }, [deploymentId]);
 
   useEffect(() => {
     const initiateDeployment = async () => {
       try {
+        console.log('Initiating deployment...');
         const response = await deployProject(currentProject._id);
-        // Update status based on response
         if (response?.deploymentUrl) {
           setPreviewUrl(response.deploymentUrl);
         }
         if (response?.status) {
           setDeploymentStatus(response.status);
+        }
+        if (response?.deploymentId) {
+          console.log('Received deployment ID:', response.deploymentId);
+          setDeploymentId(response.deploymentId);
+        } else {
+          console.error('No deployment ID received from deploy API');
         }
       } catch (error) {
         console.error('Deployment failed:', error);
@@ -137,16 +235,6 @@ const ReviewAndSave = () => {
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(previewUrl);
   };
-
-  // Sample build logs - will be replaced with real-time logs
-  const buildLogs = [
-    '23:25:20.995 ○ /profile           4.72 kB     328 kB',
-    '23:25:20.995 ○ /routes           3.22 kB     481 kB',
-    '23:25:20.996 ○ /routes/[...all]  3.23 kB     481 kB',
-    '23:25:20.996 ○ /settings         3.21 kB     481 kB',
-    '23:25:20.996 ○ /settings/[...all] 3.21 kB    481 kB',
-    '23:25:20.996 ○ /signup           1.69 kB     326 kB',
-  ];
 
   return (
     <Box className={classes.root}>
@@ -211,7 +299,11 @@ const ReviewAndSave = () => {
         </Typography>
         <Box className={classes.logsContainer}>
           {buildLogs.map((log, index) => (
-            <pre key={index} className={classes.logLine}>
+            <pre 
+              key={index} 
+              className={classes.logLine}
+              data-error={log.startsWith('[ERROR]')}
+            >
               {log}
             </pre>
           ))}
