@@ -139,7 +139,13 @@ const useStyles = makeStyles((theme) => ({
 const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   const classes = useStyles();
   const {currentProject, setProject} = useProject();
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(() => {
+    // Initialize from localStorage if exists
+    const savedStep = localStorage.getItem(
+      `project_step_${currentProject?._id}`,
+    );
+    return savedStep ? parseInt(savedStep, 10) : 0;
+  });
   const [repositories, setRepositories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -262,7 +268,17 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
         setStepError(0, 'Please select a repository');
         return;
       }
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+      setActiveStep((prevActiveStep) => {
+        const newStep = prevActiveStep + 1;
+        // Save to localStorage when moving forward
+        if (currentProject?._id) {
+          localStorage.setItem(
+            `project_step_${currentProject._id}`,
+            newStep.toString(),
+          );
+        }
+        return newStep;
+      });
     } else if (activeStep === 1) {
       if (!currentProject?._id) {
         setStepError(1, 'No active project found');
@@ -274,7 +290,14 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
         // Call ConfigureEnvironment's handleSave
         const success = await configEnvRef.current?.handleSave();
         if (success) {
-          setActiveStep((prevActiveStep) => prevActiveStep + 1);
+          setActiveStep((prevActiveStep) => {
+            const newStep = prevActiveStep + 1;
+            localStorage.setItem(
+              `project_step_${currentProject._id}`,
+              newStep.toString(),
+            );
+            return newStep;
+          });
         }
       } catch (error) {
         console.error('Error updating environment variables:', error);
@@ -295,7 +318,14 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
         setLoading(true);
         const success = await sandboxRef.current?.handleSave();
         if (success) {
-          setActiveStep((prevActiveStep) => prevActiveStep + 1);
+          setActiveStep((prevActiveStep) => {
+            const newStep = prevActiveStep + 1;
+            localStorage.setItem(
+              `project_step_${currentProject._id}`,
+              newStep.toString(),
+            );
+            return newStep;
+          });
         }
       } catch (error) {
         console.error('Error updating build settings:', error);
@@ -307,8 +337,50 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
   };
 
   const handleBack = () => {
-    clearStepError(activeStep);
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setActiveStep((prevStep) => {
+      const newStep = prevStep - 1;
+      if (currentProject?._id) {
+        localStorage.setItem(
+          `project_step_${currentProject._id}`,
+          newStep.toString(),
+        );
+      }
+      return newStep;
+    });
+  };
+
+  const handleClose = () => {
+    setActiveStep(0);
+    setSelectedRepo(null);
+    setSandboxConfig(null);
+    setStepErrors({
+      0: null,
+      1: null,
+      2: null,
+      3: null,
+    });
+    setStepWarnings({
+      0: null,
+      1: null,
+      2: null,
+      3: null,
+    });
+    // Clear step from localStorage when closing
+    if (currentProject?._id) {
+      localStorage.removeItem(`project_step_${currentProject._id}`);
+    }
+    onClose();
+  };
+
+  const handleFinish = () => {
+    const config = {
+      ...selectedRepo,
+      branch: selectedRepo.default_branch || 'main',
+      framework: sandboxConfig?.framework || 'Next.js',
+    };
+    onSelect(config);
+    localStorage.setItem('selectedRepository', JSON.stringify(config));
+    handleClose();
   };
 
   const steps = [
@@ -332,21 +404,13 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
       label: 'Configure Environment',
       description: 'Set up environment variables',
       content: (
-        <ConfigureEnvironment
-          ref={configEnvRef}
-          error={stepErrors[1]}
-        />
+        <ConfigureEnvironment ref={configEnvRef} error={stepErrors[1]} />
       ),
     },
     {
       label: 'Sandbox Preview',
       description: 'Configure sandbox settings',
-      content: (
-        <SandboxPreview
-          ref={sandboxRef}
-          error={stepErrors[2]}
-        />
-      ),
+      content: <SandboxPreview ref={sandboxRef} error={stepErrors[2]} />,
     },
     {
       label: 'Review and Save',
@@ -374,40 +438,10 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
     return 'Next';
   };
 
-  const handleClose = () => {
-    setActiveStep(0);
-    setSelectedRepo(null);
-    setSandboxConfig(null);
-    setStepErrors({
-      0: null,
-      1: null,
-      2: null,
-      3: null,
-    });
-    setStepWarnings({
-      0: null,
-      1: null,
-      2: null,
-      3: null,
-    });
-    onClose();
-  };
-
-  const handleFinish = () => {
-    const config = {
-      ...selectedRepo,
-      branch: selectedRepo.default_branch || 'main',
-      framework: sandboxConfig?.framework || 'Next.js',
-    };
-    onSelect(config);
-    localStorage.setItem('selectedRepository', JSON.stringify(config));
-    handleClose();
-  };
-
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       maxWidth='md'
       fullWidth
       classes={{paper: classes.dialogPaper}}
@@ -466,7 +500,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
       </DialogContent>
       <DialogActions style={{justifyContent: 'space-between'}}>
         <Box>
-          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={onClose}>Cancel</Button>
           {activeStep === 0 && selectedRepo && (
             <Button
               onClick={() => {
@@ -479,7 +513,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, userId, initialRepo}) => {
                     framework: 'Next.js',
                   }),
                 );
-                handleClose();
+                onClose();
               }}
               color='primary'>
               Skip Preview Setup and move to Editing
