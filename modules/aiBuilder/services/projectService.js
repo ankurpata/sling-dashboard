@@ -188,7 +188,7 @@ export async function getDeploymentStatus(projectId, deploymentId) {
   }
 }
 
-export async function updateBuildSettings(projectId, settings) {
+export async function updateBuildSettings(projectId, settings, initiateDeployment = false) {
   try {
     const response = await fetch(`${apiEndpoints.project.buildSettings}`, {
       method: 'POST',
@@ -197,7 +197,8 @@ export async function updateBuildSettings(projectId, settings) {
       },
       body: JSON.stringify({
         projectId,
-        buildSettings: settings
+        buildSettings: settings,
+        initiateDeployment,
       }),
     });
 

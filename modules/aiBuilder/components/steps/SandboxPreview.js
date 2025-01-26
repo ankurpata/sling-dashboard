@@ -375,7 +375,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
           region: config.region === 'all' ? undefined : [config.region],
         };
 
-        await updateBuildSettings(currentProject._id, settings);
+        await updateBuildSettings(currentProject._id, settings, true);
 
         // Update project in context with new settings
         setProject({
