@@ -1,4 +1,4 @@
-import React, {useState, forwardRef, useImperativeHandle} from 'react';
+import React, {useState, forwardRef, useImperativeHandle, useEffect} from 'react';
 import {
   Box,
   TextField,
@@ -153,6 +153,16 @@ const ConfigureEnvironment = forwardRef(({error}, ref) => {
   const [envVars, setEnvVars] = useState([{key: '', value: ''}]);
   const [loading, setLoading] = useState(false);
   const [localErrors, setLocalErrors] = useState({});
+
+  // Initialize envVars from project context
+  useEffect(() => {
+    if (currentProject?.environmentVariables) {
+      const existingVars = Object.entries(currentProject.environmentVariables).map(
+        ([key, value]) => ({key, value})
+      );
+      setEnvVars(existingVars.length ? existingVars : [{key: '', value: ''}]);
+    }
+  }, [currentProject?.environmentVariables]);
 
   useImperativeHandle(ref, () => ({
     handleSave: async () => {

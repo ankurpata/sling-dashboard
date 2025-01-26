@@ -9,7 +9,7 @@ export async function createProject(repository) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userId: repository.repoId?.toString(),
+        userId: repository.userId?.toString(),
         repoId: repository.repoId?.toString(),
         orgId: repository.orgId?.toString(),
         name: repository.name,
