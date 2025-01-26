@@ -1,107 +1,291 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Avatar,
   Typography,
-  Menu,
-  MenuItem,
+  TextField,
+  Button,
+  Paper,
+  IconButton,
   makeStyles,
+  Container,
+  Grid,
+  Divider,
+  Snackbar,
 } from '@material-ui/core';
+import { Alert } from '@material-ui/lab';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import EditIcon from '@material-ui/icons/Edit';
 import { useUser } from '../context/UserContext';
+import { useRouter } from 'next/router';
 
 const useStyles = makeStyles((theme) => ({
-  profile: {
+  root: {
+    padding: theme.spacing(3),
+  },
+  header: {
     display: 'flex',
     alignItems: 'center',
-    cursor: 'pointer',
-    padding: theme.spacing(1),
-    borderRadius: theme.shape.borderRadius,
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-    },
+    marginBottom: theme.spacing(4),
   },
-  avatar: {
-    width: 32,
-    height: 32,
-    marginRight: theme.spacing(1),
+  backButton: {
+    marginRight: theme.spacing(2),
   },
-  name: {
-    fontSize: '14px',
+  title: {
+    fontSize: '1.5rem',
     fontWeight: 500,
   },
-  menu: {
+  paper: {
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3),
+  },
+  avatarSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: theme.spacing(3),
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    marginBottom: theme.spacing(2),
+  },
+  uploadButton: {
     marginTop: theme.spacing(1),
   },
-  menuItem: {
-    fontSize: '14px',
-    minWidth: 150,
+  form: {
+    '& .MuiTextField-root': {
+      marginBottom: theme.spacing(2),
+    },
   },
-  logoutItem: {
-    color: theme.palette.error.main,
+  saveButton: {
+    marginTop: theme.spacing(2),
+  },
+  sectionTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 500,
+    marginBottom: theme.spacing(2),
+  },
+  connectionStatus: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: theme.spacing(1),
+    '& .MuiTypography-root': {
+      marginLeft: theme.spacing(1),
+    },
+  },
+  connectedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    backgroundColor: '#10B981',
   },
 }));
 
 const UserProfile = () => {
   const classes = useStyles();
-  const { user, logout } = useUser();
-  const [anchorEl, setAnchorEl] = useState(null);
+  const router = useRouter();
+  const { user, fetchUserInfo } = useUser();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    bio: '',
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        bio: user.bio || '',
+      });
+    }
+  }, [user]);
+
+  const handleBack = () => {
+    router.back();
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleLogout = () => {
-    handleClose();
-    logout();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Call your API to update user profile
+      const response = await fetch('http://localhost:5001/user/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          ...formData
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update profile');
+
+      // Refresh user data
+      await fetchUserInfo(user.id);
+      
+      setSnackbar({
+        open: true,
+        message: 'Profile updated successfully',
+        severity: 'success',
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update profile',
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   if (!user) return null;
 
   return (
-    <>
-      <Box className={classes.profile} onClick={handleClick}>
-        <Avatar 
-          className={classes.avatar}
-          src={user.avatar_url || user.photoURL}
-          alt={user.name || user.displayName}
-        />
-        <Typography className={classes.name}>
-          {user.name || user.displayName}
-        </Typography>
+    <Container maxWidth="md">
+      <Box className={classes.root}>
+        <Box className={classes.header}>
+          <IconButton className={classes.backButton} onClick={handleBack}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography className={classes.title}>Profile</Typography>
+        </Box>
+
+        <Paper className={classes.paper}>
+          <Box className={classes.avatarSection}>
+            <Avatar 
+              className={classes.avatar}
+              src={user.avatar}
+              alt={user.name}
+            />
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              className={classes.uploadButton}
+            >
+              Change Photo
+            </Button>
+          </Box>
+
+          <form className={classes.form} onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Bio"
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={4}
+                  disabled={!isEditing}
+                />
+              </Grid>
+            </Grid>
+
+            <Box mt={3}>
+              <Typography className={classes.sectionTitle}>
+                Connected Accounts
+              </Typography>
+              <Box className={classes.connectionStatus}>
+                <Box className={classes.connectedDot} />
+                <Typography>
+                  GitHub {user.isGithubConnected ? '(Connected)' : '(Not Connected)'}
+                </Typography>
+              </Box>
+              <Box className={classes.connectionStatus}>
+                <Box className={classes.connectedDot} />
+                <Typography>
+                  Google {user.isGoogleConnected ? '(Connected)' : '(Not Connected)'}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box mt={3} display="flex" justifyContent="flex-end">
+              {!isEditing ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<EditIcon />}
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit Profile
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setIsEditing(false)}
+                    style={{ marginRight: 8 }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                  >
+                    Save Changes
+                  </Button>
+                </>
+              )}
+            </Box>
+          </form>
+        </Paper>
       </Box>
-      <Menu
-        anchorEl={anchorEl}
-        keepMounted
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-        className={classes.menu}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
+
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleSnackbarClose}
       >
-        <MenuItem className={classes.menuItem} onClick={handleClose}>
-          Profile
-        </MenuItem>
-        <MenuItem className={classes.menuItem} onClick={handleClose}>
-          Settings
-        </MenuItem>
-        <MenuItem 
-          className={`${classes.menuItem} ${classes.logoutItem}`} 
-          onClick={handleLogout}
-        >
-          Logout
-        </MenuItem>
-      </Menu>
-    </>
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 };
 

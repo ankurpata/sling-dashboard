@@ -246,20 +246,18 @@ const UserMenu = () => {
           horizontal: 'right',
         }}
       >
-        <MenuItem
+        <MenuItem 
           onClick={handleProfile}
           selected={isProfileActive}
-          className={classes.menuItem}
         >
           <ListItemIcon>
             <AccountCircleIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText primary="Profile" />
         </MenuItem>
-        <MenuItem
+        <MenuItem 
           onClick={handleSettings}
           selected={isSettingsActive}
-          className={classes.menuItem}
         >
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
@@ -267,7 +265,7 @@ const UserMenu = () => {
           <ListItemText primary="Settings" />
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleLogout} className={classes.menuItem}>
+        <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <ExitToAppIcon fontSize="small" />
           </ListItemIcon>

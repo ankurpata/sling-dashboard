@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -9,37 +9,48 @@ import {
   Avatar,
   IconButton,
   Grid,
+  Box,
+  CircularProgress,
+  Divider,
 } from '@material-ui/core';
-import { ArrowBack } from '@material-ui/icons';
+import { ArrowBack, Edit as EditIcon } from '@material-ui/icons';
 import { useRouter } from 'next/router';
 import { useUser } from '../modules/aiBuilder/context/UserContext';
 import MainLayout from '../components/layout/MainLayout';
 
 const useStyles = makeStyles((theme) => ({
   container: {
-    paddingTop: theme.spacing(3),
-    paddingBottom: theme.spacing(3),
+    maxWidth: 800,
+    margin: '0 auto',
+    padding: theme.spacing(3),
   },
   header: {
     display: 'flex',
     alignItems: 'center',
-    marginBottom: theme.spacing(3),
-  },
-  backButton: {
-    marginRight: theme.spacing(2),
+    marginBottom: theme.spacing(4),
+    '& .MuiIconButton-root': {
+      padding: 8,
+      marginRight: theme.spacing(2),
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+      '&:hover': {
+        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+      },
+    },
   },
   paper: {
     padding: theme.spacing(4),
     borderRadius: 12,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
   },
   title: {
+    fontSize: '1.5rem',
     fontWeight: 500,
+    flex: 1,
   },
   form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(3),
+    '& .MuiTextField-root': {
+      marginBottom: theme.spacing(2),
+    },
   },
   avatarSection: {
     display: 'flex',
@@ -48,49 +59,142 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(4),
   },
   avatar: {
-    width: 100,
-    height: 100,
-    marginBottom: theme.spacing(1),
+    width: 120,
+    height: 120,
+    marginBottom: theme.spacing(2),
+    border: '4px solid #fff',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
   },
-  email: {
+  changePhotoButton: {
+    marginTop: theme.spacing(1),
+    textTransform: 'none',
+    borderRadius: 20,
+    padding: '4px 16px',
+    color: '#fff',
+    backgroundColor: '#111827',
+    '&:hover': {
+      backgroundColor: '#374151',
+    },
+    '&.Mui-disabled': {
+      backgroundColor: 'rgba(17, 24, 39, 0.12)',
+      color: 'rgba(17, 24, 39, 0.26)',
+    },
+  },
+  fieldLabel: {
     color: theme.palette.text.secondary,
-    marginTop: theme.spacing(0.5),
+    fontSize: '0.875rem',
+    marginBottom: theme.spacing(0.5),
+    fontWeight: 500,
   },
-  input: {
+  fieldValue: {
+    fontSize: '1rem',
+    color: theme.palette.text.primary,
+    minHeight: 24,
+  },
+  fieldContainer: {
+    marginBottom: theme.spacing(2),
+  },
+  sectionTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 500,
+    marginTop: theme.spacing(3),
+    marginBottom: theme.spacing(2),
+    color: theme.palette.primary.main,
+  },
+  connectionStatus: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: theme.spacing(1),
+    padding: theme.spacing(1),
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+    '& .MuiTypography-root': {
+      marginLeft: theme.spacing(1),
+      fontSize: '0.875rem',
+    },
+  },
+  connectedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    backgroundColor: '#10B981',
+  },
+  editButton: {
+    borderRadius: 20,
+    padding: '6px 16px',
+    textTransform: 'none',
+    fontWeight: 500,
+    color: '#fff',
+    backgroundColor: '#111827',
+    '&:hover': {
+      backgroundColor: '#374151',
+    },
+  },
+  textField: {
     '& .MuiOutlinedInput-root': {
       backgroundColor: '#fff',
+      borderRadius: 8,
     },
   },
-  bioField: {
-    '& .MuiOutlinedInput-root': {
-      minHeight: '120px',
-    },
+  divider: {
+    margin: theme.spacing(4, 0),
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
   },
-  saveButton: {
-    marginTop: theme.spacing(2),
-    alignSelf: 'flex-start',
-    padding: theme.spacing(1, 3),
+  actions: {
+    marginTop: theme.spacing(4),
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: theme.spacing(1),
+    '& .MuiButton-root': {
+      borderRadius: 20,
+      padding: '6px 20px',
+      textTransform: 'none',
+      fontWeight: 500,
+    },
   },
 }));
 
 const Profile = () => {
   const classes = useStyles();
   const router = useRouter();
-  const { user, updateUser } = useUser();
-  const [formData, setFormData] = useState({
-    username: user?.username || '',
-    email: user?.email || '',
-    bio: user?.bio || '',
-  });
+  const { user, updateUser, loading } = useUser();
   const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    bio: '',
+    company: '',
+    location: '',
+    website: '',
+  });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/signin');
+      return;
+    }
+    if (user) {
+      setFormData({
+        name: user.name || user.displayName || '',
+        email: user.email || '',
+        bio: user.bio || '',
+        company: user.company || '',
+        location: user.location || '',
+        website: user.website || '',
+      });
+    }
+  }, [user, loading, router]);
+
+  const handleBack = () => {
+    router.back();
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
-    setIsEditing(true);
   };
 
   const handleSubmit = async (event) => {
@@ -103,87 +207,249 @@ const Profile = () => {
     }
   };
 
-  const handleBack = () => {
-    router.push('/');
-  };
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (!user) return null;
 
   return (
     <MainLayout>
-      <Container maxWidth="md" className={classes.container}>
-        <div className={classes.header}>
-          <IconButton 
-            onClick={handleBack} 
-            className={classes.backButton}
-            size="small"
-          >
+      <Container className={classes.container}>
+        <Box className={classes.header}>
+          <IconButton className={classes.backButton} onClick={handleBack}>
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" className={classes.title}>
-            Profile
-          </Typography>
-        </div>
+          <Typography className={classes.title}>Profile</Typography>
+          {!isEditing ? (
+            <Button
+              className={classes.editButton}
+              variant="contained"
+              startIcon={<EditIcon />}
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Profile
+            </Button>
+          ) : (
+            <Box className={classes.actions}>
+              <Button
+                variant="outlined"
+                onClick={() => setIsEditing(false)}
+                style={{ 
+                  marginRight: 8,
+                  borderColor: '#111827',
+                  color: '#111827',
+                  '&:hover': {
+                    backgroundColor: 'rgba(17, 24, 39, 0.04)',
+                  },
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                style={{ 
+                  backgroundColor: '#111827',
+                  color: '#fff',
+                  '&:hover': {
+                    backgroundColor: '#374151',
+                  },
+                }}
+                type="submit"
+              >
+                Save Changes
+              </Button>
+            </Box>
+          )}
+        </Box>
 
         <Paper className={classes.paper}>
-          <form onSubmit={handleSubmit} className={classes.form}>
-            <div className={classes.avatarSection}>
+          <form onSubmit={handleSubmit}>
+            <Box className={classes.avatarSection}>
               <Avatar 
-                src={user.avatarUrl} 
-                alt={user.username}
                 className={classes.avatar}
+                src={user.photoURL || user.avatar}
+                alt={formData.name}
               />
-              <Typography variant="subtitle1" className={classes.email}>
-                {user.email}
-              </Typography>
-            </div>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                className={classes.changePhotoButton}
+                disabled={true}
+              >
+                Change Photo
+              </Button>
+            </Box>
 
             <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Name"
-                  variant="outlined"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className={classes.input}
-                />
+              <Grid item xs={12} sm={6}>
+                <Box className={classes.fieldContainer}>
+                  <Typography className={classes.fieldLabel}>Name</Typography>
+                  {isEditing ? (
+                    <TextField
+                      fullWidth
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      variant="outlined"
+                      size="small"
+                      className={classes.textField}
+                    />
+                  ) : (
+                    <Typography className={classes.fieldValue}>{formData.name}</Typography>
+                  )}
+                </Box>
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  variant="outlined"
-                  value={user.email}
-                  disabled
-                  className={classes.input}
-                />
+              
+              <Grid item xs={12} sm={6}>
+                <Box className={classes.fieldContainer}>
+                  <Typography className={classes.fieldLabel}>Email</Typography>
+                  <Typography className={classes.fieldValue}>{formData.email}</Typography>
+                </Box>
               </Grid>
+
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Bio"
-                  variant="outlined"
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  multiline
-                  rows={4}
-                  className={`${classes.input} ${classes.bioField}`}
-                />
+                <Box className={classes.fieldContainer}>
+                  <Typography className={classes.fieldLabel}>Bio</Typography>
+                  {isEditing ? (
+                    <TextField
+                      fullWidth
+                      name="bio"
+                      value={formData.bio}
+                      onChange={handleChange}
+                      variant="outlined"
+                      multiline
+                      rows={4}
+                      className={classes.textField}
+                    />
+                  ) : (
+                    <Typography className={classes.fieldValue}>
+                      {formData.bio || 'No bio added yet'}
+                    </Typography>
+                  )}
+                </Box>
               </Grid>
+
+              {(formData.company || isEditing) && (
+                <Grid item xs={12} sm={6}>
+                  <Box className={classes.fieldContainer}>
+                    <Typography className={classes.fieldLabel}>Company</Typography>
+                    {isEditing ? (
+                      <TextField
+                        fullWidth
+                        name="company"
+                        value={formData.company}
+                        onChange={handleChange}
+                        variant="outlined"
+                        size="small"
+                        className={classes.textField}
+                      />
+                    ) : (
+                      <Typography className={classes.fieldValue}>{formData.company}</Typography>
+                    )}
+                  </Box>
+                </Grid>
+              )}
+
+              {(formData.location || isEditing) && (
+                <Grid item xs={12} sm={6}>
+                  <Box className={classes.fieldContainer}>
+                    <Typography className={classes.fieldLabel}>Location</Typography>
+                    {isEditing ? (
+                      <TextField
+                        fullWidth
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        variant="outlined"
+                        size="small"
+                        className={classes.textField}
+                      />
+                    ) : (
+                      <Typography className={classes.fieldValue}>{formData.location}</Typography>
+                    )}
+                  </Box>
+                </Grid>
+              )}
+
+              {(formData.website || isEditing) && (
+                <Grid item xs={12} sm={6}>
+                  <Box className={classes.fieldContainer}>
+                    <Typography className={classes.fieldLabel}>Website</Typography>
+                    {isEditing ? (
+                      <TextField
+                        fullWidth
+                        name="website"
+                        value={formData.website}
+                        onChange={handleChange}
+                        variant="outlined"
+                        size="small"
+                        className={classes.textField}
+                      />
+                    ) : (
+                      <Typography className={classes.fieldValue}>
+                        {formData.website}
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+              )}
             </Grid>
 
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              className={classes.saveButton}
-              disabled={!isEditing}
-            >
-              Save Changes
-            </Button>
+            <Divider className={classes.divider} />
+
+            <Typography className={classes.sectionTitle}>
+              Connected Accounts
+            </Typography>
+            <Box className={classes.connectionStatus}>
+              <Box className={classes.connectedDot} />
+              <Typography>
+                GitHub {user.isGithubConnected ? '(Connected)' : '(Not Connected)'}
+              </Typography>
+            </Box>
+            <Box className={classes.connectionStatus}>
+              <Box className={classes.connectedDot} />
+              <Typography>
+                Google {user.isGoogleConnected ? '(Connected)' : '(Not Connected)'}
+              </Typography>
+            </Box>
+
+            {isEditing && (
+              <Box className={classes.actions}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsEditing(false)}
+                  style={{ 
+                    marginRight: 8,
+                    borderColor: '#111827',
+                    color: '#111827',
+                    '&:hover': {
+                      backgroundColor: 'rgba(17, 24, 39, 0.04)',
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  style={{ 
+                    backgroundColor: '#111827',
+                    color: '#fff',
+                    '&:hover': {
+                      backgroundColor: '#374151',
+                    },
+                  }}
+                  type="submit"
+                >
+                  Save Changes
+                </Button>
+              </Box>
+            )}
           </form>
         </Paper>
       </Container>
