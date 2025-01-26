@@ -265,9 +265,14 @@ const useStyles = makeStyles((theme) => ({
 
 const frameworks = supportedFrameworks
   .filter((name) =>
-    ['Next.js', 'React', 'Angular', 'Vue.js', 'Unsupported Framework'].includes(
-      name,
-    ),
+    [
+      'Next.js',
+      'React',
+      'Angular',
+      'Vue.js',
+      'HTML',
+      'Unsupported Framework',
+    ].includes(name),
   )
   .map((name) => ({
     id: name,

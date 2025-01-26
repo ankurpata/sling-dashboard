@@ -118,12 +118,19 @@ const frameworkDefaults = {
     devCommand: 'rails server',
     nodeVersion: null,
   },
-  'Unsupported Framework': {
+  'HTML': {
     buildCommand: null,
-    outputDirectory: null,
+    outputDirectory: '.',
     installCommand: null,
-    devCommand: null,
-    nodeVersion: null,
+    devCommand: 'vercel dev',
+    nodeVersion: 'latest',
+  },
+  'Unsupported Framework': {
+    buildCommand: '',
+    outputDirectory: '.',
+    installCommand: 'npm install',
+    devCommand: 'npm start',
+    nodeVersion: 'latest',
   },
 };
 
