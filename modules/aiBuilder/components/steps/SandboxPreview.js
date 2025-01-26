@@ -10,10 +10,7 @@ import {
   Typography,
   Switch,
   FormControlLabel,
-  Select,
-  MenuItem,
   Paper,
-  Button,
   Grid,
   FormControl,
   InputLabel,
@@ -22,11 +19,11 @@ import {
   Tabs,
   Tab,
 } from '@material-ui/core';
-import Alert from '@material-ui/lab/Alert';
-import {makeStyles} from '@material-ui/core/styles';
-import InfoIcon from '@material-ui/icons/Info';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import CodeIcon from '@material-ui/icons/Code';
 import RefreshIcon from '@material-ui/icons/Refresh';
+import {Alert, Select, MenuItem, Button} from '@material-ui/core';
+import {makeStyles} from '@material-ui/core/styles';
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {tomorrow} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
@@ -192,6 +189,14 @@ const useStyles = makeStyles((theme) => ({
       '&:hover': {
         backgroundColor: 'rgba(37, 99, 235, 0.16)',
       },
+    },
+  },
+  labelContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    '& .MuiIconButton-root': {
+      padding: 4,
+      marginLeft: 4,
     },
   },
 }));
@@ -474,7 +479,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
             <Typography className={classes.sectionTitle}>
               Framework
               <Tooltip title='Select the framework for your project'>
-                <InfoIcon className={classes.infoIcon} />
+                <HelpOutlineIcon className={classes.infoIcon} />
               </Tooltip>
             </Typography>
             <FormControl className={classes.select} fullWidth>
@@ -524,15 +529,20 @@ const SandboxPreview = forwardRef(({error}, ref) => {
             </Typography>
             <Grid container spacing={3}>
               <Grid item xs={12}>
-                <Box className={classes.row} display="flex" alignItems="center" justifyContent="space-between">
-                  <Box className={classes.labelContainer} style={{width: '20%'}}>
+                <Box
+                  className={classes.row}
+                  display='flex'
+                  alignItems='center'
+                  justifyContent='space-between'>
+                  <Box
+                    className={classes.labelContainer}
+                    style={{width: '20%'}}>
                     <Typography variant='subtitle1'>Build Command</Typography>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'
-                      className={classes.description}>
-                      Command to build your application
-                    </Typography>
+                    <Tooltip title='The command your frontend framework provides for compiling your code. If your frontend does not require a build, leave this field empty.'>
+                      <IconButton size='small'>
+                        <HelpOutlineIcon fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                   <Box style={{width: '50%'}}>
                     <TextField
@@ -551,8 +561,14 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                       }}
                     />
                   </Box>
-                  <Box display="flex" alignItems="center" style={{width: '20%'}}>
-                    <Typography variant="body2" color="textSecondary" style={{marginRight: 8}}>
+                  <Box
+                    display='flex'
+                    alignItems='center'
+                    style={{width: '20%'}}>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                      style={{marginRight: 8}}>
                       Override
                     </Typography>
                     <Switch
@@ -566,15 +582,20 @@ const SandboxPreview = forwardRef(({error}, ref) => {
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.row} display="flex" alignItems="center" justifyContent="space-between">
-                  <Box className={classes.labelContainer} style={{width: '20%'}}>
+                <Box
+                  className={classes.row}
+                  display='flex'
+                  alignItems='center'
+                  justifyContent='space-between'>
+                  <Box
+                    className={classes.labelContainer}
+                    style={{width: '20%'}}>
                     <Typography variant='subtitle1'>Start Command</Typography>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'
-                      className={classes.description}>
-                      Command to start your application
-                    </Typography>
+                    <Tooltip title='The command to start your application in development mode'>
+                      <IconButton size='small'>
+                        <HelpOutlineIcon fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                   <Box style={{width: '50%'}}>
                     <TextField
@@ -593,13 +614,21 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                       }}
                     />
                   </Box>
-                  <Box display="flex" alignItems="center" style={{width: '20%'}}>
-                    <Typography variant="body2" color="textSecondary" style={{marginRight: 8}}>
+                  <Box
+                    display='flex'
+                    alignItems='center'
+                    style={{width: '20%'}}>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                      style={{marginRight: 8}}>
                       Override
                     </Typography>
                     <Switch
                       checked={config.overrides.developmentCommand}
-                      onChange={() => handleToggleOverride('developmentCommand')}
+                      onChange={() =>
+                        handleToggleOverride('developmentCommand')
+                      }
                       color='primary'
                       size='small'
                     />
@@ -608,15 +637,20 @@ const SandboxPreview = forwardRef(({error}, ref) => {
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.row} display="flex" alignItems="center" justifyContent="space-between">
-                  <Box className={classes.labelContainer} style={{width: '20%'}}>
+                <Box
+                  className={classes.row}
+                  display='flex'
+                  alignItems='center'
+                  justifyContent='space-between'>
+                  <Box
+                    className={classes.labelContainer}
+                    style={{width: '20%'}}>
                     <Typography variant='subtitle1'>Install Command</Typography>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'
-                      className={classes.description}>
-                      Command to install dependencies
-                    </Typography>
+                    <Tooltip title='The command to install your project dependencies'>
+                      <IconButton size='small'>
+                        <HelpOutlineIcon fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                   <Box style={{width: '50%'}}>
                     <TextField
@@ -635,8 +669,14 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                       }}
                     />
                   </Box>
-                  <Box display="flex" alignItems="center" style={{width: '20%'}}>
-                    <Typography variant="body2" color="textSecondary" style={{marginRight: 8}}>
+                  <Box
+                    display='flex'
+                    alignItems='center'
+                    style={{width: '20%'}}>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                      style={{marginRight: 8}}>
                       Override
                     </Typography>
                     <Switch
@@ -650,15 +690,22 @@ const SandboxPreview = forwardRef(({error}, ref) => {
               </Grid>
 
               <Grid item xs={12}>
-                <Box className={classes.row} display="flex" alignItems="center" justifyContent="space-between">
-                  <Box className={classes.labelContainer} style={{width: '20%'}}>
-                    <Typography variant='subtitle1'>Output Directory</Typography>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'
-                      className={classes.description}>
-                      Directory containing the build output
+                <Box
+                  className={classes.row}
+                  display='flex'
+                  alignItems='center'
+                  justifyContent='space-between'>
+                  <Box
+                    className={classes.labelContainer}
+                    style={{width: '20%'}}>
+                    <Typography variant='subtitle1'>
+                      Output Directory
                     </Typography>
+                    <Tooltip title='The directory where your build output will be generated'>
+                      <IconButton size='small'>
+                        <HelpOutlineIcon fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                   <Box style={{width: '50%'}}>
                     <TextField
@@ -677,8 +724,14 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                       }}
                     />
                   </Box>
-                  <Box display="flex" alignItems="center" style={{width: '20%'}}>
-                    <Typography variant="body2" color="textSecondary" style={{marginRight: 8}}>
+                  <Box
+                    display='flex'
+                    alignItems='center'
+                    style={{width: '20%'}}>
+                    <Typography
+                      variant='body2'
+                      color='textSecondary'
+                      style={{marginRight: 8}}>
                       Override
                     </Typography>
                     <Switch
@@ -697,7 +750,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
             <Typography variant='h6' gutterBottom>
               Advanced Settings
               <Tooltip title='Configure advanced deployment settings'>
-                <InfoIcon className={classes.infoIcon} />
+                <HelpOutlineIcon className={classes.infoIcon} />
               </Tooltip>
             </Typography>
             <Grid container spacing={3}>
