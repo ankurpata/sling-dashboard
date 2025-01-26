@@ -38,6 +38,7 @@ import {updateBuildSettings} from '../../services/projectService';
 const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
+    height: '100%',
   },
   section: {
     padding: theme.spacing(3),
@@ -197,6 +198,55 @@ const useStyles = makeStyles((theme) => ({
     '& .MuiIconButton-root': {
       padding: 4,
       marginLeft: 4,
+    },
+    '& .MuiTypography-subtitle1': {
+      fontWeight: 500,
+    },
+  },
+  row: {
+    padding: theme.spacing(2),
+    borderRadius: theme.shape.borderRadius,
+    backgroundColor: theme.palette.background.paper,
+    '&:hover': {
+      backgroundColor: theme.palette.action.hover,
+    },
+  },
+  input: {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: theme.palette.background.paper,
+    },
+  },
+  switchContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    '& .MuiSwitch-root': {
+      width: 42,
+      height: 26,
+      padding: 0,
+      margin: theme.spacing(1),
+    },
+    '& .MuiSwitch-switchBase': {
+      padding: 1,
+      '&.Mui-checked': {
+        transform: 'translateX(16px)',
+        color: theme.palette.common.white,
+        '& + .MuiSwitch-track': {
+          backgroundColor: theme.palette.primary.main,
+          opacity: 1,
+          border: 0,
+        },
+      },
+    },
+    '& .MuiSwitch-thumb': {
+      width: 24,
+      height: 24,
+    },
+    '& .MuiSwitch-track': {
+      borderRadius: 13,
+      border: '1px solid #E0E0E0',
+      backgroundColor: theme.palette.grey[50],
+      opacity: 1,
     },
   },
 }));
@@ -562,13 +612,11 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                     />
                   </Box>
                   <Box
-                    display='flex'
-                    alignItems='center'
+                    className={classes.switchContainer}
                     style={{width: '20%'}}>
                     <Typography
                       variant='body2'
-                      color='textSecondary'
-                      style={{marginRight: 8}}>
+                      color='textSecondary'>
                       Override
                     </Typography>
                     <Switch
@@ -615,13 +663,11 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                     />
                   </Box>
                   <Box
-                    display='flex'
-                    alignItems='center'
+                    className={classes.switchContainer}
                     style={{width: '20%'}}>
                     <Typography
                       variant='body2'
-                      color='textSecondary'
-                      style={{marginRight: 8}}>
+                      color='textSecondary'>
                       Override
                     </Typography>
                     <Switch
@@ -670,13 +716,11 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                     />
                   </Box>
                   <Box
-                    display='flex'
-                    alignItems='center'
+                    className={classes.switchContainer}
                     style={{width: '20%'}}>
                     <Typography
                       variant='body2'
-                      color='textSecondary'
-                      style={{marginRight: 8}}>
+                      color='textSecondary'>
                       Override
                     </Typography>
                     <Switch
@@ -725,13 +769,11 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                     />
                   </Box>
                   <Box
-                    display='flex'
-                    alignItems='center'
+                    className={classes.switchContainer}
                     style={{width: '20%'}}>
                     <Typography
                       variant='body2'
-                      color='textSecondary'
-                      style={{marginRight: 8}}>
+                      color='textSecondary'>
                       Override
                     </Typography>
                     <Switch
