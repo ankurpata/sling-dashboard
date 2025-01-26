@@ -145,7 +145,11 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   previewSection: {
-    marginTop: theme.spacing(3),
+    margin: '22px 12px',
+    padding: '12px',
+    borderRadius: '4px',
+    boxShadow:
+      '0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12)',
   },
   codePreview: {
     marginTop: theme.spacing(2),
@@ -247,6 +251,14 @@ const useStyles = makeStyles((theme) => ({
       border: '1px solid #E0E0E0',
       backgroundColor: theme.palette.grey[50],
       opacity: 1,
+    },
+  },
+  formatButton: {
+    color: 'white',
+    background: 'black',
+
+    '&:hover': {
+      backgroundColor: theme.palette.grey[800],
     },
   },
 }));
@@ -614,9 +626,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                   <Box
                     className={classes.switchContainer}
                     style={{width: '20%'}}>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'>
+                    <Typography variant='body2' color='textSecondary'>
                       Override
                     </Typography>
                     <Switch
@@ -665,9 +675,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                   <Box
                     className={classes.switchContainer}
                     style={{width: '20%'}}>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'>
+                    <Typography variant='body2' color='textSecondary'>
                       Override
                     </Typography>
                     <Switch
@@ -718,9 +726,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                   <Box
                     className={classes.switchContainer}
                     style={{width: '20%'}}>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'>
+                    <Typography variant='body2' color='textSecondary'>
                       Override
                     </Typography>
                     <Switch
@@ -771,9 +777,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                   <Box
                     className={classes.switchContainer}
                     style={{width: '20%'}}>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'>
+                    <Typography variant='body2' color='textSecondary'>
                       Override
                     </Typography>
                     <Switch
@@ -956,8 +960,6 @@ const SandboxPreview = forwardRef(({error}, ref) => {
           )}
           <Box mt={2}>
             <Button
-              variant='outlined'
-              color='primary'
               onClick={() => {
                 try {
                   const formatted = JSON.stringify(
@@ -969,7 +971,9 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                 } catch (error) {
                   setJsonError(`Could not format JSON: ${error.message}`);
                 }
-              }}>
+              }}
+              className={classes.formatButton}
+              size='small'>
               Format JSON
             </Button>
           </Box>
