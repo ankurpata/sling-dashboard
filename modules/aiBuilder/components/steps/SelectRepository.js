@@ -167,7 +167,7 @@ const SelectRepository = ({
       <div className={classes.root}>
         <TextField
           className={classes.searchInput}
-          placeholder="Search repositories..."
+          placeholder={selectedRepo ? '' : 'Search repositories...'}
           value={selectedRepo ? '' : searchQuery}
           onClick={handleInputClick}
           onChange={handleInputChange}
