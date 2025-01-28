@@ -302,7 +302,8 @@ const SandboxPreview = forwardRef(({error}, ref) => {
       buildCommand: false,
       outputDirectory: false,
       installCommand: false,
-      developmentCommand: false,
+      devCommand: false,
+      startCommand: false,
     },
     rootDirectory: '',
     includeFiles: false,
@@ -331,7 +332,8 @@ const SandboxPreview = forwardRef(({error}, ref) => {
           buildCommand: !!settings.buildCommand,
           outputDirectory: !!settings.outputDirectory,
           installCommand: !!settings.installCommand,
-          developmentCommand: !!settings.startCommand,
+          devCommand: !!settings.startCommand,
+          startCommand: !!settings.startCommand,
         },
       }));
     }
@@ -365,8 +367,11 @@ const SandboxPreview = forwardRef(({error}, ref) => {
           installCommand: config.overrides.installCommand
             ? config.installCommand
             : undefined,
-          developmentCommand: config.overrides.developmentCommand
-            ? config.developmentCommand
+          devCommand: config.overrides.devCommand
+            ? config.devCommand
+            : undefined,
+          startCommand: config.overrides.startCommand
+            ? config.startCommand
             : undefined,
           rootDirectory: config.rootDirectory || undefined,
           nodeVersion: config.nodeVersion || '18.x',
@@ -416,7 +421,8 @@ const SandboxPreview = forwardRef(({error}, ref) => {
       handleConfigChange('buildCommand', defaults.buildCommand);
       handleConfigChange('outputDirectory', defaults.outputDirectory);
       handleConfigChange('installCommand', defaults.installCommand);
-      handleConfigChange('developmentCommand', defaults.devCommand);
+      handleConfigChange('devCommand', defaults.devCommand);
+      handleConfigChange('startCommand', defaults.startCommand);
       handleConfigChange('nodeVersion', defaults.nodeVersion);
     } else {
       handleConfigChange('framework', frameworkId);
@@ -452,8 +458,11 @@ const SandboxPreview = forwardRef(({error}, ref) => {
       installCommand: config.overrides.installCommand
         ? config.installCommand
         : undefined,
-      devCommand: config.overrides.developmentCommand
-        ? config.developmentCommand
+      devCommand: config.overrides.devCommand
+        ? config.devCommand
+        : undefined,
+      startCommand: config.overrides.startCommand
+        ? config.startCommand
         : undefined,
       rootDirectory: config.rootDirectory || undefined,
       build: {
@@ -494,7 +503,8 @@ const SandboxPreview = forwardRef(({error}, ref) => {
         buildCommand: parsed.buildCommand || '',
         outputDirectory: parsed.outputDirectory || '',
         installCommand: parsed.installCommand || '',
-        developmentCommand: parsed.devCommand || '',
+        devCommand: parsed.devCommand || '',
+        startCommand: parsed.startCommand || '',
         rootDirectory: parsed.rootDirectory || '',
         nodeVersion: parsed.build?.env?.NODE_VERSION || '18.x',
         includeFiles: Boolean(parsed.includeFiles),
@@ -504,7 +514,8 @@ const SandboxPreview = forwardRef(({error}, ref) => {
           buildCommand: Boolean(parsed.buildCommand),
           outputDirectory: Boolean(parsed.outputDirectory),
           installCommand: Boolean(parsed.installCommand),
-          developmentCommand: Boolean(parsed.devCommand),
+          devCommand: Boolean(parsed.devCommand),
+          startCommand: Boolean(parsed.startCommand),
         },
       };
 
@@ -632,20 +643,79 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                   </Box>
                   <Box
                     className={classes.switchContainer}
-                    style={{width: '20%'}}>
-                    <Typography variant='body2' color='textSecondary'>
-                      Override
-                    </Typography>
-                    <Switch
-                      checked={config.overrides.buildCommand}
-                      onChange={() => handleToggleOverride('buildCommand')}
-                      color='primary'
-                      size='small'
+                    style={{
+                      width: '30%',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.buildCommand}
+                          onChange={() => handleToggleOverride('buildCommand')}
+                          name='buildCommand'
+                        />
+                      }
+                      label='Override'
                     />
                   </Box>
                 </Box>
               </Grid>
-
+              <Grid item xs={12}>
+                <Box
+                  className={classes.row}
+                  display='flex'
+                  alignItems='center'
+                  justifyContent='space-between'>
+                  <Box
+                    className={classes.labelContainer}
+                    style={{width: '20%'}}>
+                    <Typography variant='subtitle1'>Dev Command</Typography>
+                    <Tooltip title='To start your server in development mode. This might be used for dev previews or local development.'>
+                      <IconButton size='small'>
+                        <HelpOutlineIcon fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Box style={{width: '50%'}}>
+                    <TextField
+                      fullWidth
+                      className={classes.input}
+                      variant='outlined'
+                      value={config.devCommand}
+                      onChange={(e) =>
+                        handleConfigChange('devCommand', e.target.value)
+                      }
+                      placeholder='next dev'
+                      disabled={!config.overrides.devCommand}
+                      InputLabelProps={{shrink: false}}
+                      InputProps={{
+                        notched: false,
+                      }}
+                    />
+                  </Box>
+                  <Box
+                    className={classes.switchContainer}
+                    style={{
+                      width: '30%',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.devCommand}
+                          onChange={() =>
+                            handleToggleOverride('devCommand')
+                          }
+                          name='devCommand'
+                        />
+                      }
+                      label='Override'
+                    />
+                  </Box>
+                </Box>
+              </Grid>
               <Grid item xs={12}>
                 <Box
                   className={classes.row}
@@ -672,7 +742,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                         handleConfigChange('startCommand', e.target.value)
                       }
                       placeholder='next start'
-                      disabled={!config.overrides.developmentCommand}
+                      disabled={!config.overrides.startCommand}
                       InputLabelProps={{shrink: false}}
                       InputProps={{
                         notched: false,
@@ -681,17 +751,22 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                   </Box>
                   <Box
                     className={classes.switchContainer}
-                    style={{width: '20%'}}>
-                    <Typography variant='body2' color='textSecondary'>
-                      Override
-                    </Typography>
-                    <Switch
-                      checked={config.overrides.developmentCommand}
-                      onChange={() =>
-                        handleToggleOverride('developmentCommand')
+                    style={{
+                      width: '30%',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.startCommand}
+                          onChange={() =>
+                            handleToggleOverride('startCommand')
+                          }
+                          name='startCommand'
+                        />
                       }
-                      color='primary'
-                      size='small'
+                      label='Override'
                     />
                   </Box>
                 </Box>
@@ -732,15 +807,22 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                   </Box>
                   <Box
                     className={classes.switchContainer}
-                    style={{width: '20%'}}>
-                    <Typography variant='body2' color='textSecondary'>
-                      Override
-                    </Typography>
-                    <Switch
-                      checked={config.overrides.installCommand}
-                      onChange={() => handleToggleOverride('installCommand')}
-                      color='primary'
-                      size='small'
+                    style={{
+                      width: '30%',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.installCommand}
+                          onChange={() =>
+                            handleToggleOverride('installCommand')
+                          }
+                          name='installCommand'
+                        />
+                      }
+                      label='Override'
                     />
                   </Box>
                 </Box>
@@ -783,15 +865,22 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                   </Box>
                   <Box
                     className={classes.switchContainer}
-                    style={{width: '20%'}}>
-                    <Typography variant='body2' color='textSecondary'>
-                      Override
-                    </Typography>
-                    <Switch
-                      checked={config.overrides.outputDirectory}
-                      onChange={() => handleToggleOverride('outputDirectory')}
-                      color='primary'
-                      size='small'
+                    style={{
+                      width: '30%',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={config.overrides.outputDirectory}
+                          onChange={() =>
+                            handleToggleOverride('outputDirectory')
+                          }
+                          name='outputDirectory'
+                        />
+                      }
+                      label='Override'
                     />
                   </Box>
                 </Box>

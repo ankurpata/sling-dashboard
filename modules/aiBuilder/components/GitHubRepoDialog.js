@@ -12,9 +12,12 @@ import {
   StepLabel,
   StepContent,
   CircularProgress,
+  Link,
+  Tooltip,
 } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import PreviewIcon from '@material-ui/icons/Visibility';
 import {makeStyles} from '@material-ui/core/styles';
 import {fetchRepositories} from '../services/repositoryService';
 import {
@@ -133,6 +136,17 @@ const useStyles = makeStyles((theme) => ({
     '& .MuiTypography-h6': {
       fontSize: '1.5rem',
       fontWeight: 500,
+    },
+  },
+  previewLink: {
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    gap: theme.spacing(1),
+    color: theme.palette.primary.main,
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
     },
   },
 }));
@@ -402,7 +416,9 @@ const GitHubRepoDialog = ({open, onClose, onSelect, initialRepo}) => {
   const steps = [
     {
       label: 'Select Repository',
-      description: selectedRepo ? `Selected Repository: ${selectedRepo.name}` : 'Choose a repository to connect',
+      description: selectedRepo
+        ? `Selected Repository: ${selectedRepo.name}`
+        : 'Choose a repository to connect',
       content: (
         <SelectRepository
           repositories={repositories}
@@ -456,7 +472,7 @@ const GitHubRepoDialog = ({open, onClose, onSelect, initialRepo}) => {
     if (step === 1) {
       return 'Save and Next';
     } else if (step === 2) {
-      return 'Build and Deploy';
+      return 'Build and Preview';
     }
     return 'Next';
   };
@@ -471,30 +487,45 @@ const GitHubRepoDialog = ({open, onClose, onSelect, initialRepo}) => {
       disableEscapeKeyDown>
       <DialogTitle className={classes.dialogTitle}>
         <Box display='flex' alignItems='center' justifyContent='space-between'>
-          <Typography variant='h6'>Configure Repository</Typography>
-            {activeStep > 0 && (
-              <Button
-                startIcon={<ArrowBackIcon />}
-              onClick={() => {
-                setActiveStep(0);
-                setStepErrors({
-                  0: null,
-                  1: null,
-                  2: null,
-                  3: null,
-                });
-                setStepWarnings({
-                  0: null,
-                  1: null,
-                  2: null,
-                  3: null,
-                });
-              }}
-              color='primary'>
-              Back to Repositories
-              </Button>
-            )}
-           
+          <Box display='flex' alignItems='center' gap={2}>
+            <Typography variant='h6'>Configure Repository</Typography>
+          </Box>
+          {activeStep > 0 && (
+            <Box style={{display: 'flex', alignItems: 'center', gap: 10}}>
+              <Box>
+                {selectedRepo?.development?.previewUrl && (
+                  <Tooltip title='Open preview'>
+                    <Link
+                      href={selectedRepo.development.previewUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className={classes.previewLink}>
+                      <PreviewIcon fontSize='small' />
+                      <Typography variant='body2'>Preview</Typography>
+                    </Link>
+                  </Tooltip>
+                )}{' '}
+              </Box>
+              {[0, 1, 2].includes(activeStep) && selectedRepo && (
+                <Button
+                  onClick={() => {
+                    onSelect(selectedRepo);
+                    localStorage.setItem(
+                      'selectedRepository',
+                      JSON.stringify({
+                        name: selectedRepo.name,
+                        branch: selectedRepo.default_branch || 'main',
+                        framework: 'Next.js',
+                      }),
+                    );
+                    onClose();
+                  }}
+                  color='primary'>
+                  Skip Setup
+                </Button>
+              )}
+            </Box>
+          )}
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -525,24 +556,26 @@ const GitHubRepoDialog = ({open, onClose, onSelect, initialRepo}) => {
       <DialogActions style={{justifyContent: 'space-between'}}>
         <Box>
           <Button onClick={onClose}>Cancel</Button>
-          {activeStep === 0 && selectedRepo && (
-            <Button
-              onClick={() => {
-                onSelect(selectedRepo);
-                localStorage.setItem(
-                  'selectedRepository',
-                  JSON.stringify({
-                    name: selectedRepo.name,
-                    branch: selectedRepo.default_branch || 'main',
-                    framework: 'Next.js',
-                  }),
-                );
-                onClose();
-              }}
-              color='primary'>
-              Skip Preview Setup and move to Editing
-            </Button>
-          )}
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => {
+              setActiveStep(0);
+              setStepErrors({
+                0: null,
+                1: null,
+                2: null,
+                3: null,
+              });
+              setStepWarnings({
+                0: null,
+                1: null,
+                2: null,
+                3: null,
+              });
+            }}
+            color='primary'>
+            Back to Repositories
+          </Button>
         </Box>
         <Box>
           <Button
