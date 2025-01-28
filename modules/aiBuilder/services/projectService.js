@@ -170,6 +170,31 @@ export async function deployProject(projectId) {
   }
 }
 
+//Get development status
+export async function getDevelopmentStatus(projectId) {
+  try {
+    const response = await fetch(`${apiEndpoints.project.developmentStatus}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        projectId,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting deployment status:', error);
+    throw error;
+  }
+}
+
+// Get deployment status
 export async function getDeploymentStatus(projectId, deploymentId) {
   try {
     const response = await fetch(`${apiEndpoints.project.deploymentStatus}`, {
@@ -194,7 +219,11 @@ export async function getDeploymentStatus(projectId, deploymentId) {
   }
 }
 
-export async function updateBuildSettings(projectId, settings, initiateDeployment = false) {
+export async function updateBuildSettings(
+  projectId,
+  settings,
+  initiateDeployment = false,
+) {
   try {
     const response = await fetch(`${apiEndpoints.project.buildSettings}`, {
       method: 'POST',

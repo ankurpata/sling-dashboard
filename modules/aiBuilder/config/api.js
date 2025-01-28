@@ -11,7 +11,8 @@ export const apiEndpoints = {
     env: `${API_BASE_URL}/project/env`,
     buildSettings: `${API_BASE_URL}/project/build-settings`,
     deploy: `${API_BASE_URL}/project/deploy`,
-  deploymentStatus: `${API_BASE_URL}/project/deployment/status`,
+    deploymentStatus: `${API_BASE_URL}/project/deployment/status`,
+    developmentStatus: `${API_BASE_URL}/project/development/status`,
     detect: `${API_BASE_URL}/project/detect-framework`,
   },
   projects: `${API_BASE_URL}/projects`,
@@ -29,14 +30,17 @@ const apiClient = axios.create({
 });
 
 // Add auth token to all requests
-apiClient.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, error => {
-  return Promise.reject(error);
-});
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
 
 export default apiClient;
