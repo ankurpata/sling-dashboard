@@ -1,9 +1,9 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { AppBar, Toolbar, Typography, Box, Button } from '@material-ui/core';
+import {makeStyles} from '@material-ui/core/styles';
+import {AppBar, Toolbar, Typography, Box, Button} from '@material-ui/core';
 import UserMenu from './UserMenu';
-import { useUser } from '../context/UserContext';
-import { useRouter } from 'next/router';
+import {useUser} from '../context/UserContext';
+import {useRouter} from 'next/router';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -78,7 +78,7 @@ const useStyles = makeStyles((theme) => ({
 
 const Header = () => {
   const classes = useStyles();
-  const { user } = useUser();
+  const {user} = useUser();
   const router = useRouter();
 
   const handleSignIn = () => {
@@ -90,35 +90,52 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="static" className={classes.appBar}>
+    <AppBar position='static' className={classes.appBar}>
       <Toolbar className={classes.toolbar}>
-        <a href="/" className={classes.logo}>
-          <img src="/images/logo.png" alt="Logo" />
-          <Typography variant="subtitle1">Baloon.dev</Typography>
+        <a href='/' className={classes.logo}>
+          <img
+            src='/images/logo.png'
+            style={{height: 70, paddingTop: 15}}
+            alt='Logo'
+          />
+          <Typography
+            variant='subtitle1'
+            style={{
+              fontSize: 16,
+              color: '#434446',
+              fontWeight: 'bold',
+              fontFamily: 'Poppins',
+              marginLeft: -5,
+              marginTop: -7,
+            }}>
+            Baloon.dev
+          </Typography>
         </a>
-        
+
         <nav className={classes.nav}>
-          <a href="/support" className={classes.navLink}>Support</a>
-          <a href="/careers" className={classes.navLink}>Careers</a>
-          <a href="/blog" className={classes.navLink}>Blog</a>
-          <a href="/learn" className={classes.navLink}>Learn</a>
+          <a href='/support' className={classes.navLink}>
+            Support
+          </a>
+          <a href='/careers' className={classes.navLink}>
+            Careers
+          </a>
+          <a href='/blog' className={classes.navLink}>
+            Blog
+          </a>
+          <a href='/learn' className={classes.navLink}>
+            Learn
+          </a>
         </nav>
-        
+
         <Box className={classes.rightSection}>
           {user ? (
             <UserMenu />
           ) : (
             <>
-              <Button
-                className={classes.signInButton}
-                onClick={handleSignIn}
-              >
+              <Button className={classes.signInButton} onClick={handleSignIn}>
                 Sign in
               </Button>
-              <Button
-                className={classes.signUpButton}
-                onClick={handleSignUp}
-              >
+              <Button className={classes.signUpButton} onClick={handleSignUp}>
                 Sign up
               </Button>
             </>

@@ -21,6 +21,7 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
 import EditIcon from '@material-ui/icons/Edit';
+import PublishIcon from '@material-ui/icons/Publish'; // Import PublishIcon
 import axios from 'axios';
 import Header from './components/Header';
 import CanvasLayout from './components/CanvasLayout';
@@ -252,7 +253,29 @@ const AIBuilder = () => {
   return (
     <UserProvider>
       <Box className={classes.root}>
-        <Header />
+        <Header>
+          <Box className={classes.rightSection}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              startIcon={<PublishIcon />}
+              style={{
+                marginRight: '16px',
+                textTransform: 'none',
+                backgroundColor: '#10B981',
+                '&:hover': {
+                  backgroundColor: '#059669',
+                },
+              }}
+            >
+              Publish
+            </Button>
+            <Typography variant="body2" color="textSecondary">
+              {user?.name || 'Guest'}
+            </Typography>
+          </Box>
+        </Header>
         {!showCanvas && (
           <Box className={classes.main}>
             <Box className={classes.heartLogo}>

@@ -30,9 +30,9 @@ import ArrowForwardIosIcon from '@material-ui/icons/ArrowRight';
 import CodeUtils from '../utils';
 import prettier from 'prettier/standalone';
 import parserBabel from 'prettier/parser-babel';
-import PreviewLayout from './PreviewLayout'; 
+import PreviewLayout from './PreviewLayout';
 import {useStyles as useSharedStyles} from '../styles';
-import { ALLOWED_LIBRARIES } from '../config';
+import {ALLOWED_LIBRARIES} from '../config';
 import clsx from 'clsx';
 
 // Import CodeUtils from index.js
@@ -43,8 +43,8 @@ const useStyles = makeStyles((theme) => ({
   },
   canvas: {
     display: 'flex',
-    gap: theme.spacing(3),
-    marginTop: theme.spacing(3),
+    // gap: theme.spacing(3),
+    // marginTop: theme.spacing(3),
     height: 'calc(100vh - 200px)',
     minHeight: '600px',
   },
@@ -56,7 +56,7 @@ const useStyles = makeStyles((theme) => ({
     height: '100%',
     position: 'relative',
     border: '1px solid #e5e5e5',
-    borderRadius: '12px',
+    // borderRadius: '12px',
     overflow: 'hidden',
   },
   progressHeader: {
@@ -206,12 +206,12 @@ const useStyles = makeStyles((theme) => ({
     flex: '0 0 70%',
     backgroundColor: '#ffffff',
     padding: theme.spacing(3),
-    borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    // borderRadius: '12px',
+    // boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
-    padding: theme.spacing(3),
+    paddingLeft: 0,
     // backgroundColor: theme.palette.background.default,
   },
   previewHeader: {
@@ -540,7 +540,8 @@ const CanvasLayout = ({
   useEffect(() => {
     // Scroll to bottom when chat updates
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [chatHistories[searchId]]);
 
@@ -554,14 +555,14 @@ const CanvasLayout = ({
   }, [isProcessing]);
 
   const processingSteps = [
-    { icon: '🔍', text: 'Analyzing your request...' },
-    { icon: '💡', text: 'Brainstorming ideas...' },
-    { icon: '🎨', text: 'Crafting the perfect solution...' },
-    { icon: '🏗️', text: 'Building components...' },
-    { icon: '✨', text: 'Adding some magic...' },
-    { icon: '⚡️', text: 'Generating preview for you...' },
-    { icon: '🧪', text: 'Testing the changes locally...' },
-    { icon: '🎯', text: 'Fine-tuning the details...' }
+    {icon: '🔍', text: 'Analyzing your request...'},
+    {icon: '💡', text: 'Brainstorming ideas...'},
+    {icon: '🎨', text: 'Crafting the perfect solution...'},
+    {icon: '🏗️', text: 'Building components...'},
+    {icon: '✨', text: 'Adding some magic...'},
+    {icon: '⚡️', text: 'Generating preview for you...'},
+    {icon: '🧪', text: 'Testing the changes locally...'},
+    {icon: '🎯', text: 'Fine-tuning the details...'},
   ];
 
   const handleBreakWidgets = async (prompt, options = {}) => {
@@ -912,25 +913,24 @@ const CanvasLayout = ({
             />
           </Box>
         </Box>
-        <Box className={classes.preview} position="relative">
+        <Box className={classes.preview} position='relative'>
           {isProcessing && (
             <Box className={classes.processingOverlay}>
               <Box className={classes.heartLogo}>
                 <img src='/images/logo.png' alt='Processing' />
               </Box>
-              <Typography variant="h2" className={classes.processingTitle}>
+              <Typography variant='h2' className={classes.processingTitle}>
                 Spinning up preview...
               </Typography>
               <Box className={classes.processingSteps}>
                 {processingSteps.map((step, index) => (
                   <Typography
                     key={step.text}
-                    variant="body1"
+                    variant='body1'
                     className={clsx(classes.processingStep, {
                       [classes.activeStep]: index === visibleStepIndex,
                       [classes.inactiveStep]: index !== visibleStepIndex,
-                    })}
-                  >
+                    })}>
                     <span className={classes.stepIcon}>{step.icon}</span>
                     <span>{step.text}</span>
                   </Typography>
@@ -1018,7 +1018,7 @@ const CanvasLayout = ({
                             </Box>
                             <LiveError className={classes.liveError} />
                           </LiveProvider>
-                        ) : (
+                        ) : isProcessing ? (
                           <Box className={classes.noPreview}>
                             <img
                               src='/favicon.ico'
@@ -1028,14 +1028,23 @@ const CanvasLayout = ({
                             <CircularProgress size={24} />
                             <Typography>is thinking...</Typography>
                           </Box>
+                        ) : (
+                          <Box className={classes.noPreview}>
+                            <img
+                              src='/favicon.ico'
+                              alt='AI'
+                              className={classes.loadingIcon}
+                            />
+                            <Typography>Something went wrong</Typography>
+                          </Box>
                         )
                       ) : (
                         <>
                           <Box mb={2} p={2} bgcolor='#f5f7f9' borderRadius={1}>
                             <Typography variant='body2' color='textSecondary'>
-                              ✨ Edit the code below and switch to the Preview tab
-                              to see changes in real-time. The code automatically
-                              updates as you type.
+                              ✨ Edit the code below and switch to the Preview
+                              tab to see changes in real-time. The code
+                              automatically updates as you type.
                             </Typography>
                           </Box>
                           <LiveProvider
@@ -1104,12 +1113,15 @@ const CanvasLayout = ({
           <DialogContent className={classes.dialogContent}>
             <Typography>
               Are you done creating the UI using AI? If yes, proceed to breaking
-              this into Sling Layout and Widgets. You can always come back to edit
-              if needed.
+              this into Sling Layout and Widgets. You can always come back to
+              edit if needed.
             </Typography>
           </DialogContent>
           <DialogActions className={classes.dialogActions}>
-            <Button onClick={handleCancelNext} color='primary' variant='outlined'>
+            <Button
+              onClick={handleCancelNext}
+              color='primary'
+              variant='outlined'>
               Continue Editing
             </Button>
             <Button
