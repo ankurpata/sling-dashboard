@@ -14,6 +14,16 @@ export const apiEndpoints = {
     deploymentStatus: `${API_BASE_URL}/project/deployment/status`,
     developmentStatus: `${API_BASE_URL}/project/development/status`,
     detect: `${API_BASE_URL}/project/detect-framework`,
+    chat: {
+      sessions: `${API_BASE_URL}/project/chat/sessions`,
+      session: (sessionId) =>
+        `${API_BASE_URL}/project/chat/sessions/${sessionId}`,
+    },
+  },
+  session: {
+    create: `${API_BASE_URL}/session/create`,
+    messages: (sessionId) =>
+      `${API_BASE_URL}/session/${sessionId}/messages`,
   },
   projects: `${API_BASE_URL}/projects`,
   userInfo: `${API_BASE_URL}/user/info`,

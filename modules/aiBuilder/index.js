@@ -33,6 +33,7 @@ import CodeUtils from './utils';
 import {ALLOWED_LIBRARIES} from './config';
 import {useStyles} from './styles';
 import {fetchRepositories} from './services/repositoryService';
+import {createChatSession} from './services/chatService';
 import {UserProvider} from './context/UserContext';
 import {useUser} from './context/UserContext';
 import {useProject} from './context/ProjectContext';
@@ -163,68 +164,47 @@ const AIBuilder = () => {
   };
 
   const handleConfirm = async () => {
-    setShowConfirm(false);
-    setIsProcessing(true);
-    setProcessingMessages(['Analyzing your request...']);
-    setShowCanvas(true);
-
-    processingTimeoutRef.current = setTimeout(() => {
-      setProcessingMessages((prev) => [
-        ...prev,
-        'This is taking longer than expected...',
-      ]);
-    }, 10000);
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setProcessingMessages((prev) => [...prev, 'Preparing canvas layout...']);
-
-      const response = await fetch(
-        'http://localhost:5001/api/ai/generate-page',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prompt: inputValue,
-            mock: false,
-            constraints: {
-              componentName: true,
-              useArrowFunction: true,
-              useMaterialUI: true,
-              noStyleImports: true,
-              singleComponent: true,
-              separateDependencies: true,
-              allowedLibraries: ALLOWED_LIBRARIES,
-            },
-          }),
-        },
-      );
-
-      if (processingTimeoutRef.current) {
-        clearTimeout(processingTimeoutRef.current);
+      setIsProcessing(true);
+      
+      console.log('Creating session with:', {
+        userId: user?.id,
+        projectId: currentProject?._id,
+        inputValue
+      });
+      
+      if (!user?.id || !currentProject?._id) {
+        throw new Error('Missing user ID or project ID');
       }
 
-      setProcessingMessages((prev) => [
-        ...prev,
-        'Setting up your workspace...',
-      ]);
+      // Create chat session with current context
+      const context = {
+        currentFile: window.location.pathname,
+        cursorPosition: 0,
+        selectedText: '',
+        activeCodeItem: '',
+        openFiles: [],
+      };
 
-      const data = await response.json();
-      setSearchId(data.conversationId);
-      setInitialResponse(data.summary);
-      const cleaned = CodeUtils.cleanCode(data);
-      const transformed = CodeUtils.transformCode(cleaned.code);
-      setGeneratedCode(transformed);
-      setCodeScope(cleaned.scope);
+      const session = await createChatSession(user.id, currentProject._id, context);
+      console.log('Session created:', session);
+      
+      // Encode session ID using base64 and replace special characters
+      const encodedSessionId = btoa(session.sessionId)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+      
+      console.log('Redirecting to:', `https://baloon.dev/projects/${currentProject._id}/${encodedSessionId}`);
+      
+      // Redirect to the project URL with encoded session ID
+      window.location.href = `https://baloon.dev/projects/${currentProject._id}/${encodedSessionId}`;
     } catch (error) {
-      console.error('Error generating page:', error);
-      setProcessingMessages((prev) => [
-        ...prev,
+      console.error('Error creating chat session:', error);
+      setProcessingMessages([
+        ...processingMessages,
         'An error occurred. Please try again.',
       ]);
-      // setShowCanvas(false);
     } finally {
       setIsProcessing(false);
     }
