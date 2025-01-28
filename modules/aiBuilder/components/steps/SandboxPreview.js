@@ -285,7 +285,29 @@ const nodeVersions = [
   '16.x', // Gallium (Maintenance)
   '14.x', // Fermium (End-of-life)
 ];
-const regions = ['all', 'us-east-1', 'eu-west-1', 'ap-southeast-1'];
+
+const packageManagers = [
+  {
+    value: 'npm',
+    label: 'npm',
+    description: 'Node Package Manager (default)',
+  },
+  {
+    value: 'yarn',
+    label: 'Yarn',
+    description: 'Fast, reliable, and secure dependency management',
+  },
+  {
+    value: 'pnpm',
+    label: 'pnpm',
+    description: 'Fast, disk space efficient package manager',
+  },
+  {
+    value: 'bun',
+    label: 'Bun',
+    description: 'All-in-one JavaScript runtime & package manager',
+  },
+];
 
 const SandboxPreview = forwardRef(({error}, ref) => {
   const classes = useStyles();
@@ -308,7 +330,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
     rootDirectory: '',
     includeFiles: false,
     skipDeployment: false,
-    region: 'all',
+    packageManager: 'npm',
   });
   console.log(config, 'coniggg');
 
@@ -327,7 +349,7 @@ const SandboxPreview = forwardRef(({error}, ref) => {
         rootDirectory: settings.rootDirectory || '',
         includeFiles: settings.includeFiles || false,
         skipDeployment: settings.skipDeployment || false,
-        region: settings.region || 'all',
+        packageManager: settings.packageManager || 'npm',
         overrides: {
           buildCommand: !!settings.buildCommand,
           outputDirectory: !!settings.outputDirectory,
@@ -375,9 +397,9 @@ const SandboxPreview = forwardRef(({error}, ref) => {
             : undefined,
           rootDirectory: config.rootDirectory || undefined,
           nodeVersion: config.nodeVersion || '18.x',
+          packageManager: config.packageManager,
           includeFiles: config.includeFiles ? ['**/*'] : undefined,
           skipDeployment: config.skipDeployment,
-          region: config.region === 'all' ? undefined : [config.region],
         };
 
         await updateBuildSettings(currentProject._id, settings, true);
@@ -470,11 +492,9 @@ const SandboxPreview = forwardRef(({error}, ref) => {
           NODE_VERSION: config.nodeVersion,
         },
       },
-      git: {
-        deploymentEnabled: !config.skipDeployment,
-      },
-      regions: config.region === 'all' ? undefined : [config.region],
+      packageManager: config.packageManager,
       includeFiles: config.includeFiles ? ['**/*'] : undefined,
+      skipDeployment: config.skipDeployment,
     };
 
     // Remove undefined values for cleaner JSON
@@ -507,9 +527,9 @@ const SandboxPreview = forwardRef(({error}, ref) => {
         startCommand: parsed.startCommand || '',
         rootDirectory: parsed.rootDirectory || '',
         nodeVersion: parsed.build?.env?.NODE_VERSION || '18.x',
+        packageManager: parsed.packageManager || 'npm',
         includeFiles: Boolean(parsed.includeFiles),
-        skipDeployment: !parsed.git?.deploymentEnabled,
-        region: parsed.regions?.[0] || 'all',
+        skipDeployment: Boolean(parsed.skipDeployment),
         overrides: {
           buildCommand: Boolean(parsed.buildCommand),
           outputDirectory: Boolean(parsed.outputDirectory),
@@ -938,15 +958,20 @@ const SandboxPreview = forwardRef(({error}, ref) => {
               </Grid>
               <Grid item xs={6}>
                 <Typography variant='subtitle2' gutterBottom>
-                  Deployment Region
+                  Package Manager
                 </Typography>
                 <Select
                   className={classes.select}
-                  value={config.region}
-                  onChange={(e) => handleConfigChange('region', e.target.value)}
-                  disabled={true}
+                  value={config.packageManager}
+                  onChange={(e) =>
+                    handleConfigChange('packageManager', e.target.value)
+                  }
                   variant='outlined'
                   fullWidth
+                  renderValue={(value) => {
+                    const pm = packageManagers.find(p => p.value === value);
+                    return pm ? pm.label : value;
+                  }}
                   MenuProps={{
                     anchorOrigin: {
                       vertical: 'bottom',
@@ -965,12 +990,17 @@ const SandboxPreview = forwardRef(({error}, ref) => {
                       },
                     },
                   }}>
-                  {regions.map((region) => (
+                  {packageManagers.map((pm) => (
                     <MenuItem
-                      key={region}
-                      value={region}
+                      key={pm.value}
+                      value={pm.value}
                       className={classes.menuItem}>
-                      {region === 'all' ? 'All Regions' : region}
+                      <Box>
+                        <Typography variant="body1">{pm.label}</Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {pm.description}
+                        </Typography>
+                      </Box>
                     </MenuItem>
                   ))}
                 </Select>
