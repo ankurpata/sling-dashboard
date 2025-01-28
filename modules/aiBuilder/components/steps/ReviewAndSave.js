@@ -233,8 +233,9 @@ const ReviewAndSave = () => {
       <Box className={classes.overviewSection}>
         <Paper className={classes.previewPane}>
           {previewUrl ? (
+            // Change this to previewUrl once proxy issue is resolved
             <iframe
-              src={previewUrl}
+              src={'http://localhost:3674'}
               title='Preview'
               style={{width: '100%', height: '100%', border: 'none'}}
             />

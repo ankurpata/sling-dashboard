@@ -44,7 +44,6 @@ const AIBuilder = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showRepoDialog, setShowRepoDialog] = useState(false);
   const [repositories, setRepositories] = useState([]);
-  const [repoEnvVars, setRepoEnvVars] = useState({});
   const [loading, setLoading] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
   const [searchId, setSearchId] = useState('');
@@ -53,14 +52,14 @@ const AIBuilder = () => {
   const [codeScope, setCodeScope] = useState({});
   const [activeTab, setActiveTab] = useState('preview');
   const [userId, setUserId] = useState();
-  const { currentProject, setProject } = useProject();
-  const { user } = useUser();
+  const {currentProject, setProject} = useProject();
+  const {user} = useUser();
   const classes = useStyles({showCanvas});
   const [processingMessages, setProcessingMessages] = useState([]);
   const inputRef = useRef(null);
   const processingTimeoutRef = useRef(null);
   const router = useRouter();
-
+  console.log(currentProject, 'currentProject');
   useEffect(() => {
     if (inputRef.current && !showCanvas) {
       inputRef.current.focus();
@@ -78,7 +77,7 @@ const AIBuilder = () => {
     const params = new URLSearchParams(window.location.search);
     const isAuthenticated = params.get('authenticated');
     const userIdParam = params.get('userId');
-    
+
     // Case 1: Redirected from auth with userId in params
     if (isAuthenticated && userIdParam) {
       setUserId(userIdParam);
@@ -103,7 +102,7 @@ const AIBuilder = () => {
 
   const loadRepositories = async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     try {
       const data = await fetchRepositories(userId);
@@ -157,7 +156,8 @@ const AIBuilder = () => {
         setShowAuthDialog(true);
         return;
       }
-      setShowConfirm(true);
+      // setShowConfirm(true);
+      handleConfirm();
     }
   };
 
@@ -223,7 +223,7 @@ const AIBuilder = () => {
         ...prev,
         'An error occurred. Please try again.',
       ]);
-      setShowCanvas(false);
+      // setShowCanvas(false);
     } finally {
       setIsProcessing(false);
     }
@@ -302,43 +302,45 @@ const AIBuilder = () => {
                   )
                 }
                 onClick={handleGitHubConnect}>
-                <Box display='flex' alignItems='center' position="relative" width="100%">
+                <Box
+                  display='flex'
+                  alignItems='center'
+                  position='relative'
+                  width='100%'>
                   {user?.isGithubConnected && !currentProject && (
-                    <Box 
-                      position="absolute"
+                    <Box
+                      position='absolute'
                       top={-21}
                       right={-33}
-                      display="flex" 
-                      alignItems="center" 
-                      sx={{ 
+                      display='flex'
+                      alignItems='center'
+                      sx={{
                         fontSize: '0.6rem',
                         color: '#10B981', // green-500
                         backgroundColor: 'rgba(16, 185, 129, 0.1)', // light green background
                         padding: '2px 6px',
                         borderRadius: '10px',
-                        border: '1px solid rgba(16, 185, 129, 0.2)'
-                      }}
-                    >
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                      }}>
                       <Box
-                        component="span"
+                        component='span'
                         sx={{
                           width: 5,
                           height: 5,
                           borderRadius: '50%',
                           backgroundColor: '#10B981',
                           marginRight: 0.5,
-                          display: 'inline-block'
+                          display: 'inline-block',
                         }}
-                      /> &nbsp;
-                      Connected
+                      />{' '}
+                      &nbsp; Connected
                     </Box>
                   )}
-                  {currentProject 
-                    ? currentProject.name 
-                    : user?.isGithubConnected 
+                  {currentProject
+                    ? currentProject.name
+                    : user?.isGithubConnected
                       ? 'Select Repository'
-                      : 'Connect your Repo'
-                  }
+                      : 'Connect your Repo'}
                   {currentProject && (
                     <Box
                       style={{
@@ -349,13 +351,15 @@ const AIBuilder = () => {
                       }}>
                       <Tooltip
                         title={
-                          Object.keys(repoEnvVars).length > 0
+                          currentProject?.buildSettings &&
+                          currentProject?.development
                             ? 'Deployment configured with environment variables'
                             : 'No deployment configuration'
                         }
                         placement='right'>
                         <Box className={classes.deploymentStatus}>
-                          {Object.keys(repoEnvVars).length > 0 ? (
+                          {currentProject?.buildSettings &&
+                          currentProject?.development ? (
                             <CheckCircleIcon
                               className={`${classes.statusIcon} ${classes.statusIconConfigured}`}
                             />
@@ -425,12 +429,12 @@ const AIBuilder = () => {
           />
         )}
         <ConfirmationDialog
-          open={false}
+          open={showConfirm}
           onClose={() => setShowConfirm(false)}
           onConfirm={handleConfirm}
         />
         <AuthDialog
-          open={false}
+          open={showAuthDialog}
           onClose={() => setShowAuthDialog(false)}
           onSignIn={handleSignIn}
           onSignUp={handleSignUp}
