@@ -22,7 +22,7 @@ function UserProvider({ children }) {
       console.log('API Response:', response);
       
       const userData = {
-        id: response.googleId || response._id,
+        id: response._id,
         name: response.displayName || response.googleName,
         email: response.email,
         avatar: response.avatarUrl,
