@@ -4,6 +4,7 @@ import {AppBar, Toolbar, Typography, Box, Button} from '@material-ui/core';
 import UserMenu from './UserMenu';
 import {useUser} from '../context/UserContext';
 import {useRouter} from 'next/router';
+import {Language} from '@material-ui/icons';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -74,9 +75,26 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: '#1f2937',
     },
   },
+  publishButton: {
+    backgroundColor: '#18181b',
+    color: '#fff',
+    borderRadius: '8px',
+    padding: '6px 16px',
+    fontSize: '14px',
+    textTransform: 'none',
+    fontWeight: 500,
+    marginRight: theme.spacing(2),
+    '&:hover': {
+      backgroundColor: '#27272a',
+    },
+    '& .MuiSvgIcon-root': {
+      fontSize: '18px',
+      marginRight: theme.spacing(1),
+    },
+  },
 }));
 
-const Header = () => {
+const Header = ({isCanvasView}) => {
   const classes = useStyles();
   const {user} = useUser();
   const router = useRouter();
@@ -128,6 +146,18 @@ const Header = () => {
         </nav>
 
         <Box className={classes.rightSection}>
+          {isCanvasView && (
+            <Button
+              variant='contained'
+              className={classes.publishButton}
+              onClick={() => {
+                // Add publish logic here
+                console.log('Publishing...');
+              }}
+              startIcon={<Language />}>
+              Publish
+            </Button>
+          )}
           {user ? (
             <UserMenu />
           ) : (

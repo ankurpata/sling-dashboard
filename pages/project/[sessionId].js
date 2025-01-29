@@ -76,21 +76,7 @@ const ProjectSession = () => {
 
   return (
     <Box className={classes.root}>
-      <Header>
-        <Box className={classes.rightSection}>
-          <Button
-            variant='contained'
-            color='primary'
-            size='small'
-            startIcon={<PublishIcon />}
-            className={classes.publishButton}>
-            Publish
-          </Button>
-          <Typography variant='body2' color='textSecondary'>
-            {user?.name || 'Guest'}
-          </Typography>
-        </Box>
-      </Header>
+      <Header isCanvasView={true}></Header>
       <Box className={classes.content}>
         <CanvasLayout
           initialResponse={session?.initialResponse}
