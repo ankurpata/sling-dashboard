@@ -703,11 +703,11 @@ const CanvasLayout = ({
         [sessionId]: [
           ...(prev[sessionId] || []),
           {
-            type: 'user',
+            role: 'user',
             content: promptInput,
           },
           {
-            type: 'ai',
+            role: 'ai',
             content:
               'To make changes to the layout, please return to the "Generate UI" step.',
           },
@@ -718,7 +718,7 @@ const CanvasLayout = ({
     }
 
     const newMessage = {
-      type: 'user',
+      role: 'user',
       content: promptInput,
     };
 
@@ -761,7 +761,7 @@ const CanvasLayout = ({
         [sessionId]: [
           ...prev[sessionId],
           {
-            type: 'ai',
+            role: 'ai',
             content: data.summary || 'No response summary available.',
           },
         ],
@@ -773,7 +773,7 @@ const CanvasLayout = ({
         [sessionId]: [
           ...prev[sessionId],
           {
-            type: 'ai',
+            role: 'ai',
             content: 'Sorry, I encountered an error. Please try again.',
             isError: true,
           },
