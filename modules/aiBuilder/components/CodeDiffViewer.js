@@ -1,7 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Box, Typography, Chip, Paper, List, ListItem, IconButton, Tooltip } from '@material-ui/core';
-import { Add as AddIcon, Remove as RemoveIcon, ViewColumn as ViewColumnIcon, ViewStream as ViewStreamIcon } from '@material-ui/icons';
+import { 
+  Box, 
+  Typography, 
+  Chip, 
+  Paper,
+  TextField,
+  InputAdornment,
+  Collapse,
+  Tooltip,
+  IconButton,
+  List,
+  ListItem,
+} from '@material-ui/core';
+import {
+  Add as AddIcon,
+  Remove as RemoveIcon,
+  Search as SearchIcon,
+  ChevronRight as ChevronRightIcon,
+  ExpandMore as ExpandMoreIcon,
+  InsertDriveFile as FileIcon,
+  Folder as FolderIcon,
+  ViewColumn as ViewColumnIcon,
+  ViewStream as ViewStreamIcon,
+} from '@material-ui/icons';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -13,19 +35,113 @@ const useStyles = makeStyles((theme) => ({
     width: 300,
     borderRight: '1px solid #d0d7de',
     backgroundColor: '#f6f8fa',
-    overflow: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
   },
-  fileListItem: {
-    padding: '8px 16px',
+  searchContainer: {
+    padding: theme.spacing(2),
     borderBottom: '1px solid #d0d7de',
+  },
+  searchInput: {
+    '& .MuiOutlinedInput-root': {
+      // backgroundColor: '#1c2128',
+      borderRadius: '6px',
+      border: '1px solid #424a53',
+      transition: 'border-color 0.2s',
+      '&:before, &:after': {
+        display: 'none',
+        border: 'none',
+      },
+      '& .MuiOutlinedInput-notchedOutline': {
+        border: 'none',
+        borderColor: 'transparent',
+      },
+      '&:hover': {
+        border: '1px solid #525964',
+        '& .MuiOutlinedInput-notchedOutline': {
+          border: 'none',
+        },
+      },
+      '&.Mui-focused': {
+        border: '1px solid #525964',
+        '& .MuiOutlinedInput-notchedOutline': {
+          border: 'none',
+        },
+      },
+    },
+    '& .MuiOutlinedInput-input': {
+      padding: '8px 12px',
+      fontSize: '14px',
+      color: '#1c2128',
+      '&::placeholder': {
+        color: '#7d8590',
+        opacity: 1,
+      },
+    },
+    '& .MuiInputAdornment-root': {
+      color: '#7d8590',
+      marginRight: '-4px', 
+    },
+  },
+  noBorder: {
+    border: 'none',
+  },
+  fileTree: {
+    flex: 1,
+    overflow: 'auto',
+    padding: theme.spacing(1),
+  },
+  fileItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '4px 8px',
+    cursor: 'pointer',
+    borderRadius: 4,
     '&:hover': {
       backgroundColor: '#ffffff',
     },
-    cursor: 'pointer',
   },
   selectedFile: {
-    backgroundColor: '#ffffff',
-    borderLeft: '2px solid #0969da',
+    // backgroundColor: '#ffffff',
+    '&:hover': {
+      backgroundColor: '#ffffff',
+    },
+  },
+  fileIcon: {
+    fontSize: 20,
+    color: '#57606a',
+    marginRight: theme.spacing(1),
+  },
+  folderIcon: {
+    fontSize: 20,
+    color: '#54aeff',
+    marginRight: theme.spacing(1),
+  },
+  chevron: {
+    fontSize: 20,
+    color: '#57606a',
+    transition: 'transform 0.2s',
+  },
+  chevronExpanded: {
+    transform: 'rotate(90deg)',
+  },
+  fileName: {
+    fontSize: '14px',
+    color: '#24292f',
+    flex: 1,
+    marginLeft: theme.spacing(1),
+  },
+  fileStats: {
+    display: 'flex',
+    gap: 4,
+    marginLeft: theme.spacing(1),
+  },
+  statChip: {
+    height: 18,
+    fontSize: '11px',
+  },
+  nestedFiles: {
+    paddingLeft: theme.spacing(3),
   },
   mainContent: {
     flex: 1,
@@ -48,12 +164,6 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-  },
-  fileName: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: '#24292f',
-    flex: 1,
   },
   statsContainer: {
     display: 'flex',
@@ -149,55 +259,99 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const CodeDiffViewer = ({ fileChanges }) => {
+const FileTreeItem = ({ file, depth = 0, selectedFile, onSelectFile, allFiles }) => {
   const classes = useStyles();
-  const [selectedFile, setSelectedFile] = useState(fileChanges[0]?.path);
-  const [isSplitView, setIsSplitView] = useState(false);
+  const [expanded, setExpanded] = useState(true);
+  const isDirectory = file.path.includes('/');
+  const fileName = isDirectory ? file.path.split('/')[depth] : file.path;
+  const hasChildren = isDirectory && depth < file.path.split('/').length - 1;
 
-  const findCommonLines = (oldLines, newLines) => {
-    const lines = [];
-    let oldIndex = 0;
-    let newIndex = 0;
-    let displayIndex = 1;
+  const handleClick = () => {
+    if (hasChildren) {
+      setExpanded(!expanded);
+    } else {
+      onSelectFile(file.path);
+    }
+  };
 
-    while (oldIndex < oldLines.length || newIndex < newLines.length) {
-      if (oldIndex < oldLines.length && newIndex < newLines.length) {
-        if (oldLines[oldIndex] === newLines[newIndex]) {
-          // Unchanged line
-          lines.push({
-            type: 'context',
-            content: oldLines[oldIndex],
-            displayIndex: displayIndex,
-            oldLineNumber: oldIndex + 1,
-            newLineNumber: newIndex + 1,
-          });
-          oldIndex++;
-          newIndex++;
-          displayIndex++;
-        } else {
-          // Line was changed
-          lines.push({
-            type: 'removed',
-            content: oldLines[oldIndex],
-            displayIndex: displayIndex,
-            oldLineNumber: oldIndex + 1,
-            newLineNumber: null,
-          });
-          oldIndex++;
-          displayIndex++;
+  return (
+    <>
+      <div 
+        className={`${classes.fileItem} ${!hasChildren && file.path === selectedFile ? classes.selectedFile : ''}`}
+        onClick={handleClick}
+        style={{ paddingLeft: `${depth * 16}px` }}
+      >
+        {hasChildren ? (
+          <IconButton size="small" onClick={() => setExpanded(!expanded)}>
+            {expanded ? (
+              <ExpandMoreIcon className={classes.chevron} />
+            ) : (
+              <ChevronRightIcon className={classes.chevron} />
+            )}
+          </IconButton>
+        ) : (
+          <FileIcon className={classes.fileIcon} />
+        )}
+        <Typography className={classes.fileName}>{fileName}</Typography>
+        {!hasChildren && (
+          <div className={classes.fileStats}>
+            <Chip
+              size="small"
+              label={`+${file.additions}`}
+              className={classes.statChip}
+              style={{ backgroundColor: '#dafbe1', color: '#1a7f37' }}
+            />
+            <Chip
+              size="small"
+              label={`-${file.deletions}`}
+              className={classes.statChip}
+              style={{ backgroundColor: '#ffeef0', color: '#cf222e' }}
+            />
+          </div>
+        )}
+      </div>
+      {hasChildren && expanded && (
+        <div className={classes.nestedFiles}>
+          {allFiles
+            .filter(f => f.path.startsWith(file.path.split('/').slice(0, depth + 1).join('/')))
+            .map((childFile, index) => (
+              <FileTreeItem
+                key={index}
+                file={childFile}
+                depth={depth + 1}
+                selectedFile={selectedFile}
+                onSelectFile={onSelectFile}
+                allFiles={allFiles}
+              />
+            ))}
+        </div>
+      )}
+    </>
+  );
+};
 
-          lines.push({
-            type: 'added',
-            content: newLines[newIndex],
-            displayIndex: displayIndex,
-            oldLineNumber: null,
-            newLineNumber: newIndex + 1,
-          });
-          newIndex++;
-          displayIndex++;
-        }
-      } else if (oldIndex < oldLines.length) {
-        // Remaining removed lines
+const findCommonLines = (oldLines, newLines) => {
+  const lines = [];
+  let oldIndex = 0;
+  let newIndex = 0;
+  let displayIndex = 1;
+
+  while (oldIndex < oldLines.length || newIndex < newLines.length) {
+    if (oldIndex < oldLines.length && newIndex < newLines.length) {
+      if (oldLines[oldIndex] === newLines[newIndex]) {
+        // Unchanged line
+        lines.push({
+          type: 'context',
+          content: oldLines[oldIndex],
+          displayIndex: displayIndex,
+          oldLineNumber: oldIndex + 1,
+          newLineNumber: newIndex + 1,
+        });
+        oldIndex++;
+        newIndex++;
+        displayIndex++;
+      } else {
+        // Line was changed
         lines.push({
           type: 'removed',
           content: oldLines[oldIndex],
@@ -207,8 +361,7 @@ const CodeDiffViewer = ({ fileChanges }) => {
         });
         oldIndex++;
         displayIndex++;
-      } else if (newIndex < newLines.length) {
-        // Remaining added lines
+
         lines.push({
           type: 'added',
           content: newLines[newIndex],
@@ -219,9 +372,38 @@ const CodeDiffViewer = ({ fileChanges }) => {
         newIndex++;
         displayIndex++;
       }
+    } else if (oldIndex < oldLines.length) {
+      // Remaining removed lines
+      lines.push({
+        type: 'removed',
+        content: oldLines[oldIndex],
+        displayIndex: displayIndex,
+        oldLineNumber: oldIndex + 1,
+        newLineNumber: null,
+      });
+      oldIndex++;
+      displayIndex++;
+    } else if (newIndex < newLines.length) {
+      // Remaining added lines
+      lines.push({
+        type: 'added',
+        content: newLines[newIndex],
+        displayIndex: displayIndex,
+        oldLineNumber: null,
+        newLineNumber: newIndex + 1,
+      });
+      newIndex++;
+      displayIndex++;
     }
-    return lines;
-  };
+  }
+  return lines;
+};
+
+const CodeDiffViewer = ({ fileChanges }) => {
+  const classes = useStyles();
+  const [selectedFile, setSelectedFile] = useState(fileChanges[0]?.path);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSplitView, setIsSplitView] = useState(false);
 
   const renderDiffLines = (diffLines) => {
     return diffLines.map((line, i) => (
@@ -250,31 +432,66 @@ const CodeDiffViewer = ({ fileChanges }) => {
     ));
   };
 
+  const filteredFiles = useMemo(() => {
+    if (!searchQuery) return fileChanges;
+    return fileChanges.filter(file => 
+      file.path.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [fileChanges, searchQuery]);
+
+  // Group files by directory
+  const fileTree = useMemo(() => {
+    const grouped = {};
+    filteredFiles.forEach(file => {
+      const parts = file.path.split('/');
+      let current = grouped;
+      parts.forEach((part, i) => {
+        if (!current[part]) {
+          current[part] = i === parts.length - 1 ? file : {};
+        }
+        current = current[part];
+      });
+    });
+    return grouped;
+  }, [filteredFiles]);
+
   const currentFile = fileChanges.find(f => f.path === selectedFile);
 
   return (
     <Box className={classes.root}>
       <Box className={classes.fileList}>
-        <List disablePadding>
-          {fileChanges.map((file) => (
-            <ListItem
-              key={file.path}
-              className={`${classes.fileListItem} ${
-                file.path === selectedFile ? classes.selectedFile : ''
-              }`}
-              onClick={() => setSelectedFile(file.path)}
-            >
-              <Box>
-                <Typography variant="body2">{file.path}</Typography>
-                <Box display="flex" gap={1} mt={0.5}>
-                  <Typography variant="caption" color="textSecondary">
-                    +{file.additions} -{file.deletions}
-                  </Typography>
-                </Box>
-              </Box>
-            </ListItem>
+        <Box className={classes.searchContainer}>
+          <TextField
+            fullWidth
+            size="small"
+            variant="outlined"
+            placeholder="Filter changed files"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={classes.searchInput}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon style={{ fontSize: 20 }} />
+                </InputAdornment>
+              ),
+              classes: {
+                notchedOutline: classes.noBorder
+              }
+            }}
+          />
+        </Box>
+        <Box className={classes.fileTree}>
+          {filteredFiles.map((file, index) => (
+            <FileTreeItem
+              key={index}
+              file={file}
+              selectedFile={selectedFile}
+              onSelectFile={setSelectedFile}
+              allFiles={filteredFiles}
+            />
           ))}
-        </List>
+        </Box>
       </Box>
       <Box className={classes.mainContent}>
         {currentFile && (
