@@ -33,7 +33,7 @@ import CodeUtils from './utils';
 import {ALLOWED_LIBRARIES} from './config';
 import {useStyles} from './styles';
 import {fetchRepositories} from './services/repositoryService';
-import {createChatSession} from './services/chatService';
+import {createSession} from './services/sessionService';
 import {UserProvider} from './context/UserContext';
 import {useUser} from './context/UserContext';
 import {useProject} from './context/ProjectContext';
@@ -166,13 +166,13 @@ const AIBuilder = () => {
   const handleConfirm = async () => {
     try {
       setIsProcessing(true);
-      
+
       console.log('Creating session with:', {
         userId: user?.id,
         projectId: currentProject?._id,
-        inputValue
+        inputValue,
       });
-      
+
       if (!user?.id || !currentProject?._id) {
         throw new Error('Missing user ID or project ID');
       }
@@ -186,19 +186,16 @@ const AIBuilder = () => {
         openFiles: [],
       };
 
-      const session = await createChatSession(user.id, currentProject._id, context);
+      const session = await createSession(user.id, currentProject._id, context);
       console.log('Session created:', session);
-      
-      // Encode session ID using base64 and replace special characters
-      const encodedSessionId = btoa(session.sessionId)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-      
-      console.log('Redirecting to:', `https://baloon.dev/projects/${currentProject._id}/${encodedSessionId}`);
-      
+
+      console.log(
+        'Redirecting to:',
+        `https://baloon.dev/projects/${session.sessionId}`,
+      );
+
       // Redirect to the project URL with encoded session ID
-      window.location.href = `https://baloon.dev/projects/${currentProject._id}/${encodedSessionId}`;
+      window.location.href = `${window.location.origin}/project/${session.sessionId}`;
     } catch (error) {
       console.error('Error creating chat session:', error);
       setProcessingMessages([
@@ -236,9 +233,9 @@ const AIBuilder = () => {
         <Header>
           <Box className={classes.rightSection}>
             <Button
-              variant="contained"
-              color="primary"
-              size="small"
+              variant='contained'
+              color='primary'
+              size='small'
               startIcon={<PublishIcon />}
               style={{
                 marginRight: '16px',
@@ -247,11 +244,10 @@ const AIBuilder = () => {
                 '&:hover': {
                   backgroundColor: '#059669',
                 },
-              }}
-            >
+              }}>
               Publish
             </Button>
-            <Typography variant="body2" color="textSecondary">
+            <Typography variant='body2' color='textSecondary'>
               {user?.name || 'Guest'}
             </Typography>
           </Box>

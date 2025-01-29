@@ -8,6 +8,7 @@ export const apiEndpoints = {
   },
   project: {
     create: `${API_BASE_URL}/project`,
+    detail: `${API_BASE_URL}/project/detail`,
     env: `${API_BASE_URL}/project/env`,
     buildSettings: `${API_BASE_URL}/project/build-settings`,
     deploy: `${API_BASE_URL}/project/deploy`,
@@ -22,8 +23,8 @@ export const apiEndpoints = {
   },
   session: {
     create: `${API_BASE_URL}/session/create`,
-    messages: (sessionId) =>
-      `${API_BASE_URL}/session/${sessionId}/messages`,
+    details: `${API_BASE_URL}/session/details`,
+    messages: (sessionId) => `${API_BASE_URL}/session/${sessionId}/messages`,
   },
   projects: `${API_BASE_URL}/projects`,
   userInfo: `${API_BASE_URL}/user/info`,

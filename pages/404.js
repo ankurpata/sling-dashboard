@@ -1,90 +1,90 @@
 import React from 'react';
-
-import Button from '@material-ui/core/Button';
-import {useRouter} from 'next/router';
+import { useRouter } from 'next/router';
 import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
-import {grey} from '@material-ui/core/colors';
-import {makeStyles} from '@material-ui/core';
-import IntlMessages from '../@sling/utility/IntlMessages';
-import {Fonts} from '../shared/constants/AppEnums';
-import {initialUrl} from '../shared/constants/AppConst';
-import AnimateComponent from '../@sling/core/Animate';
+import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core';
+import { ArrowBack } from '@material-ui/icons';
 
-const useStyles = makeStyles((theme) => {
-  return {
-    button: {
-      fontWeight: Fonts.BOLD,
-      fontSize: 16,
-      textTransform: 'capitalize',
+const useStyles = makeStyles((theme) => ({
+  root: {
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000',
+    color: '#fff',
+    padding: theme.spacing(2),
+  },
+  logo: {
+    height: 240,
+    marginBottom: theme.spacing(4),
+    filter: 'brightness(0) invert(1)', // Makes the logo white
+  },
+  title: {
+    fontSize: '8rem',
+    fontWeight: 700,
+    color: theme.palette.primary.main,
+    marginBottom: theme.spacing(2),
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '6rem',
     },
-    image: {
-      width: '100%',
+  },
+  subtitle: {
+    fontSize: '1.5rem',
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: theme.spacing(4),
+    textAlign: 'center',
+  },
+  button: {
+    textTransform: 'none',
+    fontSize: '1.1rem',
+    padding: theme.spacing(1, 4),
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
     },
-  };
-});
+  },
+  backIcon: {
+    marginRight: theme.spacing(1),
+  },
+}));
+
 const Error404 = () => {
+  const classes = useStyles();
   const router = useRouter();
 
-  const onGoBackToHome = () => {
-    router.push(initialUrl);
+  const handleGoHome = () => {
+    router.push('/');
   };
 
-  const classes = useStyles();
-
   return (
-    <AnimateComponent animation='transition.slideUpIn' delay={0}>
-      <Box
-        py={{xl: 8}}
-        flex={1}
-        display='flex'
-        flexDirection='column'
-        justifyContent='center'
-        alignItems='center'
-        textAlign='center'>
-        <Box
-          mb={{xs: 4, xl: 8}}
-          width='100%'
-          maxWidth={{xs: 200, sm: 300, xl: 706}}>
-          <img
-            className={classes.image}
-            src={'/images/errorPageImages/404.png'}
-            alt='404'
-          />
-        </Box>
-        <Box mb={{xs: 4, xl: 5}}>
-          <Box
-            variant='h3'
-            mb={{xs: 3, xl: 10}}
-            fontSize={{xs: 20, md: 24}}
-            fontWeight={Fonts.BOLD}>
-            <IntlMessages id='error.404Error' />.
-          </Box>
-          <Box
-            mb={{xs: 4, xl: 10}}
-            color={grey[600]}
-            fontSize={16}
-            fontWeight={Fonts.MEDIUM}>
-            <Typography>
-              <IntlMessages id='error.message1' />
-            </Typography>
-            <Typography>
-              <IntlMessages id='error.message2' />
-            </Typography>
-          </Box>
-          <Button
-            variant='contained'
-            color='primary'
-            className={classes.button}
-            onClick={onGoBackToHome}>
-            <IntlMessages id='error.goBackToHome' />
-          </Button>
-        </Box>
-      </Box>
-    </AnimateComponent>
+    <Box className={classes.root}>
+      <img
+        src="/images/logo.png"
+        alt="Baloon.dev Logo"
+        className={classes.logo}
+      />
+      <Typography variant="h1" className={classes.title}>
+        404
+      </Typography>
+      <Typography variant="h2" className={classes.subtitle}>
+        Oops! This page has floated away.
+      </Typography>
+      <Button
+        variant="contained"
+        className={classes.button}
+        onClick={handleGoHome}
+      >
+        <ArrowBack className={classes.backIcon} />
+        Back to Home
+      </Button>
+    </Box>
   );
 };
 
 import AppPage from '../@sling/hoc/AppPage';
 
-export default AppPage(() => <Error404 />);
+export default Error404;

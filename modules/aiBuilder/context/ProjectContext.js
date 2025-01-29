@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getProject } from '../services/projectService';
 
 const ProjectContext = createContext();
 
 export function ProjectProvider({ children }) {
   const [currentProject, setCurrentProject] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Load project from localStorage on mount
   useEffect(() => {
@@ -26,13 +29,34 @@ export function ProjectProvider({ children }) {
     }
   };
 
+  const loadProjectById = async (projectId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const project = await getProject(projectId);
+      setProject(project);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading project:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearProject = () => {
     setCurrentProject(null);
     localStorage.removeItem('currentProject');
   };
 
   return (
-    <ProjectContext.Provider value={{ currentProject, setProject, clearProject }}>
+    <ProjectContext.Provider value={{ 
+      currentProject, 
+      setProject, 
+      clearProject, 
+      loadProjectById,
+      loading,
+      error 
+    }}>
       {children}
     </ProjectContext.Provider>
   );

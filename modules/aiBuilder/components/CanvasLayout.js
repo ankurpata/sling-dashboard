@@ -40,32 +40,60 @@ import clsx from 'clsx';
 const useStyles = makeStyles((theme) => ({
   root: {
     position: 'relative',
+    height: '100%',
   },
   canvas: {
     display: 'flex',
     // gap: theme.spacing(3),
     // marginTop: theme.spacing(3),
-    height: 'calc(100vh - 200px)',
+    height: '100%',
     minHeight: '600px',
   },
   progress: {
-    flex: '0 0 30%',
-    backgroundColor: '#ffffff',
-    display: 'flex',
-    flexDirection: 'column',
+    flex: '0 0 25%',
     height: '100%',
-    position: 'relative',
-    border: '1px solid #e5e5e5',
-    // borderRadius: '12px',
+    display: 'flex',
     overflow: 'hidden',
+    position: 'relative',
+    flexDirection: 'column',
+    backgroundColor: '#fff',
+    borderRadius: '15px',
+    border: '1px solid #e5e5e5',
   },
   progressHeader: {
-    padding: theme.spacing(2.5, 3),
+    padding: theme.spacing(0.5),
+    backgroundColor: '#f8f9fa',
+    borderTopLeftRadius: '15px',
+    borderTopRightRadius: '15px',
     borderBottom: '1px solid #e5e5e5',
-    '& h6': {
+  },
+  tabContainer: {
+    display: 'flex',
+    backgroundColor: '#fff',
+    padding: '2px',
+    borderRadius: '8px',
+    border: '1px solid #e5e5e5',
+  },
+  tab: {
+    flex: 1,
+    padding: theme.spacing(1),
+    textAlign: 'center',
+    color: '#6c757d',
+    cursor: 'pointer',
+    borderRadius: '6px',
+    transition: 'all 0.2s ease',
+    '& .MuiTypography-root': {
+      fontSize: '14px',
       fontWeight: 500,
-      color: '#1a1a1a',
     },
+    '&:hover': {
+      backgroundColor: '#f8f9fa',
+      color: '#495057',
+    },
+  },
+  activeTab: {
+    backgroundColor: '#e9ecef',
+    color: '#212529',
   },
   progressContent: {
     flex: 1,
@@ -154,7 +182,7 @@ const useStyles = makeStyles((theme) => ({
   inputContainer: {
     marginTop: 'auto',
     padding: theme.spacing(2),
-    backgroundColor: '#ffffff',
+    // backgroundColor: '#ffffff',
     borderTop: '1px solid #e5e5e5',
     position: 'relative',
   },
@@ -203,16 +231,14 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   preview: {
-    flex: '0 0 70%',
-    backgroundColor: '#ffffff',
-    padding: theme.spacing(3),
-    // borderRadius: '12px',
-    // boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-    overflowY: 'auto',
+    flex: '0 0 75%',
     display: 'flex',
+    padding: '12px',
+    border: '1px solid #e5e5e5',
+    borderRadius: '15px',
+    paddingLeft: '0',
     flexDirection: 'column',
-    paddingLeft: 0,
-    // backgroundColor: theme.palette.background.default,
+    backgroundColor: '#ffffff',
   },
   previewHeader: {
     marginBottom: theme.spacing(2),
@@ -536,6 +562,7 @@ const CanvasLayout = ({
   const [originalScope, setOriginalScope] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
   const chatContainerRef = useRef(null);
+  const [activeTabState, setActiveTabState] = useState('chat');
 
   useEffect(() => {
     // Scroll to bottom when chat updates
@@ -656,13 +683,23 @@ const CanvasLayout = ({
           {
             type: 'user',
             content: inputValue,
+            timestamp: new Date().toISOString(),
           },
           {
             type: 'ai',
             content: initialResponse,
+            timestamp: new Date().toISOString(),
           },
         ],
       }));
+
+      // Set initial code if available in session
+      if (initialResponse?.code) {
+        setGeneratedCode(initialResponse.code);
+      }
+      if (initialResponse?.scope) {
+        setCodeScope(initialResponse.scope);
+      }
     }
   }, [searchId, inputValue, initialResponse]);
 
@@ -847,9 +884,24 @@ const CanvasLayout = ({
       <Box className={classes.canvas}>
         <Box className={classes.progress}>
           <Box className={classes.progressHeader}>
-            <Typography variant='h6' gutterBottom>
-              AI Assistant
-            </Typography>
+            <Box className={classes.tabContainer}>
+              <Box
+                className={`${classes.tab} ${
+                  activeTabState === 'chat' ? classes.activeTab : ''
+                }`}
+                onClick={() => setActiveTabState('chat')}
+              >
+                <Typography variant="body1">Chat</Typography>
+              </Box>
+              <Box
+                className={`${classes.tab} ${
+                  activeTabState === 'history' ? classes.activeTab : ''
+                }`}
+                onClick={() => setActiveTabState('history')}
+              >
+                <Typography variant="body1">History</Typography>
+              </Box>
+            </Box>
           </Box>
           <Box className={classes.progressContent}>
             <Box className={sharedClasses.progressItem}>
