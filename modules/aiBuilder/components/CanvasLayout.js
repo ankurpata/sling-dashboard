@@ -21,7 +21,6 @@ import {
   Step,
   StepLabel,
 } from '@material-ui/core';
-import {LiveProvider, LiveEditor, LiveError, LivePreview} from 'react-live';
 import {makeStyles} from '@material-ui/core/styles';
 import AttachFile from '@material-ui/icons/AttachFile';
 import Send from '@material-ui/icons/Send';
@@ -35,6 +34,8 @@ import {useStyles as useSharedStyles} from '../styles';
 import {ALLOWED_LIBRARIES} from '../config';
 import clsx from 'clsx';
 import {OpenInNew, Refresh} from '@material-ui/icons';
+import {useProject} from '../context/ProjectContext';
+import CodeDiffViewer from './CodeDiffViewer';
 
 // Import CodeUtils from index.js
 
@@ -61,7 +62,7 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: '15px',
     border: '1px solid #e5e5e5',
   },
-  appBar:{borderBottom: 'none'},
+  appBar: {borderBottom: 'none', position: 'relative'},
   progressHeader: {
     padding: theme.spacing(0.5),
     backgroundColor: '#f8f9fa',
@@ -384,11 +385,10 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: '#1a1a1a',
   },
   livePreview: {
+    height: '100%',
     flex: 1,
-    // padding: theme.spacing(2),
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    minHeight: '500px',
+    display: 'flex',
+    flexDirection: 'column',
   },
   liveEditor: {
     fontFamily: 'monospace',
@@ -574,6 +574,40 @@ const useStyles = makeStyles((theme) => ({
       opacity: 0.8,
     },
   },
+  publishButton: {
+    position: 'absolute',
+    right: theme.spacing(2),
+    top: '50%',
+    transform: 'translateY(-50%)',
+    backgroundColor: '#18181b',
+    color: '#fff',
+    borderRadius: '8px',
+    padding: '6px 16px',
+    fontSize: '14px',
+    textTransform: 'none',
+    fontWeight: 500,
+    '&:hover': {
+      backgroundColor: '#27272a',
+    },
+    '& .MuiSvgIcon-root': {
+      fontSize: '18px',
+      marginRight: theme.spacing(1),
+    },
+  },
+  previewFrame: {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    borderRadius: '8px',
+    backgroundColor: '#fff',
+  },
+  previewContent: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    minHeight: 0, // Important for flex child to respect parent height
+  },
 }));
 
 // CanvasLayout component
@@ -589,9 +623,11 @@ const CanvasLayout = ({
   setGeneratedCode,
   setCodeScope,
   setIsProcessing,
+  view = 'canvas', // Add view prop with default value
 }) => {
   const classes = useStyles();
   const sharedClasses = useSharedStyles();
+  const {currentProject} = useProject();
   const [visibleStepIndex, setVisibleStepIndex] = useState(0);
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
@@ -605,7 +641,6 @@ const CanvasLayout = ({
   const chatContainerRef = useRef(null);
   const [activeTabState, setActiveTabState] = useState('chat');
   const [previewTab, setPreviewTab] = useState('preview');
-  const [previewUrl, setPreviewUrl] = useState('');
 
   useEffect(() => {
     // Scroll to bottom when chat updates
@@ -926,6 +961,76 @@ const CanvasLayout = ({
     setPreviewTab(value);
   };
 
+  const handlePublish = () => {
+    // Add publish logic here
+    console.log('Publishing...');
+  };
+
+  const dummyFileChanges = [
+    {
+      path: 'src/components/Button.js',
+      oldContent: `import React from 'react';
+import { Button as MuiButton } from '@material-ui/core';
+
+const Button = ({ children, ...props }) => {
+  return <MuiButton {...props}>{children}</MuiButton>;
+};
+
+export default Button;`,
+      newContent: `import React from 'react';
+import { Button as MuiButton } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    borderRadius: theme.spacing(1),
+    textTransform: 'none',
+    fontWeight: 500,
+  },
+}));
+
+const Button = ({ children, ...props }) => {
+  const classes = useStyles();
+  return (
+    <MuiButton className={classes.root} {...props}>
+      {children}
+    </MuiButton>
+  );
+};
+
+export default Button;`,
+      additions: 10,
+      deletions: 5,
+    },
+    {
+      path: 'src/components/TextField.js',
+      oldContent: `import React from 'react';
+import { TextField } from '@material-ui/core';
+
+export default function CustomTextField(props) {
+  return <TextField {...props} />;
+}`,
+      newContent: `import React from 'react';
+import { TextField } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: theme.spacing(1),
+    },
+  },
+}));
+
+export default function CustomTextField(props) {
+  const classes = useStyles();
+  return <TextField className={classes.root} variant="outlined" {...props} />;
+}`,
+      additions: 8,
+      deletions: 2,
+    },
+  ];
+
   return (
     <Box className={classes.root}>
       <Box className={classes.canvas}>
@@ -1044,13 +1149,18 @@ const CanvasLayout = ({
               <Box className={classes.slidePage}>
                 <Box className={classes.urlBar}>
                   <Typography className={classes.urlText}>
-                    {previewUrl ||
-                      'preview--loving-buddy-app.lovable.app / index'}
+                    {currentProject?.development?.previewUrl ||
+                      'No preview URL available'}
                   </Typography>
                   <Box className={classes.urlActions}>
                     <IconButton
                       size='small'
-                      onClick={() => window.open(previewUrl, '_blank')}>
+                      onClick={() =>
+                        window.open(
+                          currentProject?.development?.previewUrl,
+                          '_blank',
+                        )
+                      }>
                       <OpenInNew fontSize='small' />
                     </IconButton>
                     <IconButton
@@ -1074,109 +1184,51 @@ const CanvasLayout = ({
                 <Box flex={1} style={{overflowY: 'auto', height: '100%'}}>
                   {isProcessing ? (
                     <Typography variant='body2' color='textSecondary'>
-                      Generating code...
+                      Processing...
                     </Typography>
                   ) : (
                     <Box
+                      className={classes.previewContent}
                       style={{
                         backgroundColor: '#ffffff',
-                        padding: '16px',
                         borderRadius: '12px',
-                        minHeight: '500px',
                       }}>
                       {previewTab === 'preview' ? (
-                        generatedCode ? (
-                          <LiveProvider
-                            code={generatedCode}
-                            noInline={true}
-                            scope={{
-                              React,
-                              ...codeScope,
-                            }}>
-                            <Box className={classes.livePreview}>
-                              <LivePreview />
-                            </Box>
-                            <LiveError className={classes.liveError} />
-                          </LiveProvider>
-                        ) : isProcessing ? (
-                          <Box className={classes.noPreview}>
-                            <img
-                              src='/favicon.ico'
-                              alt='AI'
-                              className={classes.loadingIcon}
+                        currentProject?.development?.previewUrl ? (
+                          <Box className={classes.livePreview}>
+                            <iframe
+                              src={'http://localhost:3674'}
+                              className={classes.previewFrame}
+                              title='Preview'
+                              sandbox='allow-same-origin allow-scripts allow-popups allow-forms'
                             />
-                            <CircularProgress size={24} />
-                            <Typography>is thinking...</Typography>
                           </Box>
                         ) : (
-                          <Box className={classes.noPreview}>
-                            <img
-                              src='/favicon.ico'
-                              alt='AI'
-                              className={classes.loadingIcon}
-                            />
-                            <Typography>Something went wrong</Typography>
-                          </Box>
+                          <Typography
+                            variant='body2'
+                            color='textSecondary'
+                            style={{padding: 16}}>
+                            No preview URL available
+                          </Typography>
                         )
                       ) : (
                         <>
-                          <Box mb={2} p={2} bgcolor='#f5f7f9' borderRadius={1}>
+                          <Box
+                            p={4}
+                            bgcolor='#f5f7f9'
+                            style={{borderBottom: '1px solid #e1e1e1'}}
+                            borderRadius={1}>
                             <Typography variant='body2' color='textSecondary'>
-                              ✨ Edit the code below and switch to the Preview
-                              tab to see changes in real-time. The code
-                              automatically updates as you type.
+                              ✨ Review the changes below. These changes will be
+                              applied when you click Publish.
                             </Typography>
                           </Box>
-                          <LiveProvider
-                            code={generatedCode}
-                            noInline={true}
-                            scope={{
-                              React,
-                              ...codeScope,
-                            }}>
-                            <LiveEditor
-                              onChange={(code) => setGeneratedCode(code)}
-                              className={classes.liveEditor}
-                              style={{
-                                fontFamily: 'monospace',
-                                fontSize: 14,
-                                backgroundColor: '#f8fafc',
-                                borderRadius: 12,
-                                padding: 16,
-                              }}
-                            />
-                            <LiveError
-                              style={{
-                                color: 'red',
-                                marginTop: 8,
-                                padding: 8,
-                                backgroundColor: '#ffebee',
-                                borderRadius: 12,
-                              }}
-                            />
-                          </LiveProvider>
+                          <CodeDiffViewer fileChanges={dummyFileChanges} />
                         </>
                       )}
                     </Box>
                   )}
                 </Box>
-              </Box>
-            </Slide>
-
-            <Slide
-              direction='left'
-              in={currentView === 'preview'}
-              mountOnEnter
-              unmountOnExit>
-              <Box className={classes.slidePage}>
-                <PreviewLayout
-                  generatedCode={generatedCode}
-                  codeScope={codeScope}
-                  isProcessing={isProcessing}
-                  onBack={handleBack}
-                  onSave={handleSave}
-                  isBreakingWidgets={isBreakingWidgets}
-                />
               </Box>
             </Slide>
           </Box>
