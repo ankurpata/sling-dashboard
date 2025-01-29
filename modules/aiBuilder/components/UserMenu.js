@@ -38,6 +38,13 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       backgroundColor: 'rgba(107, 114, 128, 0.1)',
     },
+    '.darkTheme &': {
+      color: '#ffffff',
+      border: '1px solid rgba(156, 163, 175, 0.3)',
+      '&:hover': {
+        backgroundColor: 'rgba(156, 163, 175, 0.1)',
+      },
+    },
   },
   orgButton: {
     fontSize: '0.875rem',
@@ -49,57 +56,59 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       backgroundColor: 'rgba(107, 114, 128, 0.1)',
     },
+    '.darkTheme &': {
+      color: '#9ca3af',
+      border: '1px solid rgba(156, 163, 175, 0.2)',
+      backgroundColor: 'rgba(156, 163, 175, 0.05)',
+      '&:hover': {
+        backgroundColor: 'rgba(156, 163, 175, 0.1)',
+      },
+    },
+  },
+  menu: {
+    '& .MuiPaper-root': {
+      marginTop: theme.spacing(1),
+      minWidth: 180,
+      borderRadius: 12,
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
+    '.darkTheme &': {
+      '& .MuiPaper-root': {
+        backgroundColor: '#262626',
+        border: '1px solid #404040',
+      },
+      '& .MuiMenuItem-root': {
+        color: '#ffffff',
+        '&:hover': {
+          backgroundColor: 'rgba(156, 163, 175, 0.1)',
+        },
+      },
+      '& .MuiListItemIcon-root': {
+        color: '#9ca3af',
+      },
+      '& .MuiDivider-root': {
+        backgroundColor: '#404040',
+      },
+    },
+  },
+  menuItem: {
+    padding: theme.spacing(1, 2),
+    '& .MuiListItemIcon-root': {
+      minWidth: 32,
+    },
   },
   avatar: {
     width: 28,
     height: 28,
     marginRight: theme.spacing(0.5),
   },
-  menu: {
-    marginTop: theme.spacing(1),
-  },
-  menuPaper: {
-    backgroundColor: '#111827',
-    color: '#fff',
-    borderRadius: 8,
-    minWidth: 220,
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-  },
-  menuItem: {
-    padding: theme.spacing(1.5, 2),
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(2),
-    '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    '& .MuiSvgIcon-root': {
-      fontSize: 20,
-    },
-  },
-  activeMenuItem: {
-    backgroundColor: '#2563eb',
-    '&:hover': {
-      backgroundColor: '#2563eb',
-    },
-  },
-  icon: {
-    color: '#9CA3AF',
-    marginRight: theme.spacing(1),
-  },
-  divider: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    margin: theme.spacing(1, 0),
-  },
   userName: {
     fontWeight: 500,
     fontSize: '0.9rem',
-  },
-  shortcut: {
-    marginLeft: 'auto',
-    color: '#9CA3AF',
-    fontSize: '0.75rem',
+    color: '#111827',
+    '.darkTheme &': {
+      color: '#ffffff',
+    },
   },
   orgName: {
     fontSize: '0.875rem',
@@ -112,6 +121,15 @@ const useStyles = makeStyles((theme) => ({
   },
   orgMenuItem: {
     fontSize: '0.875rem',
+  },
+  divider: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    margin: theme.spacing(1, 0),
+  },
+  shortcut: {
+    marginLeft: 'auto',
+    color: '#9CA3AF',
+    fontSize: '0.75rem',
   },
 }));
 
@@ -167,7 +185,7 @@ const UserMenu = () => {
   console.log('UserMenu - Current user:', user);
 
   return (
-    <Box className={classes.container}>
+    <Box className={`${classes.container} darkTheme`}>
       {organizations?.length > 0 && (
         <>
           <Button

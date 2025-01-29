@@ -13,6 +13,11 @@ const useStyles = makeStyles((theme) => ({
     boxShadow: 'none',
     borderBottom: '1px solid rgba(229, 231, 235, 0.5)',
     backdropFilter: 'blur(8px)',
+    '&.darkTheme': {
+      backgroundColor: '#1a1a1a',
+      color: '#fff',
+      borderBottom: '1px solid rgba(64, 64, 64, 0.5)',
+    },
   },
   toolbar: {
     display: 'flex',
@@ -26,11 +31,23 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    color: '#111827',
     textDecoration: 'none',
-    fontWeight: 500,
     '& img': {
-      height: 20,
+      height: 70,
+      paddingTop: 15,
+    },
+    '& .MuiTypography-root': {
+      fontSize: 16,
+      color: '#434446',
+      fontWeight: 'bold',
+      fontFamily: 'Poppins',
+      marginLeft: -5,
+      marginTop: -7,
+    },
+    '.darkTheme &': {
+      '& .MuiTypography-root': {
+        color: '#ffffff',
+      },
     },
   },
   nav: {
@@ -45,6 +62,12 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 500,
     '&:hover': {
       color: '#111827',
+    },
+    '.darkTheme &': {
+      color: '#9ca3af',
+      '&:hover': {
+        color: '#ffffff',
+      },
     },
   },
   rightSection: {
@@ -63,6 +86,13 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       backgroundColor: 'rgba(107, 114, 128, 0.1)',
     },
+    '&.darkTheme &': {
+      color: '#ffffff',
+      border: '1px solid rgba(156, 163, 175, 0.3)',
+      '&:hover': {
+        backgroundColor: 'rgba(156, 163, 175, 0.1)',
+      },
+    },
   },
   signUpButton: {
     backgroundColor: '#111827',
@@ -73,6 +103,12 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 500,
     '&:hover': {
       backgroundColor: '#1f2937',
+    },
+    '&.darkTheme &': {
+      backgroundColor: '#059669',
+      '&:hover': {
+        backgroundColor: '#047857',
+      },
     },
   },
   publishButton: {
@@ -91,6 +127,12 @@ const useStyles = makeStyles((theme) => ({
       fontSize: '18px',
       marginRight: theme.spacing(1),
     },
+    '&.darkTheme &': {
+      backgroundColor: '#059669',
+      '&:hover': {
+        backgroundColor: '#047857',
+      },
+    },
   },
 }));
 
@@ -108,64 +150,65 @@ const Header = ({isCanvasView}) => {
   };
 
   return (
-    <AppBar position='static' className={classes.appBar}>
+    <AppBar
+      position='static'
+      className={`${classes.appBar} ${isCanvasView ? 'darkTheme' : ''}`}>
       <Toolbar className={classes.toolbar}>
         <a href='/' className={classes.logo}>
           <img
             src='/images/logo.png'
-            style={{height: 70, paddingTop: 15}}
             alt='Logo'
           />
           <Typography
-            variant='subtitle1'
-            style={{
-              fontSize: 16,
-              color: '#434446',
-              fontWeight: 'bold',
-              fontFamily: 'Poppins',
-              marginLeft: -5,
-              marginTop: -7,
-            }}>
+            variant='subtitle1'>
             Baloon.dev
           </Typography>
         </a>
 
         <nav className={classes.nav}>
-          <a href='/support' className={classes.navLink}>
+          <a
+            href='https://balloon.dev/support'
+            target='_blank'
+            rel='noopener noreferrer'
+            className={classes.navLink}>
             Support
           </a>
-          <a href='/careers' className={classes.navLink}>
+          <a
+            href='https://balloon.dev/careers'
+            target='_blank'
+            rel='noopener noreferrer'
+            className={classes.navLink}>
             Careers
           </a>
-          <a href='/blog' className={classes.navLink}>
+          <a
+            href='https://balloon.dev/blog'
+            target='_blank'
+            rel='noopener noreferrer'
+            className={classes.navLink}>
             Blog
           </a>
-          <a href='/learn' className={classes.navLink}>
+          <a
+            href='https://balloon.dev/learn'
+            target='_blank'
+            rel='noopener noreferrer'
+            className={classes.navLink}>
             Learn
           </a>
         </nav>
 
         <Box className={classes.rightSection}>
-          {isCanvasView && (
-            <Button
-              variant='contained'
-              className={classes.publishButton}
-              onClick={() => {
-                // Add publish logic here
-                console.log('Publishing...');
-              }}
-              startIcon={<Language />}>
-              Publish
-            </Button>
-          )}
           {user ? (
-            <UserMenu />
+            <UserMenu isCanvasView={isCanvasView} />
           ) : (
             <>
-              <Button className={classes.signInButton} onClick={handleSignIn}>
+              <Button
+                className={classes.signInButton}
+                onClick={() => router.push('/signin')}>
                 Sign in
               </Button>
-              <Button className={classes.signUpButton} onClick={handleSignUp}>
+              <Button
+                className={classes.signUpButton}
+                onClick={() => router.push('/signup')}>
                 Sign up
               </Button>
             </>

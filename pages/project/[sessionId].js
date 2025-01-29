@@ -15,6 +15,8 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     height: '100vh',
     width: '100%',
+    backgroundColor: '#1a1a1a',
+    color: '#ffffff',
   },
   rightSection: {
     display: 'flex',
@@ -24,6 +26,29 @@ const useStyles = makeStyles((theme) => ({
   content: {
     flex: 1,
     overflow: 'auto',
+    backgroundColor: '#1a1a1a',
+    '& .MuiPaper-root': {
+      backgroundColor: '#1a1a1a',
+      // color: '#ffffff',
+    },
+    '& .MuiTypography-root': {
+     },
+    '& .MuiTab-root': {
+       '&.Mui-selected': {
+        color: '#059669',
+      },
+    },
+    '& .MuiTabs-indicator': {
+      backgroundColor: '#059669',
+    },
+    // Keep preview section white
+    '& [class*="preview"]': {
+      backgroundColor: '#ffffff',
+      color: '#000000',
+      '& .MuiTypography-root': {
+        color: '#000000',
+      },
+    },
   },
   publishButton: {
     marginRight: theme.spacing(2),
