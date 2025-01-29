@@ -638,7 +638,8 @@ const CanvasLayout = ({
   setGeneratedCode,
   setCodeScope,
   setIsProcessing,
-  view = 'canvas', // Add view prop with default value
+  chatHistory,
+  view = 'canvas',
 }) => {
   const classes = useStyles();
   const sharedClasses = useSharedStyles();
@@ -660,8 +661,7 @@ const CanvasLayout = ({
   useEffect(() => {
     // Scroll to bottom when chat updates
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatHistories[searchId]]);
 
@@ -673,6 +673,88 @@ const CanvasLayout = ({
       return () => clearInterval(interval);
     }
   }, [isProcessing]);
+
+  useEffect(() => {
+    // Initialize chat history from props
+    if (chatHistory?.length > 0) {
+      setChatHistories((prev) => ({
+        ...prev,
+        [searchId]: chatHistory,
+      }));
+    }
+  }, [chatHistory, searchId]);
+
+  const handleSendMessage = async () => {
+    if (!promptInput.trim()) return;
+
+    try {
+      // Save the prompt
+      await savePrompt(currentProject._id, promptInput, searchId);
+
+      // Add user message to chat
+      setChatHistories((prev) => ({
+        ...prev,
+        [searchId]: [
+          ...(prev[searchId] || []),
+          {
+            type: 'user',
+            content: promptInput,
+          },
+        ],
+      }));
+
+      setPromptInput('');
+      setIsTyping(true);
+
+      // Your existing API call and response handling
+      const response = await fetch('http://localhost:5001/api/ai/generate-page', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: promptInput,
+          mock: false,
+          conversationId: searchId,
+        }),
+      });
+
+      const data = await response.json();
+
+      // Process returned code
+      const cleaned = CodeUtils.cleanCode(data);
+      const transformed = CodeUtils.transformCode(cleaned.code);
+      setGeneratedCode(transformed);
+      setCodeScope(cleaned.scope);
+
+      // Add AI response to chat
+      setChatHistories((prev) => ({
+        ...prev,
+        [searchId]: [
+          ...prev[searchId],
+          {
+            type: 'ai',
+            content: data.summary || 'No response summary available.',
+          },
+        ],
+      }));
+    } catch (error) {
+      console.error('Error:', error);
+      setChatHistories((prev) => ({
+        ...prev,
+        [searchId]: [
+          ...prev[searchId],
+          {
+            type: 'ai',
+            content: 'Sorry, I encountered an error. Please try again.',
+            isError: true,
+          },
+        ],
+      }));
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
   const processingSteps = [
     {icon: '🔍', text: 'Analyzing your request...'},

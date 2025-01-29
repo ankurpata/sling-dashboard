@@ -34,6 +34,7 @@ import {ALLOWED_LIBRARIES} from './config';
 import {useStyles} from './styles';
 import {fetchRepositories} from './services/repositoryService';
 import {createSession} from './services/sessionService';
+import {savePrompt} from './services/chatService';
 import {UserProvider} from './context/UserContext';
 import {useUser} from './context/UserContext';
 import {useProject} from './context/ProjectContext';
@@ -150,60 +151,31 @@ const AIBuilder = () => {
     },
   ];
 
-  const handleInputSubmit = async (e) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
-      // Check if user is authenticated
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        setShowAuthDialog(true);
-        return;
-      }
-      // setShowConfirm(true);
-      handleConfirm();
-    }
-  };
+  const handleSubmit = async () => {
+    if (!inputValue.trim()) return;
 
-  const handleConfirm = async () => {
+    const context = {
+      currentFile: window.location.pathname,
+      cursorPosition: 0,
+      selectedText: '',
+      activeCodeItem: '',
+      openFiles: [],
+      prompt: inputValue,
+    };
+
     try {
-      setIsProcessing(true);
-
-      console.log('Creating session with:', {
-        userId: user?.id,
-        projectId: currentProject?._id,
-        inputValue,
-      });
-
-      if (!user?.id || !currentProject?._id) {
-        throw new Error('Missing user ID or project ID');
-      }
-
-      // Create chat session with current context
-      const context = {
-        currentFile: window.location.pathname,
-        cursorPosition: 0,
-        selectedText: '',
-        activeCodeItem: '',
-        openFiles: [],
-      };
-
+      // Create session
       const session = await createSession(user.id, currentProject._id, context);
       console.log('Session created:', session);
 
-      console.log(
-        'Redirecting to:',
-        `https://baloon.dev/projects/${session.sessionId}`,
-      );
+      // Save the prompt to chat history
+      await savePrompt(currentProject._id, inputValue);
 
-      // Redirect to the project URL with encoded session ID
-      window.location.href = `${window.location.origin}/project/${session.sessionId}`;
+      // Navigate to session page
+      router.push(`/project/${session.sessionId}`);
     } catch (error) {
-      console.error('Error creating chat session:', error);
-      setProcessingMessages([
-        ...processingMessages,
-        'An error occurred. Please try again.',
-      ]);
-    } finally {
-      setIsProcessing(false);
+      console.error('Error creating session:', error);
+      // Handle error appropriately
     }
   };
 
@@ -380,7 +352,11 @@ const AIBuilder = () => {
                 fullWidth
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleInputSubmit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && inputValue.trim()) {
+                    handleSubmit();
+                  }
+                }}
                 inputRef={inputRef}
               />
             </Box>
@@ -430,7 +406,7 @@ const AIBuilder = () => {
         <ConfirmationDialog
           open={showConfirm}
           onClose={() => setShowConfirm(false)}
-          onConfirm={handleConfirm}
+          onConfirm={handleSubmit}
         />
         <AuthDialog
           open={showAuthDialog}

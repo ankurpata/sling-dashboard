@@ -6,6 +6,7 @@ import PublishIcon from '@material-ui/icons/Publish';
 import CanvasLayout from '../../modules/aiBuilder/components/CanvasLayout';
 import Header from '../../modules/aiBuilder/components/Header';
 import {getSession} from '../../modules/aiBuilder/services/sessionService';
+import {getChatHistory} from '../../modules/aiBuilder/services/chatService';
 import {useUser} from '../../modules/aiBuilder/context/UserContext';
 import {useProject} from '../../modules/aiBuilder/context/ProjectContext';
 
@@ -65,6 +66,7 @@ const ProjectSession = () => {
   const {sessionId} = router.query;
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [chatHistory, setChatHistory] = useState([]);
   const {user, fetchUserInfo} = useUser();
   const {currentProject, loadProjectById} = useProject();
 
@@ -84,6 +86,10 @@ const ProjectSession = () => {
           ]);
 
           setSession(sessionData);
+
+          // Fetch chat history
+          const history = await getChatHistory(project._id);
+          setChatHistory(history);
         } catch (error) {
           console.error('Error fetching session:', error);
         } finally {
@@ -107,6 +113,7 @@ const ProjectSession = () => {
           initialResponse={session?.initialResponse}
           inputValue={session?.context?.prompt}
           searchId={session?.sessionId}
+          chatHistory={chatHistory}
         />
       </Box>
     </Box>
