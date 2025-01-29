@@ -1,13 +1,22 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   Box,
   Typography,
+  IconButton,
+  ListItem,
+  TextField,
+} from '@material-ui/core';
+import {makeStyles} from '@material-ui/core/styles';
+import AttachFile from '@material-ui/icons/AttachFile';
+import Send from '@material-ui/icons/Send';
+import CodeUtils from '../utils';
+import prettier from 'prettier/standalone';
+import parserBabel from 'prettier/parser-babel';
+import {getDummyFileChanges} from '../utils/fileChanges';
+import {
   Tabs,
   Tab,
-  TextField,
-  IconButton,
   List,
-  ListItem,
   ListItemText,
   Divider,
   CircularProgress,
@@ -21,14 +30,6 @@ import {
   Step,
   StepLabel,
 } from '@material-ui/core';
-import {makeStyles} from '@material-ui/core/styles';
-import AttachFile from '@material-ui/icons/AttachFile';
-import Send from '@material-ui/icons/Send';
-import TuneIcon from '@material-ui/icons/Tune';
-import ArrowForwardIosIcon from '@material-ui/icons/ArrowRight';
-import CodeUtils from '../utils';
-import prettier from 'prettier/standalone';
-import parserBabel from 'prettier/parser-babel';
 import PreviewLayout from './PreviewLayout';
 import {useStyles as useSharedStyles} from '../styles';
 import {ALLOWED_LIBRARIES} from '../config';
@@ -627,43 +628,50 @@ const useStyles = makeStyles((theme) => ({
 
 // CanvasLayout component
 const CanvasLayout = ({
-  activeTab,
-  handleTabChange,
-  generatedCode,
-  codeScope,
-  inputValue,
   isProcessing,
-  searchId,
+  sessionId,
   initialResponse,
   setGeneratedCode,
   setCodeScope,
-  setIsProcessing,
   chatHistory,
-  view = 'canvas',
 }) => {
   const classes = useStyles();
-  const sharedClasses = useSharedStyles();
   const {currentProject} = useProject();
   const [visibleStepIndex, setVisibleStepIndex] = useState(0);
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentView, setCurrentView] = useState('editor');
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [isBreakingWidgets, setIsBreakingWidgets] = useState(false);
-  const [originalCode, setOriginalCode] = useState(null);
-  const [originalScope, setOriginalScope] = useState(null);
-  const [activeStep, setActiveStep] = useState(0);
+
   const chatContainerRef = useRef(null);
   const [activeTabState, setActiveTabState] = useState('chat');
   const [previewTab, setPreviewTab] = useState('preview');
 
   useEffect(() => {
+    // Initialize chat history from props
+    if (chatHistory?.length > 0) {
+      // Transform the chat history to match our UI structure
+      const transformedHistory = chatHistory.map((message) => ({
+        type: message.isUser ? 'user' : 'ai',
+        content: message.message,
+        timestamp: message.timestamp,
+        changes: message.changes || [],
+      }));
+
+      setChatHistories((prev) => ({
+        ...prev,
+        [sessionId]: transformedHistory,
+      }));
+    }
+  }, [chatHistory, sessionId]);
+
+  useEffect(() => {
     // Scroll to bottom when chat updates
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
-  }, [chatHistories[searchId]]);
+  }, [chatHistories[sessionId]]);
 
   useEffect(() => {
     if (isProcessing) {
@@ -673,88 +681,6 @@ const CanvasLayout = ({
       return () => clearInterval(interval);
     }
   }, [isProcessing]);
-
-  useEffect(() => {
-    // Initialize chat history from props
-    if (chatHistory?.length > 0) {
-      setChatHistories((prev) => ({
-        ...prev,
-        [searchId]: chatHistory,
-      }));
-    }
-  }, [chatHistory, searchId]);
-
-  const handleSendMessage = async () => {
-    if (!promptInput.trim()) return;
-
-    try {
-      // Save the prompt
-      await savePrompt(currentProject._id, promptInput, searchId);
-
-      // Add user message to chat
-      setChatHistories((prev) => ({
-        ...prev,
-        [searchId]: [
-          ...(prev[searchId] || []),
-          {
-            type: 'user',
-            content: promptInput,
-          },
-        ],
-      }));
-
-      setPromptInput('');
-      setIsTyping(true);
-
-      // Your existing API call and response handling
-      const response = await fetch('http://localhost:5001/api/ai/generate-page', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: promptInput,
-          mock: false,
-          conversationId: searchId,
-        }),
-      });
-
-      const data = await response.json();
-
-      // Process returned code
-      const cleaned = CodeUtils.cleanCode(data);
-      const transformed = CodeUtils.transformCode(cleaned.code);
-      setGeneratedCode(transformed);
-      setCodeScope(cleaned.scope);
-
-      // Add AI response to chat
-      setChatHistories((prev) => ({
-        ...prev,
-        [searchId]: [
-          ...prev[searchId],
-          {
-            type: 'ai',
-            content: data.summary || 'No response summary available.',
-          },
-        ],
-      }));
-    } catch (error) {
-      console.error('Error:', error);
-      setChatHistories((prev) => ({
-        ...prev,
-        [searchId]: [
-          ...prev[searchId],
-          {
-            type: 'ai',
-            content: 'Sorry, I encountered an error. Please try again.',
-            isError: true,
-          },
-        ],
-      }));
-    } finally {
-      setIsTyping(false);
-    }
-  };
 
   const processingSteps = [
     {icon: '🔍', text: 'Analyzing your request...'},
@@ -767,122 +693,6 @@ const CanvasLayout = ({
     {icon: '🎯', text: 'Fine-tuning the details...'},
   ];
 
-  const handleBreakWidgets = async (prompt, options = {}) => {
-    setIsProcessing(true);
-    setIsTyping(false);
-
-    // Store original code before breaking into widgets
-    setOriginalCode(generatedCode);
-    setOriginalScope(codeScope);
-    localStorage.setItem('originalCode', generatedCode);
-    localStorage.setItem('originalScope', JSON.stringify(codeScope));
-
-    try {
-      const response = await fetch(
-        'http://localhost:5001/api/ai/generate-page',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prompt,
-            mock: false,
-            conversationId: searchId,
-            constraints: {
-              ...options,
-            },
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      // Process returned code same as index.js
-      const cleaned = CodeUtils.cleanCode(data);
-      const transformed = CodeUtils.transformCode(cleaned.code);
-      setGeneratedCode(transformed);
-      setCodeScope(cleaned.scope);
-
-      if (data?.message) {
-        setChatHistories((prev) => ({
-          ...prev,
-          [searchId]: [
-            ...(prev[searchId] || []),
-            {type: 'ai', content: data.message},
-          ],
-        }));
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error generating code:', error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleConfirmNext = async () => {
-    setShowConfirmDialog(false);
-    setCurrentView('preview');
-    setIsBreakingWidgets(true);
-
-    // Add confirmation message to chat
-    setChatHistories((prev) => ({
-      ...prev,
-      [searchId]: [
-        ...(prev[searchId] || []),
-        {
-          type: 'ai',
-          content:
-            'Alright, your request is my command! We are breaking the UI into smaller React Widgets and creating layout config for Sling. This will help in better component organization and reusability.',
-        },
-      ],
-    }));
-
-    try {
-      await handleBreakWidgets(inputValue, {
-        breakWidgets: true,
-      });
-    } finally {
-      setIsBreakingWidgets(false);
-    }
-  };
-
-  // Initialize chat history with initial prompt and AI response
-  useEffect(() => {
-    if (searchId && !chatHistories[searchId] && inputValue && initialResponse) {
-      setChatHistories((prev) => ({
-        ...prev,
-        [searchId]: [
-          {
-            type: 'user',
-            content: inputValue,
-            timestamp: new Date().toISOString(),
-          },
-          {
-            type: 'ai',
-            content: initialResponse,
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      }));
-
-      // Set initial code if available in session
-      if (initialResponse?.code) {
-        setGeneratedCode(initialResponse.code);
-      }
-      if (initialResponse?.scope) {
-        setCodeScope(initialResponse.scope);
-      }
-    }
-  }, [searchId, inputValue, initialResponse]);
-
-  // Get current chat history for the active search
-  const getCurrentChatHistory = () => {
-    return searchId ? chatHistories[searchId] || [] : [];
-  };
-
   // Handle prompt submission
   const handlePromptSubmit = async () => {
     if (!promptInput.trim()) return;
@@ -890,8 +700,8 @@ const CanvasLayout = ({
     if (currentView === 'preview') {
       setChatHistories((prev) => ({
         ...prev,
-        [searchId]: [
-          ...(prev[searchId] || []),
+        [sessionId]: [
+          ...(prev[sessionId] || []),
           {
             type: 'user',
             content: promptInput,
@@ -914,7 +724,7 @@ const CanvasLayout = ({
 
     setChatHistories((prev) => ({
       ...prev,
-      [searchId]: [...(prev[searchId] || []), newMessage],
+      [sessionId]: [...(prev[sessionId] || []), newMessage],
     }));
 
     setPromptInput('');
@@ -932,7 +742,7 @@ const CanvasLayout = ({
           body: JSON.stringify({
             prompt: promptInput,
             mock: false,
-            conversationId: searchId,
+            conversationId: sessionId,
           }),
         },
       );
@@ -948,8 +758,8 @@ const CanvasLayout = ({
       // Add AI response to chat
       setChatHistories((prev) => ({
         ...prev,
-        [searchId]: [
-          ...prev[searchId],
+        [sessionId]: [
+          ...prev[sessionId],
           {
             type: 'ai',
             content: data.summary || 'No response summary available.',
@@ -960,8 +770,8 @@ const CanvasLayout = ({
       // Add error message to chat
       setChatHistories((prev) => ({
         ...prev,
-        [searchId]: [
-          ...prev[searchId],
+        [sessionId]: [
+          ...prev[sessionId],
           {
             type: 'ai',
             content: 'Sorry, I encountered an error. Please try again.',
@@ -975,83 +785,38 @@ const CanvasLayout = ({
     }
   };
 
-  const handleImageError = (event) => {
-    event.target.src = '/images/default-component.png';
+  const handleImageError = (e) => {
+    e.target.src = '/images/favicon.ico';
   };
+
+  const fileChanges = getDummyFileChanges();
 
   const renderChatMessage = (message, index) => {
     return (
       <Box
-        key={`${searchId}-${index}`}
+        key={`${sessionId}-${index}`}
         mb={2}
         display='flex'
         alignItems='flex-start'
         className={`${classes.messageWrapper} ${message.type}`}>
-        {message.type === 'ai' && (
-          <Box className={classes.messageIcon}>
+        <Box className={classes.messageIcon}>
+          {message.type === 'ai' && (
             <img src='/favicon.ico' alt='AI' onError={handleImageError} />
-          </Box>
-        )}
-        <Box flex={1}>
-          <ListItem
-            className={`${classes.chatMessage} ${message.type} ${message.isError ? 'error' : ''}`}
-            disableGutters>
-            <ListItemText
-              className={classes.messageContent}
-              primary={message.content}
-            />
-          </ListItem>
+          )}
         </Box>
+        <ListItem className={`${classes.chatMessage} ${message.type}`}>
+          <Typography>{message.content}</Typography>
+          {message.changes?.length > 0 && (
+            <Box mt={2}>
+              <Typography variant='subtitle2' color='textSecondary'>
+                Changes:
+              </Typography>
+              <CodeDiffViewer fileChanges={message.changes} />
+            </Box>
+          )}
+        </ListItem>
       </Box>
     );
-  };
-
-  const handleNext = () => {
-    setShowConfirmDialog(true);
-  };
-
-  const handleCancelNext = () => {
-    setShowConfirmDialog(false);
-  };
-
-  const handleBack = () => {
-    // Restore original code when going back
-    if (originalCode) {
-      setGeneratedCode(originalCode);
-      setOriginalCode(null);
-      localStorage.removeItem('originalCode');
-    } else {
-      // Try to get from localStorage as fallback
-      const savedCode = localStorage.getItem('originalCode');
-      if (savedCode) {
-        setGeneratedCode(savedCode);
-        localStorage.removeItem('originalCode');
-      }
-    }
-
-    if (originalScope) {
-      setCodeScope(originalScope);
-      setOriginalScope(null);
-      localStorage.removeItem('originalScope');
-    } else {
-      // Try to get from localStorage as fallback
-      const savedScope = localStorage.getItem('originalScope');
-      if (savedScope) {
-        try {
-          setCodeScope(JSON.parse(savedScope));
-          localStorage.removeItem('originalScope');
-        } catch (e) {
-          console.error('Error parsing saved scope:', e);
-        }
-      }
-    }
-
-    setCurrentView('editor');
-  };
-
-  const handleSave = () => {
-    // TODO: Implement save functionality
-    console.log('Saving layout...');
   };
 
   const handlePreviewTabChange = (event, value) => {
@@ -1062,71 +827,6 @@ const CanvasLayout = ({
     // Add publish logic here
     console.log('Publishing...');
   };
-
-  const dummyFileChanges = [
-    {
-      path: 'src/components/Button.js',
-      oldContent: `import React from 'react';
-import { Button as MuiButton } from '@material-ui/core';
-
-const Button = ({ children, ...props }) => {
-  return <MuiButton {...props}>{children}</MuiButton>;
-};
-
-export default Button;`,
-      newContent: `import React from 'react';
-import { Button as MuiButton } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    borderRadius: theme.spacing(1),
-    textTransform: 'none',
-    fontWeight: 500,
-  },
-}));
-
-const Button = ({ children, ...props }) => {
-  const classes = useStyles();
-  return (
-    <MuiButton className={classes.root} {...props}>
-      {children}
-    </MuiButton>
-  );
-};
-
-export default Button;`,
-      additions: 10,
-      deletions: 5,
-    },
-    {
-      path: 'src/components/TextField.js',
-      oldContent: `import React from 'react';
-import { TextField } from '@material-ui/core';
-
-export default function CustomTextField(props) {
-  return <TextField {...props} />;
-}`,
-      newContent: `import React from 'react';
-import { TextField } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: theme.spacing(1),
-    },
-  },
-}));
-
-export default function CustomTextField(props) {
-  const classes = useStyles();
-  return <TextField className={classes.root} variant="outlined" {...props} />;
-}`,
-      additions: 8,
-      deletions: 2,
-    },
-  ];
 
   return (
     <Box className={classes.root}>
@@ -1151,32 +851,30 @@ export default function CustomTextField(props) {
             </Box>
           </Box>
           <Box className={classes.progressContent}>
-            <Box className={sharedClasses.progressItem}>
-              <Typography variant='subtitle2' color='textSecondary'>
-                Prompt Analysis
-              </Typography>
-              <Typography style={{fontStyle: 'italic'}} variant='body2'>
-                "{inputValue}"
-              </Typography>
-            </Box>
-
-            <List className={classes.chatHistory} ref={chatContainerRef}>
-              {getCurrentChatHistory().map((message, index) =>
+            <Box className={classes.chatHistory} ref={chatContainerRef}>
+              {chatHistories[sessionId]?.map((message, index) =>
                 renderChatMessage(message, index),
               )}
               {isTyping && (
-                <Box className={classes.messageWrapper}>
-                  <ListItem
-                    className={`${classes.chatMessage} ai typing`}
-                    disableGutters>
-                    <ListItemText
-                      className={classes.messageContent}
-                      primary='Thinking... '
+                <Box
+                  key={`typing-${sessionId}`}
+                  mb={2}
+                  display='flex'
+                  alignItems='flex-start'
+                  className={`${classes.messageWrapper} ai`}>
+                  <Box className={classes.messageIcon}>
+                    <img
+                      src='/favicon.ico'
+                      alt='AI'
+                      onError={handleImageError}
                     />
+                  </Box>
+                  <ListItem className={`${classes.chatMessage} ai typing`}>
+                    <Typography>Thinking...</Typography>
                   </ListItem>
                 </Box>
               )}
-            </List>
+            </Box>
           </Box>
 
           <Box className={classes.inputContainer}>
@@ -1320,7 +1018,7 @@ export default function CustomTextField(props) {
                               applied when you click Publish.
                             </Typography>
                           </Box>
-                          <CodeDiffViewer fileChanges={dummyFileChanges} />
+                          <CodeDiffViewer fileChanges={fileChanges} />
                         </>
                       )}
                     </Box>
@@ -1330,38 +1028,6 @@ export default function CustomTextField(props) {
             </Slide>
           </Box>
         </Box>
-        <Dialog
-          open={showConfirmDialog}
-          onClose={handleCancelNext}
-          className={classes.confirmDialog}
-          maxWidth='xs'
-          fullWidth>
-          <DialogTitle className={classes.dialogTitle}>
-            Ready to Customize Layout?
-          </DialogTitle>
-          <DialogContent className={classes.dialogContent}>
-            <Typography>
-              Are you done creating the UI using AI? If yes, proceed to breaking
-              this into Sling Layout and Widgets. You can always come back to
-              edit if needed.
-            </Typography>
-          </DialogContent>
-          <DialogActions className={classes.dialogActions}>
-            <Button
-              onClick={handleCancelNext}
-              color='primary'
-              variant='outlined'>
-              Continue Editing
-            </Button>
-            <Button
-              onClick={handleConfirmNext}
-              color='primary'
-              variant='contained'
-              disableElevation>
-              Proceed to Customize
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
     </Box>
   );

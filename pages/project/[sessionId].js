@@ -32,10 +32,9 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: '#1a1a1a',
       // color: '#ffffff',
     },
-    '& .MuiTypography-root': {
-     },
+    '& .MuiTypography-root': {},
     '& .MuiTab-root': {
-       '&.Mui-selected': {
+      '&.Mui-selected': {
         color: '#059669',
       },
     },
@@ -110,10 +109,9 @@ const ProjectSession = () => {
       <Header isCanvasView={true}></Header>
       <Box className={classes.content}>
         <CanvasLayout
-          initialResponse={session?.initialResponse}
           inputValue={session?.context?.prompt}
-          searchId={session?.sessionId}
-          chatHistory={chatHistory}
+          sessionId={session?.sessionId}
+          chatHistory={chatHistory.history}
         />
       </Box>
     </Box>
