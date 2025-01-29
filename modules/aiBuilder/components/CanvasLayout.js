@@ -34,6 +34,7 @@ import PreviewLayout from './PreviewLayout';
 import {useStyles as useSharedStyles} from '../styles';
 import {ALLOWED_LIBRARIES} from '../config';
 import clsx from 'clsx';
+import {OpenInNew, Refresh} from '@material-ui/icons';
 
 // Import CodeUtils from index.js
 
@@ -60,6 +61,7 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: '15px',
     border: '1px solid #e5e5e5',
   },
+  appBar:{borderBottom: 'none'},
   progressHeader: {
     padding: theme.spacing(0.5),
     backgroundColor: '#f8f9fa',
@@ -71,7 +73,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     backgroundColor: '#fff',
     padding: '2px',
-    borderRadius: '8px',
+    borderRadius: '15px',
     border: '1px solid #e5e5e5',
   },
   tab: {
@@ -80,7 +82,7 @@ const useStyles = makeStyles((theme) => ({
     textAlign: 'center',
     color: '#6c757d',
     cursor: 'pointer',
-    borderRadius: '6px',
+    borderRadius: '15px',
     transition: 'all 0.2s ease',
     '& .MuiTypography-root': {
       fontSize: '14px',
@@ -233,12 +235,51 @@ const useStyles = makeStyles((theme) => ({
   preview: {
     flex: '0 0 75%',
     display: 'flex',
-    padding: '12px',
-    border: '1px solid #e5e5e5',
+    padding: '0',
+    // border: '1px solid #e5e5e5',
     borderRadius: '15px',
     paddingLeft: '0',
     flexDirection: 'column',
     backgroundColor: '#ffffff',
+  },
+  urlBar: {
+    display: 'flex',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #e5e5e5',
+    borderRadius: '8px',
+    padding: '4px 8px',
+    marginBottom: theme.spacing(2),
+  },
+  urlText: {
+    flex: 1,
+    fontSize: '13px',
+    color: '#6c757d',
+    padding: '4px 8px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  urlActions: {
+    display: 'flex',
+    gap: '4px',
+    '& .MuiIconButton-root': {
+      padding: 6,
+      color: '#6c757d',
+      '&:hover': {
+        backgroundColor: '#e9ecef',
+        color: '#212529',
+      },
+    },
+  },
+  previewTabs: {
+    borderBottom: '1px solid #e5e5e5',
+    '& .MuiTab-root': {
+      textTransform: 'none',
+      minWidth: 100,
+      fontSize: '14px',
+      fontWeight: 500,
+    },
   },
   previewHeader: {
     marginBottom: theme.spacing(2),
@@ -563,6 +604,8 @@ const CanvasLayout = ({
   const [activeStep, setActiveStep] = useState(0);
   const chatContainerRef = useRef(null);
   const [activeTabState, setActiveTabState] = useState('chat');
+  const [previewTab, setPreviewTab] = useState('preview');
+  const [previewUrl, setPreviewUrl] = useState('');
 
   useEffect(() => {
     // Scroll to bottom when chat updates
@@ -879,6 +922,10 @@ const CanvasLayout = ({
     console.log('Saving layout...');
   };
 
+  const handlePreviewTabChange = (event, value) => {
+    setPreviewTab(value);
+  };
+
   return (
     <Box className={classes.root}>
       <Box className={classes.canvas}>
@@ -889,17 +936,15 @@ const CanvasLayout = ({
                 className={`${classes.tab} ${
                   activeTabState === 'chat' ? classes.activeTab : ''
                 }`}
-                onClick={() => setActiveTabState('chat')}
-              >
-                <Typography variant="body1">Chat</Typography>
+                onClick={() => setActiveTabState('chat')}>
+                <Typography variant='body1'>Chat</Typography>
               </Box>
               <Box
                 className={`${classes.tab} ${
                   activeTabState === 'history' ? classes.activeTab : ''
                 }`}
-                onClick={() => setActiveTabState('history')}
-              >
-                <Typography variant="body1">History</Typography>
+                onClick={() => setActiveTabState('history')}>
+                <Typography variant='body1'>History</Typography>
               </Box>
             </Box>
           </Box>
@@ -997,52 +1042,35 @@ const CanvasLayout = ({
               mountOnEnter
               unmountOnExit>
               <Box className={classes.slidePage}>
-                <Box className={classes.headerSection}>
-                  <Box className={classes.headerLeft}>
-                    <Typography variant='h5' color='primary'>
-                      Generate UI
-                    </Typography>
-                    <Typography variant='subtitle1' color='textSecondary'>
-                      Create and preview your component using AI
-                    </Typography>
-                  </Box>
-                  <Box className={classes.buttonGroup}>
-                    <Button
-                      variant='contained'
-                      className={classes.nextButton}
-                      onClick={handleNext}
-                      disabled={!generatedCode || isProcessing}
-                      disableElevation>
-                      Customize Layout
-                      <ArrowForwardIosIcon style={{fontSize: 25}} />
-                    </Button>
+                <Box className={classes.urlBar}>
+                  <Typography className={classes.urlText}>
+                    {previewUrl ||
+                      'preview--loving-buddy-app.lovable.app / index'}
+                  </Typography>
+                  <Box className={classes.urlActions}>
+                    <IconButton
+                      size='small'
+                      onClick={() => window.open(previewUrl, '_blank')}>
+                      <OpenInNew fontSize='small' />
+                    </IconButton>
+                    <IconButton
+                      size='small'
+                      onClick={() => {
+                        // Add refresh logic here
+                      }}>
+                      <Refresh fontSize='small' />
+                    </IconButton>
                   </Box>
                 </Box>
 
-                <Box mb={2}>
-                  <Tabs
-                    value={activeTab}
-                    onChange={handleTabChange}
-                    classes={{
-                      root: classes.tabsRoot,
-                      indicator: classes.tabsIndicator,
-                    }}>
-                    <Tab
-                      label='Preview'
-                      value='preview'
-                      classes={{
-                        root: classes.tabRoot,
-                      }}
-                    />
-                    <Tab
-                      label='Code'
-                      value='code'
-                      classes={{
-                        root: classes.tabRoot,
-                      }}
-                    />
-                  </Tabs>
-                </Box>
+                <Tabs
+                  value={previewTab}
+                  onChange={handlePreviewTabChange}
+                  className={classes.previewTabs}>
+                  <Tab label='Preview' value='preview' />
+                  <Tab label='Code' value='code' />
+                </Tabs>
+
                 <Box flex={1} style={{overflowY: 'auto', height: '100%'}}>
                   {isProcessing ? (
                     <Typography variant='body2' color='textSecondary'>
@@ -1056,7 +1084,7 @@ const CanvasLayout = ({
                         borderRadius: '12px',
                         minHeight: '500px',
                       }}>
-                      {activeTab === 'preview' ? (
+                      {previewTab === 'preview' ? (
                         generatedCode ? (
                           <LiveProvider
                             code={generatedCode}
