@@ -652,7 +652,7 @@ const CanvasLayout = ({
     if (chatHistory?.length > 0) {
       // Transform the chat history to match our UI structure
       const transformedHistory = chatHistory.map((message) => ({
-        type: message.isUser ? 'user' : 'ai',
+        role: message.role,
         content: message.message,
         timestamp: message.timestamp,
         changes: message.changes || [],
@@ -798,13 +798,13 @@ const CanvasLayout = ({
         mb={2}
         display='flex'
         alignItems='flex-start'
-        className={`${classes.messageWrapper} ${message.type}`}>
-        <Box className={classes.messageIcon}>
-          {message.type === 'ai' && (
+        className={`${classes.messageWrapper} ${message.role}`}>
+        {message.role === 'ai' && (
+          <Box className={classes.messageIcon}>
             <img src='/favicon.ico' alt='AI' onError={handleImageError} />
-          )}
-        </Box>
-        <ListItem className={`${classes.chatMessage} ${message.type}`}>
+          </Box>
+        )}
+        <ListItem className={`${classes.chatMessage} ${message.role}`}>
           <Typography>{message.content}</Typography>
           {message.changes?.length > 0 && (
             <Box mt={2}>
