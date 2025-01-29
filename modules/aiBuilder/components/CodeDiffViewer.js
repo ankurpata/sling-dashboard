@@ -114,12 +114,12 @@ const useStyles = makeStyles((theme) => ({
   },
   folderIcon: {
     fontSize: 20,
-    color: '#54aeff',
-    marginRight: theme.spacing(1),
+    color: '#7d8590',
+    marginLeft: theme.spacing(1),
   },
   chevron: {
-    fontSize: 20,
-    color: '#57606a',
+    fontSize: 16,
+    color: '#7d8590',
     transition: 'transform 0.2s',
   },
   chevronExpanded: {
@@ -282,13 +282,12 @@ const FileTreeItem = ({ file, depth = 0, selectedFile, onSelectFile, allFiles })
         style={{ paddingLeft: `${depth * 16}px` }}
       >
         {hasChildren ? (
-          <IconButton size="small" onClick={() => setExpanded(!expanded)}>
-            {expanded ? (
-              <ExpandMoreIcon className={classes.chevron} />
-            ) : (
-              <ChevronRightIcon className={classes.chevron} />
-            )}
-          </IconButton>
+          <Box display="flex" alignItems="center">
+            <ChevronRightIcon 
+              className={`${classes.chevron} ${expanded ? classes.chevronExpanded : ''}`}
+            />
+            <FolderIcon className={classes.folderIcon} />
+          </Box>
         ) : (
           <FileIcon className={classes.fileIcon} />
         )}
