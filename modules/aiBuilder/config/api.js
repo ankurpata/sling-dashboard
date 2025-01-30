@@ -40,13 +40,16 @@ import axios from 'axios';
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'application/json'
+  }
 });
 
 // Add auth token to all requests
 apiClient.interceptors.request.use(
   (config) => {
+    // Initialize headers if they don't exist
+    config.headers = config.headers || {};
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -54,8 +57,24 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
-  },
+  }
 );
 
+// Add response interceptor to handle auth errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized errors
+      console.error('Authentication failed:', error.response?.data);
+      // Clear invalid token
+      localStorage.removeItem('token');
+    }
+    return Promise.reject(error);
+  }
+);
+
+export { API_BASE_URL };
 export default apiClient;

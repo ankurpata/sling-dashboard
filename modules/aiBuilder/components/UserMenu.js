@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   Box,
   Button,
@@ -11,8 +11,8 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@material-ui/core';
-import { useRouter } from 'next/router';
-import { useUser } from '../context/UserContext';
+import {useRouter} from 'next/router';
+import {useUser} from '../context/UserContext';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import SettingsIcon from '@material-ui/icons/Settings';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
@@ -70,7 +70,8 @@ const useStyles = makeStyles((theme) => ({
       marginTop: theme.spacing(1),
       minWidth: 180,
       borderRadius: 12,
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      boxShadow:
+        '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     },
     '.darkTheme &': {
       '& .MuiPaper-root': {
@@ -137,7 +138,8 @@ const UserMenu = () => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const [orgAnchorEl, setOrgAnchorEl] = useState(null);
-  const { user, organizations, selectedOrg, selectOrganization, logout } = useUser();
+  const {user, organizations, selectedOrg, selectOrganization, logout} =
+    useUser();
   const router = useRouter();
 
   const handleClick = (event) => {
@@ -185,14 +187,13 @@ const UserMenu = () => {
   console.log('UserMenu - Current user:', user);
 
   return (
-    <Box className={`${classes.container} darkTheme`}>
+    <Box className={classes.container}>
       {organizations?.length > 0 && (
         <>
           <Button
             className={classes.orgButton}
             onClick={handleOrgClick}
-            endIcon={<KeyboardArrowDownIcon />}
-          >
+            endIcon={<KeyboardArrowDownIcon />}>
             <BusinessIcon className={classes.orgIcon} />
             {selectedOrg?.name || 'Select Organization'}
           </Button>
@@ -213,14 +214,12 @@ const UserMenu = () => {
             transformOrigin={{
               vertical: 'top',
               horizontal: 'left',
-            }}
-          >
+            }}>
             {organizations.map((org) => (
               <MenuItem
                 key={org.id}
                 onClick={() => handleOrgSelect(org)}
-                selected={selectedOrg?.id === org.id}
-              >
+                selected={selectedOrg?.id === org.id}>
                 {org.name}
               </MenuItem>
             ))}
@@ -230,8 +229,7 @@ const UserMenu = () => {
       <Button
         className={classes.button}
         onClick={handleClick}
-        endIcon={<KeyboardArrowDownIcon />}
-      >
+        endIcon={<KeyboardArrowDownIcon />}>
         {user.avatar ? (
           <Avatar
             src={user.avatar}
@@ -241,7 +239,7 @@ const UserMenu = () => {
         ) : (
           <AccountCircleIcon className={classes.avatar} />
         )}
-        <Typography variant="body2" className={classes.userName}>
+        <Typography variant='body2' className={classes.userName}>
           {user.name || user.email}
         </Typography>
       </Button>
@@ -262,32 +260,25 @@ const UserMenu = () => {
         transformOrigin={{
           vertical: 'top',
           horizontal: 'right',
-        }}
-      >
-        <MenuItem 
-          onClick={handleProfile}
-          selected={isProfileActive}
-        >
+        }}>
+        <MenuItem onClick={handleProfile} selected={isProfileActive}>
           <ListItemIcon>
-            <AccountCircleIcon fontSize="small" />
+            <AccountCircleIcon fontSize='small' />
           </ListItemIcon>
-          <ListItemText primary="Profile" />
+          <ListItemText primary='Profile' />
         </MenuItem>
-        <MenuItem 
-          onClick={handleSettings}
-          selected={isSettingsActive}
-        >
+        <MenuItem onClick={handleSettings} selected={isSettingsActive}>
           <ListItemIcon>
-            <SettingsIcon fontSize="small" />
+            <SettingsIcon fontSize='small' />
           </ListItemIcon>
-          <ListItemText primary="Settings" />
+          <ListItemText primary='Settings' />
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
-            <ExitToAppIcon fontSize="small" />
+            <ExitToAppIcon fontSize='small' />
           </ListItemIcon>
-          <ListItemText primary="Logout" />
+          <ListItemText primary='Logout' />
         </MenuItem>
       </Menu>
     </Box>

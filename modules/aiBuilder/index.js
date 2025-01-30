@@ -17,6 +17,8 @@ import {
   Tooltip,
 } from '@material-ui/core';
 import {useRouter} from 'next/router';
+import {v4 as uuidv4} from 'uuid';
+
 import GitHubIcon from '@material-ui/icons/GitHub';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
@@ -56,7 +58,7 @@ const AIBuilder = () => {
   const [activeTab, setActiveTab] = useState('preview');
   const [userId, setUserId] = useState();
   const {currentProject, setProject} = useProject();
-  const {user} = useUser();
+  const {user, handleAuthentication} = useUser();
   const classes = useStyles({showCanvas});
   const [processingMessages, setProcessingMessages] = useState([]);
   const inputRef = useRef(null);
@@ -80,13 +82,12 @@ const AIBuilder = () => {
     const params = new URLSearchParams(window.location.search);
     const isAuthenticated = params.get('authenticated');
     const userIdParam = params.get('userId');
+    const token = params.get('token');
 
-    // Case 1: Redirected from auth with userId in params
-    if (isAuthenticated && userIdParam) {
-      setUserId(userIdParam);
-      localStorage.setItem('userId', userIdParam);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+    // Case 1: Redirected from auth with userId and token in params
+    if (isAuthenticated && userIdParam && token) {
+      // Let UserContext handle the authentication
+      handleAuthentication(userIdParam, token);
       return;
     }
 
@@ -151,27 +152,41 @@ const AIBuilder = () => {
     },
   ];
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!inputValue.trim()) return;
 
-    const context = {
-      currentFile: window.location.pathname,
-      cursorPosition: 0,
-      selectedText: '',
-      activeCodeItem: '',
-      openFiles: [],
-      prompt: inputValue,
-    };
+    //if no project selected
+    if (!currentProject) {
+      setShowRepoDialog(true);
+      return;
+    }
+    setIsProcessing(true);
 
     try {
+      //Create unique uuid
+      const conversationId = uuidv4(); // Generate a unique conversationId
+
       // Create session
-      const session = await createSession(user.id, currentProject._id, context);
+      const session = await createSession(
+        user.id,
+        currentProject._id,
+        conversationId,
+      );
       console.log('Session created:', session);
 
-      // Save the prompt to chat history
-      await savePrompt(currentProject._id, inputValue);
+      // Save the prompt to chat history with conversationId
+      const chatResponse = await savePrompt(
+        currentProject._id,
+        inputValue,
+        conversationId,
+      );
+      console.log(
+        'Prompt saved with conversationId:',
+        chatResponse.conversationId,
+      );
 
-      // Navigate to session page
+      // Navigate to session page with both sessionId and conversationId
       router.push(`/project/${session.sessionId}`);
     } catch (error) {
       console.error('Error creating session:', error);
@@ -354,7 +369,7 @@ const AIBuilder = () => {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && inputValue.trim()) {
-                    handleSubmit();
+                    handleSubmit(e);
                   }
                 }}
                 inputRef={inputRef}

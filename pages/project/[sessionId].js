@@ -108,11 +108,7 @@ const ProjectSession = () => {
     <Box className={classes.root}>
       <Header isCanvasView={true}></Header>
       <Box className={classes.content}>
-        <CanvasLayout
-          inputValue={session?.context?.prompt}
-          sessionId={session?.sessionId}
-          chatHistory={chatHistory.history}
-        />
+        <CanvasLayout sessionId={sessionId} chatHistory={chatHistory.history} />
       </Box>
     </Box>
   );

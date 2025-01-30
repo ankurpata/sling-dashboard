@@ -1,11 +1,15 @@
 import apiClient, {apiEndpoints} from '../config/api';
 
-export async function createSession(userId, projectId, context) {
+export async function createSession(
+  userId,
+  projectId,
+  conversationId,
+) {
   try {
     const response = await apiClient.post(apiEndpoints.session.create, {
       userId,
       projectId,
-      context,
+      conversationId,
     });
 
     return response.data;

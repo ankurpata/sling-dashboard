@@ -37,6 +37,12 @@ import clsx from 'clsx';
 import {OpenInNew, Refresh} from '@material-ui/icons';
 import {useProject} from '../context/ProjectContext';
 import CodeDiffViewer from './CodeDiffViewer';
+import {
+  initializeSocket,
+  disconnectSocket,
+  emitMessage,
+  subscribeToEvent,
+} from '../services/socketService';
 
 // Import CodeUtils from index.js
 
@@ -627,166 +633,183 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // CanvasLayout component
-const CanvasLayout = ({
-  isProcessing,
-  sessionId,
-  initialResponse,
-  setGeneratedCode,
-  setCodeScope,
-  chatHistory,
-}) => {
+const CanvasLayout = ({sessionId}) => {
   const classes = useStyles();
   const {currentProject} = useProject();
-  const [visibleStepIndex, setVisibleStepIndex] = useState(0);
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentView, setCurrentView] = useState('editor');
-
+  const [currentUserPrompt, setCurrentUserPrompt] = useState('');
   const chatContainerRef = useRef(null);
   const [activeTabState, setActiveTabState] = useState('chat');
   const [previewTab, setPreviewTab] = useState('preview');
 
+  // Get last user prompt from chat history
   useEffect(() => {
-    // Initialize chat history from props
-    if (chatHistory?.length > 0) {
-      // Transform the chat history to match our UI structure
-      const transformedHistory = chatHistory.map((message) => ({
-        role: message.role,
-        content: message.message,
-        timestamp: message.timestamp,
-        changes: message.changes || [],
-      }));
-
-      setChatHistories((prev) => ({
-        ...prev,
-        [sessionId]: transformedHistory,
-      }));
+    const messages = chatHistories[sessionId] || [];
+    const lastUserMessage = [...messages].reverse().find(msg => msg.role === 'user');
+    
+    if (lastUserMessage && lastUserMessage.content !== currentUserPrompt) {
+      console.log('Setting current user prompt:', lastUserMessage.content);
+      setCurrentUserPrompt(lastUserMessage.content);
     }
-  }, [chatHistory, sessionId]);
+  }, [chatHistories, sessionId, currentUserPrompt]);
 
+  // Initialize socket connection
   useEffect(() => {
-    // Scroll to bottom when chat updates
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
-    }
-  }, [chatHistories[sessionId]]);
+    console.log('CanvasLayout mounted with sessionId:', sessionId);
 
-  useEffect(() => {
-    if (isProcessing) {
-      const interval = setInterval(() => {
-        setVisibleStepIndex((prev) => (prev + 1) % processingSteps.length);
-      }, 3000);
-      return () => clearInterval(interval);
+    if (!sessionId) {
+      console.warn('No sessionId provided, skipping socket initialization');
+      return;
     }
-  }, [isProcessing]);
 
-  const processingSteps = [
-    {icon: '🔍', text: 'Analyzing your request...'},
-    {icon: '💡', text: 'Brainstorming ideas...'},
-    {icon: '🎨', text: 'Crafting the perfect solution...'},
-    {icon: '🏗️', text: 'Building components...'},
-    {icon: '✨', text: 'Adding some magic...'},
-    {icon: '⚡️', text: 'Generating preview for you...'},
-    {icon: '🧪', text: 'Testing the changes locally...'},
-    {icon: '🎯', text: 'Fine-tuning the details...'},
-  ];
+    let socketInstance;
+    try {
+      console.log('Attempting to initialize socket...');
+      socketInstance = initializeSocket(sessionId);
+
+      if (!socketInstance) {
+        console.error('Failed to initialize socket');
+        return;
+      }
+
+      // Subscribe to socket events
+      const unsubscribeProgress = subscribeToEvent(
+        'analysis_progress',
+        handleProgressUpdate,
+      );
+      const unsubscribeComplete = subscribeToEvent(
+        'analysis_complete',
+        handleAnalysisComplete,
+      );
+      const unsubscribeError = subscribeToEvent(
+        'analysis_error',
+        handleAnalysisError,
+      );
+
+      // If there's a current user prompt, send it through socket
+      if (currentUserPrompt) {
+        console.log('Sending current user prompt through socket:', currentUserPrompt);
+        emitMessage('analyze_code', {
+          projectId: currentProject._id,
+          sessionId,
+          prompt: currentUserPrompt,
+        });
+
+        // Add the message to chat history if not already present
+        setChatHistories((prev) => {
+          const messages = prev[sessionId] || [];
+          const hasPrompt = messages.some(
+            (msg) => msg.role === 'user' && msg.content === currentUserPrompt
+          );
+
+          if (!hasPrompt) {
+            return {
+              ...prev,
+              [sessionId]: [
+                ...messages,
+                {
+                  role: 'user',
+                  content: currentUserPrompt,
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+            };
+          }
+          return prev;
+        });
+      }
+
+      // Cleanup function
+      return () => {
+        console.log('Cleaning up socket connections...');
+        unsubscribeProgress();
+        unsubscribeComplete();
+        unsubscribeError();
+        disconnectSocket();
+      };
+    } catch (error) {
+      console.error('Error in socket setup:', error);
+    }
+  }, [sessionId, currentProject?._id, currentUserPrompt]);
 
   // Handle prompt submission
   const handlePromptSubmit = async () => {
     if (!promptInput.trim()) return;
 
-    if (currentView === 'preview') {
-      setChatHistories((prev) => ({
-        ...prev,
-        [sessionId]: [
-          ...(prev[sessionId] || []),
-          {
-            role: 'user',
-            content: promptInput,
-          },
-          {
-            role: 'ai',
-            content:
-              'To make changes to the layout, please return to the "Generate UI" step.',
-          },
-        ],
-      }));
-      setPromptInput('');
-      return;
-    }
+    setIsTyping(true);
+    const newPrompt = promptInput.trim();
+    setCurrentUserPrompt(newPrompt);
 
-    const newMessage = {
-      role: 'user',
-      content: promptInput,
-    };
-
+    // Add user message to chat
     setChatHistories((prev) => ({
       ...prev,
-      [sessionId]: [...(prev[sessionId] || []), newMessage],
+      [sessionId]: [
+        ...(prev[sessionId] || []),
+        {
+          role: 'user',
+          content: newPrompt,
+          timestamp: new Date().toISOString(),
+        },
+      ],
     }));
 
+    // Emit message through socket
+    emitMessage('analyze_code', {
+      projectId: currentProject._id,
+      sessionId,
+      prompt: newPrompt,
+    });
+
     setPromptInput('');
-    setIsTyping(true);
-
-    try {
-      // Send follow-up question to API
-      const response = await fetch(
-        'http://localhost:5001/api/ai/generate-page',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prompt: promptInput,
-            mock: false,
-            conversationId: sessionId,
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      // Process returned code same as index.js
-      const cleaned = CodeUtils.cleanCode(data);
-      const transformed = CodeUtils.transformCode(cleaned.code);
-      setGeneratedCode(transformed);
-      setCodeScope(cleaned.scope);
-
-      // Add AI response to chat
-      setChatHistories((prev) => ({
-        ...prev,
-        [sessionId]: [
-          ...prev[sessionId],
-          {
-            role: 'ai',
-            content: data.summary || 'No response summary available.',
-          },
-        ],
-      }));
-    } catch (error) {
-      // Add error message to chat
-      setChatHistories((prev) => ({
-        ...prev,
-        [sessionId]: [
-          ...prev[sessionId],
-          {
-            role: 'ai',
-            content: 'Sorry, I encountered an error. Please try again.',
-            isError: true,
-          },
-        ],
-      }));
-      console.error('Error:', error);
-    } finally {
-      setIsTyping(false);
-    }
   };
 
-  const handleImageError = (e) => {
-    e.target.src = '/images/favicon.ico';
+  const handleProgressUpdate = (data) => {
+    setChatHistories((prev) => ({
+      ...prev,
+      [sessionId]: [
+        ...(prev[sessionId] || []),
+        {
+          role: 'progress',
+          content: data.message,
+          progress: data.progress,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+  };
+
+  const handleAnalysisComplete = (data) => {
+    setChatHistories((prev) => ({
+      ...prev,
+      [sessionId]: [
+        ...(prev[sessionId] || []),
+        {
+          role: 'assistant',
+          content: data.message,
+          changes: data.changes,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+    setIsTyping(false);
+  };
+
+  const handleAnalysisError = (error) => {
+    setChatHistories((prev) => ({
+      ...prev,
+      [sessionId]: [
+        ...(prev[sessionId] || []),
+        {
+          role: 'system',
+          content: `Error: ${error.message}`,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+    setIsTyping(false);
   };
 
   const fileChanges = getDummyFileChanges();
@@ -801,7 +824,7 @@ const CanvasLayout = ({
         className={`${classes.messageWrapper} ${message.role}`}>
         {message.role === 'ai' && (
           <Box className={classes.messageIcon}>
-            <img src='/favicon.ico' alt='AI' onError={handleImageError} />
+            <img src='/favicon.ico' alt='AI' />
           </Box>
         )}
         <ListItem className={`${classes.chatMessage} ${message.role}`}>
@@ -863,11 +886,7 @@ const CanvasLayout = ({
                   alignItems='flex-start'
                   className={`${classes.messageWrapper} ai`}>
                   <Box className={classes.messageIcon}>
-                    <img
-                      src='/favicon.ico'
-                      alt='AI'
-                      onError={handleImageError}
-                    />
+                    <img src='/favicon.ico' alt='AI' />
                   </Box>
                   <ListItem className={`${classes.chatMessage} ai typing`}>
                     <Typography>Thinking...</Typography>
@@ -911,30 +930,6 @@ const CanvasLayout = ({
           </Box>
         </Box>
         <Box className={classes.preview} position='relative'>
-          {isProcessing && (
-            <Box className={classes.processingOverlay}>
-              <Box className={classes.heartLogo}>
-                <img src='/images/logo.png' alt='Processing' />
-              </Box>
-              <Typography variant='h2' className={classes.processingTitle}>
-                Spinning up preview...
-              </Typography>
-              <Box className={classes.processingSteps}>
-                {processingSteps.map((step, index) => (
-                  <Typography
-                    key={step.text}
-                    variant='body1'
-                    className={clsx(classes.processingStep, {
-                      [classes.activeStep]: index === visibleStepIndex,
-                      [classes.inactiveStep]: index !== visibleStepIndex,
-                    })}>
-                    <span className={classes.stepIcon}>{step.icon}</span>
-                    <span>{step.text}</span>
-                  </Typography>
-                ))}
-              </Box>
-            </Box>
-          )}
           <Box className={classes.slideContainer}>
             <Slide
               direction='right'
@@ -977,52 +972,46 @@ const CanvasLayout = ({
                 </Tabs>
 
                 <Box flex={1} style={{overflowY: 'auto', height: '100%'}}>
-                  {isProcessing ? (
-                    <Typography variant='body2' color='textSecondary'>
-                      Processing...
-                    </Typography>
-                  ) : (
-                    <Box
-                      className={classes.previewContent}
-                      style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '12px',
-                      }}>
-                      {previewTab === 'preview' ? (
-                        currentProject?.development?.previewUrl ? (
-                          <Box className={classes.livePreview}>
-                            <iframe
-                              src={'http://localhost:3674'}
-                              className={classes.previewFrame}
-                              title='Preview'
-                              sandbox='allow-same-origin allow-scripts allow-popups allow-forms'
-                            />
-                          </Box>
-                        ) : (
-                          <Typography
-                            variant='body2'
-                            color='textSecondary'
-                            style={{padding: 16}}>
-                            No preview URL available
-                          </Typography>
-                        )
+                  <Box
+                    className={classes.previewContent}
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                    }}>
+                    {previewTab === 'preview' ? (
+                      currentProject?.development?.previewUrl ? (
+                        <Box className={classes.livePreview}>
+                          <iframe
+                            src={'http://localhost:3674'}
+                            className={classes.previewFrame}
+                            title='Preview'
+                            sandbox='allow-same-origin allow-scripts allow-popups allow-forms'
+                          />
+                        </Box>
                       ) : (
-                        <>
-                          <Box
-                            p={4}
-                            bgcolor='#f5f7f9'
-                            style={{borderBottom: '1px solid #e1e1e1'}}
-                            borderRadius={1}>
-                            <Typography variant='body2' color='textSecondary'>
-                              ✨ Review the changes below. These changes will be
-                              applied when you click Publish.
-                            </Typography>
-                          </Box>
-                          <CodeDiffViewer fileChanges={fileChanges} />
-                        </>
-                      )}
-                    </Box>
-                  )}
+                        <Typography
+                          variant='body2'
+                          color='textSecondary'
+                          style={{padding: 16}}>
+                          No preview URL available
+                        </Typography>
+                      )
+                    ) : (
+                      <>
+                        <Box
+                          p={4}
+                          bgcolor='#f5f7f9'
+                          style={{borderBottom: '1px solid #e1e1e1'}}
+                          borderRadius={1}>
+                          <Typography variant='body2' color='textSecondary'>
+                            ✨ Review the changes below. These changes will be
+                            applied when you click Publish.
+                          </Typography>
+                        </Box>
+                        <CodeDiffViewer fileChanges={fileChanges} />
+                      </>
+                    )}
+                  </Box>
                 </Box>
               </Box>
             </Slide>
