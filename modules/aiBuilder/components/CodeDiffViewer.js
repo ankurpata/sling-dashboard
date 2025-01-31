@@ -30,6 +30,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     height: '100%',
     overflow: 'hidden',
+    justifyContent: 'center'
   },
   fileList: {
     width: 300,

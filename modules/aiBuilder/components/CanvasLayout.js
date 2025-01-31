@@ -257,81 +257,94 @@ const useStyles = makeStyles((theme) => ({
     flex: '0 0 75%',
     display: 'flex',
     padding: '0',
-    borderRadius: '15px',
-    paddingLeft: '0',
     flexDirection: 'column',
-    backgroundColor: '#ffffff',
-    border: '1px solid #e5e5e5',
-    '& .MuiTypography-root': {
-      color: '#000000',
-    },
+    backgroundColor: '#262626',
+    border: '1px solid #404040',
+    overflow: 'hidden',
+    borderRadius: '15px',
+  },
+  previewHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#262626',
+    borderBottom: '1px solid #404040',
+    padding: '4px 8px',
+  },
+  previewTabs: {
+    backgroundColor: '#262626',
     '& .MuiTab-root': {
-      color: '#4b5563',
+      color: '#9ca3af',
       '&.Mui-selected': {
-        color: '#000000',
+        color: '#ffffff',
       },
     },
+    '& .MuiTabs-indicator': {
+      backgroundColor: '#ffffff',
+    },
+  },
+  previewContent: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    minHeight: 0,
+    backgroundColor: '#262626',
+  },
+  livePreview: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#262626',
+    '& iframe': {
+      backgroundColor: '#262626',
+      border: 'none',
+    },
+  },
+  noPreview: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    backgroundColor: '#262626',
+    color: '#9ca3af',
   },
   urlBar: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #e5e5e5',
-    borderRadius: '15px',
-    borderBottomRightRadius: '0',
-    borderBottomLeftRadius: '0',
-    padding: '4px 8px',
-    marginBottom: theme.spacing(2),
+    padding: theme.spacing(0.5, 1),
+    backgroundColor: '#1a1a1a',
+    // borderBottom: '1px solid #404040',
+    height: '36px',
   },
   urlText: {
-    flex: 1,
+    display: 'flex',
+    paddingLeft: theme.spacing(2),
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    color: '#9ca3af',
     fontSize: '13px',
-    color: '#6c757d',
-    padding: '4px 8px',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    '& .MuiTypography-root': {
+      fontSize: '13px',
+    },
   },
   urlActions: {
     display: 'flex',
-    gap: '4px',
+    gap: theme.spacing(0.5),
     '& .MuiIconButton-root': {
-      padding: 6,
-      color: '#6c757d',
+      padding: 4,
+      color: '#9ca3af',
       '&:hover': {
-        backgroundColor: '#e9ecef',
-        color: '#212529',
+        color: '#ffffff',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
       },
     },
   },
-  previewTabs: {
-    borderBottom: '1px solid #e5e5e5',
-    '& .MuiTab-root': {
-      textTransform: 'none',
-      minWidth: 100,
-      fontSize: '14px',
-      fontWeight: 500,
-    },
-  },
-  previewHeader: {
-    marginBottom: theme.spacing(2),
-  },
-  headerSection: {
-    marginBottom: theme.spacing(3),
-    borderBottom: '1px solid #e2e8f073',
-    padding: theme.spacing(3, 2),
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  headerLeft: {
-    '& h5': {
-      fontWeight: 500,
-    },
-    '& .MuiTypography-subtitle1': {
-      marginTop: theme.spacing(1),
-      opacity: 0.8,
-    },
+  previewFrame: {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    backgroundColor: '#262626',
   },
   nextButton: {
     color: 'white',
@@ -624,20 +637,6 @@ const useStyles = makeStyles((theme) => ({
       fontSize: '18px',
       marginRight: theme.spacing(1),
     },
-  },
-  previewFrame: {
-    width: '100%',
-    height: '100%',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#fff',
-  },
-  previewContent: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    minHeight: 0, // Important for flex child to respect parent height
   },
 }));
 
@@ -1036,81 +1035,66 @@ const CanvasLayout = ({
               unmountOnExit>
               <Box className={classes.slidePage}>
                 <Box className={classes.urlBar}>
-                  <Typography className={classes.urlText}>
-                    {currentProject?.development?.previewUrl ||
-                      'No preview URL available'}
-                  </Typography>
+                  <Box className={classes.urlText}>
+                    <Typography className={classes.urlText}>
+                      {currentProject?.development?.previewUrl ||
+                        'No preview URL available'}
+                    </Typography>
+                  </Box>
                   <Box className={classes.urlActions}>
                     <IconButton
                       size='small'
                       onClick={() =>
-                        window.open(
-                          currentProject?.development?.previewUrl,
-                          '_blank',
-                        )
+                        window.open('http://localhost:3674', '_blank')
                       }>
                       <OpenInNew fontSize='small' />
                     </IconButton>
-                    <IconButton
-                      size='small'
-                      onClick={() => {
-                        // Add refresh logic here
-                      }}>
+                    <IconButton size='small'>
                       <Refresh fontSize='small' />
                     </IconButton>
                   </Box>
                 </Box>
 
-                <Tabs
-                  value={previewTab}
-                  onChange={handlePreviewTabChange}
-                  className={classes.previewTabs}>
-                  <Tab label='Preview' value='preview' />
-                  <Tab label='Code' value='code' />
-                </Tabs>
+                <Box className={classes.previewHeader}>
+                  <Tabs
+                    value={previewTab}
+                    onChange={(e, newValue) => setPreviewTab(newValue)}
+                    className={classes.previewTabs}>
+                    <Tab label='Preview' value='preview' />
+                    <Tab label='Code' value='code' />
+                  </Tabs>
+                </Box>
 
-                <Box flex={1} style={{overflowY: 'auto', height: '100%'}}>
-                  <Box
-                    className={classes.previewContent}
-                    style={{
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                    }}>
-                    {previewTab === 'preview' ? (
-                      currentProject?.development?.previewUrl ||
-                      'http://localhost:3674' ? (
-                        <Box className={classes.livePreview}>
-                          <iframe
-                            src={'http://localhost:3674'}
-                            className={classes.previewFrame}
-                            title='Preview'
-                            sandbox='allow-same-origin allow-scripts allow-popups allow-forms'
-                          />
-                        </Box>
-                      ) : (
-                        <Typography
-                          variant='body2'
-                          color='textSecondary'
-                          style={{padding: 16}}>
-                          No preview URL available
-                        </Typography>
-                      )
+                <Box
+                  className={classes.previewContent}
+                  style={{
+                    backgroundColor: '#262626',
+                    borderRadius: '12px',
+                  }}>
+                  {previewTab === 'preview' ? (
+                    currentProject?.development?.previewUrl ||
+                    'http://localhost:3674' ? (
+                      <Box className={classes.livePreview}>
+                        <iframe
+                          src={currentProject?.development?.previewUrl || 'http://localhost:3674'}
+                          className={classes.previewFrame}
+                          title='Preview'
+                          sandbox='allow-same-origin allow-scripts allow-popups allow-forms'
+                        />
+                      </Box>
                     ) : (
-                      <>
-                        <Box
-                          p={4}
-                          bgcolor='#f5f7f9'
-                          style={{borderBottom: '1px solid #e1e1e1'}}
-                          borderRadius={1}>
-                          <Typography variant='body2' color='textSecondary'>
-                            ✨ Review the changes below. These changes will be
-                            applied when you click Publish.
-                          </Typography>
-                        </Box>
-                        <CodeDiffViewer fileChanges={fileChanges} />
-                      </>
-                    )}
-                  </Box>
+                      <Typography
+                        variant='body2'
+                        color='textSecondary'
+                        style={{padding: 16}}>
+                        No preview URL available
+                      </Typography>
+                    )
+                  ) : (
+                    <>
+                      <CodeDiffViewer fileChanges={fileChanges} />
+                    </>
+                  )}
                 </Box>
               </Box>
             </Slide>
