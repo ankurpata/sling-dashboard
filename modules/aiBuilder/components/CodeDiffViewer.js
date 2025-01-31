@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { 
-  Box, 
-  Typography, 
-  Chip, 
+import React, {useState, useMemo} from 'react';
+import {makeStyles} from '@material-ui/core/styles';
+import {
+  Box,
+  Typography,
+  Chip,
   Paper,
   TextField,
   InputAdornment,
@@ -80,7 +80,7 @@ const useStyles = makeStyles((theme) => ({
     },
     '& .MuiInputAdornment-root': {
       color: '#7d8590',
-      marginRight: '-4px', 
+      marginRight: '-4px',
     },
   },
   noBorder: {
@@ -259,7 +259,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const FileTreeItem = ({ file, depth = 0, selectedFile, onSelectFile, allFiles }) => {
+const FileTreeItem = ({
+  file,
+  depth = 0,
+  selectedFile,
+  onSelectFile,
+  allFiles,
+}) => {
   const classes = useStyles();
   const [expanded, setExpanded] = useState(true);
   const isDirectory = file.path.includes('/');
@@ -276,14 +282,13 @@ const FileTreeItem = ({ file, depth = 0, selectedFile, onSelectFile, allFiles })
 
   return (
     <>
-      <div 
+      <div
         className={`${classes.fileItem} ${!hasChildren && file.path === selectedFile ? classes.selectedFile : ''}`}
         onClick={handleClick}
-        style={{ paddingLeft: `${depth * 16}px` }}
-      >
+        style={{paddingLeft: `${depth * 16}px`}}>
         {hasChildren ? (
-          <Box display="flex" alignItems="center">
-            <ChevronRightIcon 
+          <Box display='flex' alignItems='center'>
+            <ChevronRightIcon
               className={`${classes.chevron} ${expanded ? classes.chevronExpanded : ''}`}
             />
             <FolderIcon className={classes.folderIcon} />
@@ -295,16 +300,16 @@ const FileTreeItem = ({ file, depth = 0, selectedFile, onSelectFile, allFiles })
         {!hasChildren && (
           <div className={classes.fileStats}>
             <Chip
-              size="small"
+              size='small'
               label={`+${file.additions}`}
               className={classes.statChip}
-              style={{ backgroundColor: '#dafbe1', color: '#1a7f37' }}
+              style={{backgroundColor: '#dafbe1', color: '#1a7f37'}}
             />
             <Chip
-              size="small"
+              size='small'
               label={`-${file.deletions}`}
               className={classes.statChip}
-              style={{ backgroundColor: '#ffeef0', color: '#cf222e' }}
+              style={{backgroundColor: '#ffeef0', color: '#cf222e'}}
             />
           </div>
         )}
@@ -312,7 +317,14 @@ const FileTreeItem = ({ file, depth = 0, selectedFile, onSelectFile, allFiles })
       {hasChildren && expanded && (
         <div className={classes.nestedFiles}>
           {allFiles
-            .filter(f => f.path.startsWith(file.path.split('/').slice(0, depth + 1).join('/')))
+            .filter((f) =>
+              f.path.startsWith(
+                file.path
+                  .split('/')
+                  .slice(0, depth + 1)
+                  .join('/'),
+              ),
+            )
             .map((childFile, index) => (
               <FileTreeItem
                 key={index}
@@ -329,7 +341,10 @@ const FileTreeItem = ({ file, depth = 0, selectedFile, onSelectFile, allFiles })
   );
 };
 
-const findCommonLines = (oldLines, newLines) => {
+const findCommonLines = (oldLines = [], newLines = []) => {
+  // Handle undefined or null inputs
+  if (!oldLines || !newLines) return [];
+  
   const lines = [];
   let oldIndex = 0;
   let newIndex = 0;
@@ -398,13 +413,35 @@ const findCommonLines = (oldLines, newLines) => {
   return lines;
 };
 
-const CodeDiffViewer = ({ fileChanges }) => {
+const CodeDiffViewer = ({fileChanges = []}) => {
   const classes = useStyles();
-  const [selectedFile, setSelectedFile] = useState(fileChanges[0]?.path);
+  const [selectedFile, setSelectedFile] = useState(fileChanges[0]?.path || '');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSplitView, setIsSplitView] = useState(false);
 
-  const renderDiffLines = (diffLines) => {
+  // Handle empty fileChanges
+  if (!fileChanges || fileChanges.length === 0) {
+    return (
+      <Box className={classes.root}>
+        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+          <Typography variant="body1" color="textSecondary">
+            No file changes to display
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  const renderDiffLines = (diffLines = []) => {
+    if (!diffLines || diffLines.length === 0) {
+      return (
+        <div className={classes.line}>
+          <span className={classes.lineNumber}> </span>
+          <span className={classes.lineContent}>No changes to display</span>
+        </div>
+      );
+    }
+
     return diffLines.map((line, i) => (
       <div
         key={i}
@@ -412,19 +449,15 @@ const CodeDiffViewer = ({ fileChanges }) => {
           line.type === 'added'
             ? classes.addedLine
             : line.type === 'removed'
-            ? classes.removedLine
-            : ''
-        }`}
-      >
+              ? classes.removedLine
+              : ''
+        }`}>
         <span className={classes.lineNumber}>
           {line.oldLineNumber || ' '} {line.newLineNumber || ' '}
         </span>
-        <span className={`${classes.lineContent} ${line.type === 'context' ? classes.contextLine : ''}`}>
-          {line.type === 'added'
-            ? '+'
-            : line.type === 'removed'
-            ? '-'
-            : ' '}
+        <span
+          className={`${classes.lineContent} ${line.type === 'context' ? classes.contextLine : ''}`}>
+          {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
           {line.content}
         </span>
       </div>
@@ -433,15 +466,15 @@ const CodeDiffViewer = ({ fileChanges }) => {
 
   const filteredFiles = useMemo(() => {
     if (!searchQuery) return fileChanges;
-    return fileChanges.filter(file => 
-      file.path.toLowerCase().includes(searchQuery.toLowerCase())
+    return fileChanges.filter((file) =>
+      file.path.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [fileChanges, searchQuery]);
 
   // Group files by directory
   const fileTree = useMemo(() => {
     const grouped = {};
-    filteredFiles.forEach(file => {
+    filteredFiles.forEach((file) => {
       const parts = file.path.split('/');
       let current = grouped;
       parts.forEach((part, i) => {
@@ -454,7 +487,17 @@ const CodeDiffViewer = ({ fileChanges }) => {
     return grouped;
   }, [filteredFiles]);
 
-  const currentFile = fileChanges.find(f => f.path === selectedFile);
+  const currentFile = fileChanges.find((f) => f.path === selectedFile);
+
+  // Handle case when file content is missing
+  const hasValidContent = currentFile?.oldContent || currentFile?.newContent;
+  const emptyContentMessage = !hasValidContent ? (
+    <Box p={2}>
+      <Typography variant="body2" color="textSecondary">
+        File content is not available
+      </Typography>
+    </Box>
+  ) : null;
 
   return (
     <Box className={classes.root}>
@@ -462,21 +505,21 @@ const CodeDiffViewer = ({ fileChanges }) => {
         <Box className={classes.searchContainer}>
           <TextField
             fullWidth
-            size="small"
-            variant="outlined"
-            placeholder="Filter changed files"
+            size='small'
+            variant='outlined'
+            placeholder='Filter changed files'
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={classes.searchInput}
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon style={{ fontSize: 20 }} />
+                <InputAdornment position='start'>
+                  <SearchIcon style={{fontSize: 20}} />
                 </InputAdornment>
               ),
               classes: {
-                notchedOutline: classes.noBorder
-              }
+                notchedOutline: classes.noBorder,
+              },
             }}
           />
         </Box>
@@ -496,72 +539,86 @@ const CodeDiffViewer = ({ fileChanges }) => {
         {currentFile && (
           <Paper className={classes.fileContainer}>
             <Box className={classes.fileHeader}>
-              <Typography className={classes.fileName}>{currentFile.path}</Typography>
+              <Typography className={classes.fileName}>
+                {currentFile.path}
+              </Typography>
               <Box className={classes.statsContainer}>
                 <Chip
-                  icon={<AddIcon style={{ fontSize: 16 }} />}
+                  icon={<AddIcon style={{fontSize: 16}} />}
                   label={`+${currentFile.additions}`}
                   className={classes.addChip}
-                  size="small"
+                  size='small'
                 />
                 <Chip
-                  icon={<RemoveIcon style={{ fontSize: 16 }} />}
+                  icon={<RemoveIcon style={{fontSize: 16}} />}
                   label={`-${currentFile.deletions}`}
                   className={classes.removeChip}
-                  size="small"
+                  size='small'
                 />
-                <Tooltip title={isSplitView ? "Unified View" : "Split View"}>
-                  <IconButton size="small" onClick={() => setIsSplitView(!isSplitView)}>
+                <Tooltip title={isSplitView ? 'Unified View' : 'Split View'}>
+                  <IconButton
+                    size='small'
+                    onClick={() => setIsSplitView(!isSplitView)}>
                     {isSplitView ? <ViewStreamIcon /> : <ViewColumnIcon />}
                   </IconButton>
                 </Tooltip>
               </Box>
             </Box>
             <Box className={classes.diffContainer}>
-              {isSplitView ? (
+              {!hasValidContent ? (
+                emptyContentMessage
+              ) : isSplitView ? (
                 <>
                   <Box className={classes.splitView}>
                     {findCommonLines(
-                      currentFile.oldContent.split('\n'),
-                      currentFile.newContent.split('\n')
+                      currentFile.oldContent?.split('\n') || [],
+                      currentFile.newContent?.split('\n') || [],
                     ).map((line, i) => (
                       <div
                         key={i}
                         className={`${classes.line} ${
                           line.type === 'removed' ? classes.removedLine : ''
-                        }`}
-                      >
+                        }`}>
                         <span className={classes.lineNumber}>
                           {line.displayIndex}
                         </span>
-                        <span className={`${classes.lineContent} ${
-                          line.type === 'context' ? classes.contextLine : ''
-                        }`}>
+                        <span
+                          className={`${classes.lineContent} ${
+                            line.type === 'context' ? classes.contextLine : ''
+                          }`}>
                           {line.type === 'removed' ? '-' : ' '}
-                          {line.type === 'removed' ? line.content : (line.oldLineNumber ? line.content : '')}
+                          {line.type === 'removed'
+                            ? line.content
+                            : line.oldLineNumber
+                              ? line.content
+                              : ''}
                         </span>
                       </div>
                     ))}
                   </Box>
                   <Box className={classes.splitView}>
                     {findCommonLines(
-                      currentFile.oldContent.split('\n'),
-                      currentFile.newContent.split('\n')
+                      currentFile.oldContent?.split('\n') || [],
+                      currentFile.newContent?.split('\n') || [],
                     ).map((line, i) => (
                       <div
                         key={i}
                         className={`${classes.line} ${
                           line.type === 'added' ? classes.addedLine : ''
-                        }`}
-                      >
+                        }`}>
                         <span className={classes.lineNumber}>
                           {line.displayIndex}
                         </span>
-                        <span className={`${classes.lineContent} ${
-                          line.type === 'context' ? classes.contextLine : ''
-                        }`}>
+                        <span
+                          className={`${classes.lineContent} ${
+                            line.type === 'context' ? classes.contextLine : ''
+                          }`}>
                           {line.type === 'added' ? '+' : ' '}
-                          {line.type === 'added' ? line.content : (line.newLineNumber ? line.content : '')}
+                          {line.type === 'added'
+                            ? line.content
+                            : line.newLineNumber
+                              ? line.content
+                              : ''}
                         </span>
                       </div>
                     ))}
@@ -569,10 +626,12 @@ const CodeDiffViewer = ({ fileChanges }) => {
                 </>
               ) : (
                 <Box flex={1}>
-                  {renderDiffLines(findCommonLines(
-                    currentFile.oldContent.split('\n'),
-                    currentFile.newContent.split('\n')
-                  ))}
+                  {renderDiffLines(
+                    findCommonLines(
+                      currentFile.oldContent?.split('\n') || [],
+                      currentFile.newContent?.split('\n') || [],
+                    ),
+                  )}
                 </Box>
               )}
             </Box>

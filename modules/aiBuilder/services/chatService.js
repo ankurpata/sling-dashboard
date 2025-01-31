@@ -7,19 +7,21 @@ export const savePrompt = async (projectId, prompt, conversationId) => {
       prompt,
       conversationId,
     });
-    return {...response.data};
+    return response.data;
   } catch (error) {
     console.error('Error saving prompt:', error);
     throw error;
   }
 };
 
-export const getChatHistory = async (projectId) => {
+export const getChatHistory = async (projectId, conversationId = '') => {
   try {
-    const response = await api.get(apiEndpoints.chat.history(projectId));
+    const response = await api.get(
+      apiEndpoints.chat.history(projectId, conversationId),
+    );
     return response.data;
   } catch (error) {
     console.error('Error fetching chat history:', error);
-    throw error;
+    return { conversations: [] };
   }
 };

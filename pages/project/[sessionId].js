@@ -9,6 +9,7 @@ import {getSession} from '../../modules/aiBuilder/services/sessionService';
 import {getChatHistory} from '../../modules/aiBuilder/services/chatService';
 import {useUser} from '../../modules/aiBuilder/context/UserContext';
 import {useProject} from '../../modules/aiBuilder/context/ProjectContext';
+import {CircularProgress} from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -84,11 +85,25 @@ const ProjectSession = () => {
             fetchUserInfo(user._id),
           ]);
 
-          setSession(sessionData);
+          setSession(sessionData.session);
 
-          // Fetch chat history
-          const history = await getChatHistory(project._id);
-          setChatHistory(history);
+          // Fetch chat history if we have a conversationId
+          if (sessionData.session?.conversationId) {
+            const data = await getChatHistory(
+              project._id,
+              sessionData.session.conversationId,
+            );
+            // Find the specific conversation
+            const conversation = data.conversations?.find(
+              (conv) =>
+                conv.conversationId === sessionData.session.conversationId,
+            );
+            setChatHistory(conversation?.messages || []);
+          } else {
+            setChatHistory([]);
+          }
+
+          setLoading(false);
         } catch (error) {
           console.error('Error fetching session:', error);
         } finally {
@@ -101,16 +116,32 @@ const ProjectSession = () => {
   }, [sessionId]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className={classes.root}>
+        <Header isCanvasView={true}></Header>
+        <Box
+          display='flex'
+          justifyContent='center'
+          alignItems='center'
+          height='100%'>
+          <CircularProgress />
+        </Box>
+      </div>
+    );
   }
 
+  const conversationId = session?.conversationId;
+
   return (
-    <Box className={classes.root}>
-      <Header isCanvasView={true}></Header>
-      <Box className={classes.content}>
-        <CanvasLayout sessionId={sessionId} chatHistory={chatHistory.history} />
-      </Box>
-    </Box>
+    <div className={classes.root}>
+      <Header />
+      <CanvasLayout
+        sessionId={sessionId}
+        initialChatHistory={chatHistory}
+        conversationId={conversationId}
+        session={session}
+      />
+    </div>
   );
 };
 

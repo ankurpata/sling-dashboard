@@ -23,7 +23,7 @@ export const apiEndpoints = {
   },
   chat: {
     prompt: `${API_BASE_URL}/chat/prompt`,
-    history: (projectId) => `${API_BASE_URL}/chat/history/${projectId}`,
+    history: (projectId, conversationId = '') => `${API_BASE_URL}/chat/history/${projectId}/${conversationId}`,
   },
   session: {
     create: `${API_BASE_URL}/session/create`,

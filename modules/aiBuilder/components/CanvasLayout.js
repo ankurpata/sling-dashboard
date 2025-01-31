@@ -633,28 +633,27 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // CanvasLayout component
-const CanvasLayout = ({sessionId}) => {
+const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, session}) => {
   const classes = useStyles();
   const {currentProject} = useProject();
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentView, setCurrentView] = useState('editor');
-  const [currentUserPrompt, setCurrentUserPrompt] = useState('');
   const chatContainerRef = useRef(null);
   const [activeTabState, setActiveTabState] = useState('chat');
   const [previewTab, setPreviewTab] = useState('preview');
 
-  // Get last user prompt from chat history
+  // Initialize chat history from props
   useEffect(() => {
-    const messages = chatHistories[sessionId] || [];
-    const lastUserMessage = [...messages].reverse().find(msg => msg.role === 'user');
-    
-    if (lastUserMessage && lastUserMessage.content !== currentUserPrompt) {
-      console.log('Setting current user prompt:', lastUserMessage.content);
-      setCurrentUserPrompt(lastUserMessage.content);
+    if (sessionId && initialChatHistory.length > 0) {
+      console.log('Initializing chat history:', initialChatHistory);
+      setChatHistories((prev) => ({
+        ...prev,
+        [sessionId]: initialChatHistory,
+      }));
     }
-  }, [chatHistories, sessionId, currentUserPrompt]);
+  }, [sessionId, initialChatHistory]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -677,49 +676,40 @@ const CanvasLayout = ({sessionId}) => {
 
       // Subscribe to socket events
       const unsubscribeProgress = subscribeToEvent(
-        'analysis_progress',
+        'analyze-query-progress',
         handleProgressUpdate,
       );
       const unsubscribeComplete = subscribeToEvent(
-        'analysis_complete',
+        'analyze-query-complete',
         handleAnalysisComplete,
       );
       const unsubscribeError = subscribeToEvent(
-        'analysis_error',
+        'analyze-query-error',
         handleAnalysisError,
       );
 
-      // If there's a current user prompt, send it through socket
-      if (currentUserPrompt) {
-        console.log('Sending current user prompt through socket:', currentUserPrompt);
-        emitMessage('analyze_code', {
-          projectId: currentProject._id,
-          sessionId,
-          prompt: currentUserPrompt,
-        });
+      // Send initial prompt through socket if available and it's from user
+      if (currentProject?._id && initialChatHistory.length > 0) {
+        const lastMessage = initialChatHistory[initialChatHistory.length - 1];
+        const isLastMessageFromUser = lastMessage.role === 'user';
 
-        // Add the message to chat history if not already present
-        setChatHistories((prev) => {
-          const messages = prev[sessionId] || [];
-          const hasPrompt = messages.some(
-            (msg) => msg.role === 'user' && msg.content === currentUserPrompt
+        if (isLastMessageFromUser) {
+          console.log(
+            'Sending initial prompt through socket:',
+            lastMessage.message,
           );
-
-          if (!hasPrompt) {
-            return {
-              ...prev,
-              [sessionId]: [
-                ...messages,
-                {
-                  role: 'user',
-                  content: currentUserPrompt,
-                  timestamp: new Date().toISOString(),
-                },
-              ],
-            };
-          }
-          return prev;
-        });
+          emitMessage('analyze-query', {
+            projectId: currentProject._id,
+            sessionId,
+            conversationId,
+            query: lastMessage.message,
+            newConversation: true,
+          });
+        } else {
+          console.log(
+            'Skipping initial analyze-query as last message was not from user',
+          );
+        }
       }
 
       // Cleanup function
@@ -733,36 +723,33 @@ const CanvasLayout = ({sessionId}) => {
     } catch (error) {
       console.error('Error in socket setup:', error);
     }
-  }, [sessionId, currentProject?._id, currentUserPrompt]);
+  }, [sessionId, currentProject?._id]);
 
-  // Handle prompt submission
-  const handlePromptSubmit = async () => {
-    if (!promptInput.trim()) return;
+  const handleSendMessage = async (newPrompt) => {
+    if (!newPrompt.trim()) return;
 
     setIsTyping(true);
-    const newPrompt = promptInput.trim();
-    setCurrentUserPrompt(newPrompt);
 
-    // Add user message to chat
+    // Update chat history with new user message
     setChatHistories((prev) => ({
       ...prev,
       [sessionId]: [
         ...(prev[sessionId] || []),
         {
           role: 'user',
-          content: newPrompt,
+          message: newPrompt,
           timestamp: new Date().toISOString(),
         },
       ],
     }));
 
     // Emit message through socket
-    emitMessage('analyze_code', {
+    emitMessage('analyze-query', {
+      conversationId,
       projectId: currentProject._id,
       sessionId,
-      prompt: newPrompt,
+      query: newPrompt,
     });
-
     setPromptInput('');
   };
 
@@ -773,7 +760,7 @@ const CanvasLayout = ({sessionId}) => {
         ...(prev[sessionId] || []),
         {
           role: 'progress',
-          content: data.message,
+          message: data.message,
           progress: data.progress,
           timestamp: new Date().toISOString(),
         },
@@ -788,7 +775,7 @@ const CanvasLayout = ({sessionId}) => {
         ...(prev[sessionId] || []),
         {
           role: 'assistant',
-          content: data.message,
+          message: data.message,
           changes: data.changes,
           timestamp: new Date().toISOString(),
         },
@@ -804,7 +791,7 @@ const CanvasLayout = ({sessionId}) => {
         ...(prev[sessionId] || []),
         {
           role: 'system',
-          content: `Error: ${error.message}`,
+          message: `Error: ${error.message}`,
           timestamp: new Date().toISOString(),
         },
       ],
@@ -828,7 +815,7 @@ const CanvasLayout = ({sessionId}) => {
           </Box>
         )}
         <ListItem className={`${classes.chatMessage} ${message.role}`}>
-          <Typography>{message.content}</Typography>
+          <Typography>{message.message}</Typography>
           {message.changes?.length > 0 && (
             <Box mt={2}>
               <Typography variant='subtitle2' color='textSecondary'>
@@ -908,7 +895,7 @@ const CanvasLayout = ({sessionId}) => {
               onKeyPress={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
-                  handlePromptSubmit();
+                  handleSendMessage(promptInput);
                 }
               }}
               disabled={isTyping}
@@ -919,7 +906,7 @@ const CanvasLayout = ({sessionId}) => {
                       <AttachFile />
                     </IconButton>
                     <IconButton
-                      onClick={handlePromptSubmit}
+                      onClick={() => handleSendMessage(promptInput)}
                       disabled={isTyping || !promptInput.trim()}>
                       <Send />
                     </IconButton>
