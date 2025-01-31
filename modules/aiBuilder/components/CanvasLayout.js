@@ -137,6 +137,15 @@ const useStyles = makeStyles((theme) => ({
     overflowY: 'auto',
     marginBottom: theme.spacing(2),
     scrollBehavior: 'smooth',
+    '&::-webkit-scrollbar': {
+      width: '8px',
+    },
+    '&::-webkit-scrollbar-track': {
+      background: '#1a1a1a',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      background: '#404040',
+    },
   },
   chatMessage: {
     padding: theme.spacing(2),
@@ -647,19 +656,34 @@ const CanvasLayout = ({
   const [currentView, setCurrentView] = useState('editor');
   const [fileChanges, setFileChanges] = useState([]);
   const chatContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
   const [activeTabState, setActiveTabState] = useState('chat');
   const [previewTab, setPreviewTab] = useState('preview');
+
+  // Helper function to scroll to bottom
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
+      });
+    }
+  };
 
   // Initialize chat history from props
   useEffect(() => {
     if (sessionId && initialChatHistory.length > 0) {
-      console.log('Initializing chat history:', initialChatHistory);
       setChatHistories((prev) => ({
         ...prev,
         [sessionId]: initialChatHistory,
       }));
     }
   }, [sessionId, initialChatHistory]);
+
+  // Scroll to bottom when chat history changes or component mounts
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatHistories, sessionId]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -691,11 +715,19 @@ const CanvasLayout = ({
           },
         );
 
+        const unsubscribeSuccess = subscribeToEvent(
+          'analyze-query-success',
+          (data) => {
+            console.log('Success update received:', data);
+            handleSuccessUpdate(data);
+          },
+        );
+
         const unsubscribeComplete = subscribeToEvent(
           'analyze-query-complete',
           (data) => {
-            console.log('Analysis complete received:', data);
-            handleAnalysisComplete(data);
+            console.log('Analysis Completd:', data);
+            handleCompleteUpdate(data);
           },
         );
 
@@ -719,6 +751,7 @@ const CanvasLayout = ({
           unsubscribeDebug();
           unsubscribeProgress();
           unsubscribeComplete();
+          unsubscribeSuccess();
           unsubscribeError();
           unsubscribeFileChanges();
         };
@@ -798,6 +831,7 @@ const CanvasLayout = ({
       query: newPrompt,
     });
     setPromptInput('');
+    setTimeout(scrollToBottom, 100);
   };
 
   const handleProgressUpdate = (data) => {
@@ -813,9 +847,28 @@ const CanvasLayout = ({
         },
       ],
     }));
+    setTimeout(scrollToBottom, 100);
   };
 
-  const handleAnalysisComplete = (data) => {
+  const handleSuccessUpdate = (data) => {
+    setChatHistories((prev) => ({
+      ...prev,
+      [sessionId]: [
+        ...(prev[sessionId] || []),
+        {
+          role: 'success',
+          message: data.message,
+          summary: data.summary,
+          fileChanges: data.fileChanges,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+    setIsTyping(false);
+    setTimeout(scrollToBottom, 100);
+  };
+
+  const handleCompleteUpdate = (data) => {
     setChatHistories((prev) => ({
       ...prev,
       [sessionId]: [
@@ -829,6 +882,7 @@ const CanvasLayout = ({
       ],
     }));
     setIsTyping(false);
+    setTimeout(scrollToBottom, 100);
   };
 
   const handleAnalysisError = (error) => {
@@ -844,6 +898,7 @@ const CanvasLayout = ({
       ],
     }));
     setIsTyping(false);
+    setTimeout(scrollToBottom, 100);
   };
 
   const handleFileChanges = (data) => {
@@ -854,9 +909,9 @@ const CanvasLayout = ({
   };
 
   const renderChatMessage = (message, index) => {
-    // Show favicon only for first assistant response after user message
+    // Show favicon only for first response after user message
     const showFavicon = () => {
-      if (message.role === 'assistant' && index > 0) {
+      if (message.role === 'progress' && index > 0) {
         const messages = chatHistories[sessionId] || [];
         const prevMessage = messages[index - 1];
         return prevMessage.role === 'user';
@@ -873,18 +928,11 @@ const CanvasLayout = ({
         className={`${classes.messageWrapper} ${message.role}`}>
         {showFavicon() && (
           <Box className={classes.messageIcon}>
-            <img src='/favicon.ico' alt='AI' />
+            <img src='/images/favicon.ico' alt='AI' />
           </Box>
         )}
         <ListItem className={`${classes.chatMessage} ${message.role}`}>
           <Typography>{message.message}</Typography>
-          {message.changes?.length > 0 && (
-            <Box mt={2}>
-              <Typography variant='subtitle2' color='textSecondary'>
-                Changes {message.changes?.length}
-              </Typography>
-            </Box>
-          )}
         </ListItem>
       </Box>
     );
@@ -934,13 +982,15 @@ const CanvasLayout = ({
                   alignItems='flex-start'
                   className={`${classes.messageWrapper} ai`}>
                   <Box className={classes.messageIcon}>
-                    <img src='/favicon.ico' alt='AI' />
+                    <img src='/images/favicon.ico' alt='AI' />
                   </Box>
                   <ListItem className={`${classes.chatMessage} ai typing`}>
                     <Typography>Thinking...</Typography>
                   </ListItem>
                 </Box>
               )}
+              <div ref={messagesEndRef} />{' '}
+              {/* This keeps scrolling to bottom */}
             </Box>
           </Box>
 
