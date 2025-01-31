@@ -633,13 +633,19 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // CanvasLayout component
-const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, session}) => {
+const CanvasLayout = ({
+  sessionId,
+  initialChatHistory = [],
+  conversationId,
+  session,
+}) => {
   const classes = useStyles();
   const {currentProject} = useProject();
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentView, setCurrentView] = useState('editor');
+  const [fileChanges, setFileChanges] = useState([]);
   const chatContainerRef = useRef(null);
   const [activeTabState, setActiveTabState] = useState('chat');
   const [previewTab, setPreviewTab] = useState('preview');
@@ -664,29 +670,71 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, sessi
       return;
     }
 
-    let socketInstance;
     try {
-      console.log('Attempting to initialize socket...');
-      socketInstance = initializeSocket(sessionId);
+      console.log('Initializing socket connection...');
+      const socketInstance = initializeSocket(sessionId);
 
-      if (!socketInstance) {
-        console.error('Failed to initialize socket');
-        return;
+      // Wait for socket to be connected before subscribing to events
+      const setupSocketEvents = () => {
+        console.log('Setting up socket event listeners...');
+        
+        // Debug: Log all incoming socket events
+        const unsubscribeDebug = subscribeToEvent('*', (event) => {
+          console.log('Socket event received:', event);
+        });
+
+        const unsubscribeProgress = subscribeToEvent(
+          'analyze-query-progress',
+          (data) => {
+            console.log('Progress update received:', data);
+            handleProgressUpdate(data);
+          },
+        );
+
+        const unsubscribeComplete = subscribeToEvent(
+          'analyze-query-complete',
+          (data) => {
+            console.log('Analysis complete received:', data);
+            handleAnalysisComplete(data);
+          },
+        );
+
+        const unsubscribeError = subscribeToEvent(
+          'analyze-query-error',
+          (error) => {
+            console.log('Analysis error received:', error);
+            handleAnalysisError(error);
+          },
+        );
+
+        const unsubscribeFileChanges = subscribeToEvent(
+          'file-changes',
+          (data) => {
+            console.log('File changes event received:', data);
+            handleFileChanges(data);
+          },
+        );
+
+        return () => {
+          unsubscribeDebug();
+          unsubscribeProgress();
+          unsubscribeComplete();
+          unsubscribeError();
+          unsubscribeFileChanges();
+        };
+      };
+
+      let cleanup = null;
+      const connectHandler = () => {
+        console.log('Socket connected, setting up events');
+        cleanup = setupSocketEvents();
+      };
+
+      socketInstance.on('connect', connectHandler);
+      if (socketInstance.connected) {
+        console.log('Socket already connected, setting up events immediately');
+        cleanup = setupSocketEvents();
       }
-
-      // Subscribe to socket events
-      const unsubscribeProgress = subscribeToEvent(
-        'analyze-query-progress',
-        handleProgressUpdate,
-      );
-      const unsubscribeComplete = subscribeToEvent(
-        'analyze-query-complete',
-        handleAnalysisComplete,
-      );
-      const unsubscribeError = subscribeToEvent(
-        'analyze-query-error',
-        handleAnalysisError,
-      );
 
       // Send initial prompt through socket if available and it's from user
       if (currentProject?._id && initialChatHistory.length > 0) {
@@ -715,9 +763,8 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, sessi
       // Cleanup function
       return () => {
         console.log('Cleaning up socket connections...');
-        unsubscribeProgress();
-        unsubscribeComplete();
-        unsubscribeError();
+        if (cleanup) cleanup();
+        socketInstance.off('connect', connectHandler);
         disconnectSocket();
       };
     } catch (error) {
@@ -799,7 +846,12 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, sessi
     setIsTyping(false);
   };
 
-  const fileChanges = getDummyFileChanges();
+  const handleFileChanges = (data) => {
+    console.log('Received file changes:', data);
+    if (data.changes && Array.isArray(data.changes)) {
+      setFileChanges(data.changes);
+    }
+  };
 
   const renderChatMessage = (message, index) => {
     return (
@@ -819,9 +871,8 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, sessi
           {message.changes?.length > 0 && (
             <Box mt={2}>
               <Typography variant='subtitle2' color='textSecondary'>
-                Changes:
+                Changes {message.changes?.length}
               </Typography>
-              <CodeDiffViewer fileChanges={message.changes} />
             </Box>
           )}
         </ListItem>
