@@ -677,7 +677,7 @@ const CanvasLayout = ({
       // Wait for socket to be connected before subscribing to events
       const setupSocketEvents = () => {
         console.log('Setting up socket event listeners...');
-        
+
         // Debug: Log all incoming socket events
         const unsubscribeDebug = subscribeToEvent('*', (event) => {
           console.log('Socket event received:', event);
@@ -854,6 +854,16 @@ const CanvasLayout = ({
   };
 
   const renderChatMessage = (message, index) => {
+    // Show favicon only for first assistant response after user message
+    const showFavicon = () => {
+      if (message.role === 'assistant' && index > 0) {
+        const messages = chatHistories[sessionId] || [];
+        const prevMessage = messages[index - 1];
+        return prevMessage.role === 'user';
+      }
+      return false;
+    };
+
     return (
       <Box
         key={`${sessionId}-${index}`}
@@ -861,7 +871,7 @@ const CanvasLayout = ({
         display='flex'
         alignItems='flex-start'
         className={`${classes.messageWrapper} ${message.role}`}>
-        {message.role === 'ai' && (
+        {showFavicon() && (
           <Box className={classes.messageIcon}>
             <img src='/favicon.ico' alt='AI' />
           </Box>
@@ -1017,7 +1027,8 @@ const CanvasLayout = ({
                       borderRadius: '12px',
                     }}>
                     {previewTab === 'preview' ? (
-                      currentProject?.development?.previewUrl ? (
+                      currentProject?.development?.previewUrl ||
+                      'http://localhost:3674' ? (
                         <Box className={classes.livePreview}>
                           <iframe
                             src={'http://localhost:3674'}
