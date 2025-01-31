@@ -2,103 +2,109 @@ import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../config/api';
 
 let socket = null;
+let currentSessionId = null;
+let connectionAttempts = 0;
+const MAX_RECONNECTION_ATTEMPTS = 5;
+
+const createSocket = (sessionId) => {
+  // Get auth token from localStorage
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('No authentication token found');
+    throw new Error('Authentication required');
+  }
+
+  // For development, use ws://localhost:5001
+  const socketUrl = process.env.NODE_ENV === 'development' 
+    ? 'ws://localhost:5001'
+    : API_BASE_URL.replace(/^http/, 'ws');
+
+  console.log('Creating new socket connection to:', socketUrl);
+  
+  const newSocket = io(socketUrl, {
+    query: { sessionId },
+    auth: { token },
+    transports: ['websocket'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: MAX_RECONNECTION_ATTEMPTS,
+    path: '/socket.io',
+    autoConnect: false, // We'll manually connect
+    withCredentials: true,
+    timeout: 20000
+  });
+
+  // Add connection event handlers
+  newSocket.on('connect', () => {
+    console.log('Socket connected successfully:', newSocket.id);
+    connectionAttempts = 0;
+  });
+
+  newSocket.on('connect_error', (error) => {
+    console.error('Socket connection error:', error);
+    connectionAttempts++;
+    
+    if (connectionAttempts >= MAX_RECONNECTION_ATTEMPTS) {
+      console.error('Max reconnection attempts reached, cleaning up socket');
+      disconnectSocket();
+    }
+  });
+
+  newSocket.on('disconnect', (reason) => {
+    console.log('Socket disconnected:', reason);
+    if (reason === 'io server disconnect' || reason === 'io client disconnect') {
+      // Clean up the socket instance on intentional disconnects
+      socket = null;
+      currentSessionId = null;
+    }
+  });
+
+  newSocket.io.on("error", (error) => {
+    console.error('Socket.io error:', error);
+    if (error.message?.includes('authentication')) {
+      console.error('Socket authentication failed');
+      disconnectSocket();
+    }
+  });
+
+  newSocket.io.on("reconnect_attempt", (attempt) => {
+    console.log('Attempting to reconnect:', attempt);
+    // Re-add auth token on reconnection attempts
+    newSocket.auth = { token };
+  });
+
+  return newSocket;
+};
 
 export const initializeSocket = (sessionId) => {
   console.log('Initializing socket with sessionId:', sessionId);
   console.log('Using API_BASE_URL:', API_BASE_URL);
   
-  if (!socket) {
-    try {
-      // Get auth token from localStorage
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No authentication token found');
-        throw new Error('Authentication required');
-      }
-
-      // For development, use ws://localhost:5001
-      const socketUrl = process.env.NODE_ENV === 'development' 
-        ? 'ws://localhost:5001'
-        : API_BASE_URL.replace(/^http/, 'ws');
-
-      console.log('Connecting to socket URL:', socketUrl);
-      
-      socket = io(socketUrl, {
-        query: { sessionId },
-        auth: { token }, // Add token to auth object
-        transports: ['websocket'],
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        reconnectionAttempts: 5,
-        path: '/socket.io',
-        autoConnect: true,
-        withCredentials: true,
-        forceNew: true,
-        timeout: 10000
-      });
-
-      socket.io.on("error", (error) => {
-        console.error('Socket.io error:', error);
-        if (error.message?.includes('authentication')) {
-          // Handle authentication errors
-          console.error('Socket authentication failed');
-          disconnectSocket();
-        }
-      });
-
-      socket.io.on("reconnect_attempt", (attempt) => {
-        // Re-add auth token on reconnection attempts
-        socket.auth = { token: localStorage.getItem('token') };
-        console.log('Socket reconnection attempt:', attempt);
-      });
-
-      socket.io.on("reconnect_failed", () => {
-        console.error('Socket reconnection failed');
-      });
-
-      socket.on('connect', () => {
-        console.log('Socket connected with ID:', socket.id);
-      });
-
-      socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected, reason:', reason);
-        if (reason === 'io server disconnect') {
-          // Server initiated disconnect, possibly due to authentication
-          disconnectSocket();
-        }
-      });
-
-      socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error.message);
-        if (error.message?.includes('authentication')) {
-          // Handle authentication errors
-          console.error('Socket authentication failed');
-          disconnectSocket();
-        }
-      });
-
-      // Force connect if not auto-connecting
-      if (!socket.connected) {
-        console.log('Forcing socket connection...');
-        socket.connect();
-      }
-    } catch (error) {
-      console.error('Error creating socket:', error);
-      throw error;
-    }
-  } else {
-    // Verify token is still valid when reusing connection
-    const currentToken = localStorage.getItem('token');
-    if (currentToken && socket.auth?.token !== currentToken) {
-      console.log('Token changed, reconnecting socket...');
-      disconnectSocket();
-      return initializeSocket(sessionId);
-    }
-    console.log('Reusing existing socket connection, ID:', socket.id);
+  // If we already have a socket for this session, return it
+  if (socket && socket.connected && currentSessionId === sessionId) {
+    console.log('Reusing existing socket connection:', socket.id);
+    return socket;
   }
 
-  return socket;
+  // If we have a socket but it's for a different session or disconnected, clean it up
+  if (socket) {
+    console.log('Cleaning up existing socket before creating new one');
+    disconnectSocket();
+  }
+
+  try {
+    socket = createSocket(sessionId);
+    currentSessionId = sessionId;
+    
+    // Manually connect the socket
+    socket.connect();
+    
+    return socket;
+  } catch (error) {
+    console.error('Error initializing socket:', error);
+    return null;
+  }
 };
 
 export const disconnectSocket = () => {
@@ -106,6 +112,8 @@ export const disconnectSocket = () => {
     console.log('Disconnecting socket:', socket.id);
     socket.disconnect();
     socket = null;
+    currentSessionId = null;
+    connectionAttempts = 0;
   }
 };
 
@@ -134,11 +142,22 @@ export const subscribeToEvent = (eventName, callback) => {
     return () => {};
   }
 
+  const wrappedCallback = (...args) => {
+    console.log(`Event ${eventName} received with args:`, args);
+    try {
+      callback(...args);
+    } catch (error) {
+      console.error(`Error in ${eventName} callback:`, error);
+    }
+  };
+
   console.log('Subscribing to event:', eventName);
-  socket.on(eventName, callback);
+  socket.on(eventName, wrappedCallback);
   
   return () => {
-    console.log('Unsubscribing from event:', eventName);
-    socket.off(eventName, callback);
+    if (socket) {
+      console.log('Unsubscribing from event:', eventName);
+      socket.off(eventName, wrappedCallback);
+    }
   };
 };

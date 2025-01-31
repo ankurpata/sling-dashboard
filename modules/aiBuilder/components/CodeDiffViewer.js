@@ -150,10 +150,10 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'hidden',
   },
   fileContainer: {
-    marginBottom: theme.spacing(3),
-    '&:last-child': {
-      marginBottom: 0,
-    },
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
   },
   fileHeader: {
     padding: '8px 12px',
@@ -190,15 +190,13 @@ const useStyles = makeStyles((theme) => ({
   },
   diffContainer: {
     flex: 1,
-    overflow: 'auto',
-    backgroundColor: '#ffffff',
-    fontFamily: 'SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace',
-    fontSize: '12px',
-    lineHeight: '20px',
     display: 'flex',
+    overflow: 'auto',
   },
   splitView: {
     width: '50%',
+    minWidth: '50%',
+    overflow: 'auto',
     borderRight: '1px solid #d0d7de',
     '&:last-child': {
       borderRight: 'none',
@@ -229,7 +227,7 @@ const useStyles = makeStyles((theme) => ({
   },
   lineNumber: {
     color: '#6e7781',
-    width: '35px',
+    minWidth: '35px',
     padding: '0 10px',
     textAlign: 'center',
     userSelect: 'none',
@@ -241,6 +239,7 @@ const useStyles = makeStyles((theme) => ({
     padding: '0 16px',
     flex: 1,
     whiteSpace: 'pre',
+    overflow: 'visible',
   },
   addedLine: {
     backgroundColor: '#e6ffec',
