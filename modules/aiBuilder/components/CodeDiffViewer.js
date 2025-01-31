@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import React, {useState, useEffect, useMemo, useRef} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import {
   Box,
@@ -12,6 +12,7 @@ import {
   IconButton,
   List,
   ListItem,
+  ListItemText,
 } from '@material-ui/core';
 import {
   Add as AddIcon,
@@ -23,21 +24,23 @@ import {
   Folder as FolderIcon,
   ViewColumn as ViewColumnIcon,
   ViewStream as ViewStreamIcon,
+  ViewAgenda as ViewAgendaIcon,
 } from '@material-ui/icons';
+import {getFileChanges} from '../services/fileChangesService';
+import {useProject} from '../context/ProjectContext';
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
     height: '100%',
     overflow: 'hidden',
-    justifyContent: 'center'
+    backgroundColor: '#ffffff',
   },
   fileList: {
     width: 300,
     borderRight: '1px solid #d0d7de',
+    overflow: 'auto',
     backgroundColor: '#f6f8fa',
-    display: 'flex',
-    flexDirection: 'column',
   },
   searchContainer: {
     padding: theme.spacing(2),
@@ -45,9 +48,9 @@ const useStyles = makeStyles((theme) => ({
   },
   searchInput: {
     '& .MuiOutlinedInput-root': {
-      // backgroundColor: '#1c2128',
+      backgroundColor: '#ffffff',
       borderRadius: '6px',
-      border: '1px solid #424a53',
+      border: '1px solid #d0d7de',
       transition: 'border-color 0.2s',
       '&:before, &:after': {
         display: 'none',
@@ -58,29 +61,29 @@ const useStyles = makeStyles((theme) => ({
         borderColor: 'transparent',
       },
       '&:hover': {
-        border: '1px solid #525964',
+        border: '1px solid #d0d7de',
         '& .MuiOutlinedInput-notchedOutline': {
           border: 'none',
         },
       },
       '&.Mui-focused': {
-        border: '1px solid #525964',
+        border: '1px solid #d0d7de',
         '& .MuiOutlinedInput-notchedOutline': {
           border: 'none',
         },
       },
-    },
-    '& .MuiOutlinedInput-input': {
-      padding: '8px 12px',
-      fontSize: '14px',
-      color: '#1c2128',
-      '&::placeholder': {
-        color: '#7d8590',
-        opacity: 1,
+      '& .MuiOutlinedInput-input': {
+        padding: '8px 12px',
+        fontSize: '14px',
+        color: '#24292f',
+        '&::placeholder': {
+          color: '#57606a',
+          opacity: 1,
+        },
       },
     },
     '& .MuiInputAdornment-root': {
-      color: '#7d8590',
+      color: '#57606a',
       marginRight: '-4px',
     },
   },
@@ -99,11 +102,11 @@ const useStyles = makeStyles((theme) => ({
     cursor: 'pointer',
     borderRadius: 4,
     '&:hover': {
-      backgroundColor: '#ffffff',
+      backgroundColor: '#f6f8fa',
     },
   },
   selectedFile: {
-    // backgroundColor: '#ffffff',
+    backgroundColor: '#ffffff',
     '&:hover': {
       backgroundColor: '#ffffff',
     },
@@ -115,12 +118,12 @@ const useStyles = makeStyles((theme) => ({
   },
   folderIcon: {
     fontSize: 20,
-    color: '#7d8590',
+    color: '#57606a',
     marginLeft: theme.spacing(1),
   },
   chevron: {
     fontSize: 16,
-    color: '#7d8590',
+    color: '#57606a',
     transition: 'transform 0.2s',
   },
   chevronExpanded: {
@@ -158,7 +161,7 @@ const useStyles = makeStyles((theme) => ({
   },
   fileHeader: {
     padding: '8px 12px',
-    backgroundColor: '#f6f8fa',
+    backgroundColor: '#ffffff',
     borderBottom: '1px solid #d0d7de',
     borderTopLeftRadius: '6px',
     borderTopRightRadius: '6px',
@@ -172,16 +175,16 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
   },
   addChip: {
-    backgroundColor: '#dafbe1',
-    color: '#1a7f37',
+    backgroundColor: '#e6ffec',
+    color: '#2cbe4e',
     height: '20px',
     '& .MuiChip-icon': {
-      color: '#1a7f37',
+      color: '#2cbe4e',
       marginLeft: '4px',
     },
   },
   removeChip: {
-    backgroundColor: '#ffeef0',
+    backgroundColor: '#ffebe9',
     color: '#cf222e',
     height: '20px',
     '& .MuiChip-icon': {
@@ -192,70 +195,103 @@ const useStyles = makeStyles((theme) => ({
   diffContainer: {
     flex: 1,
     display: 'flex',
+    flexDirection: 'column',
     overflow: 'auto',
+    backgroundColor: '#ffffff',
   },
   splitView: {
-    width: '50%',
-    minWidth: '50%',
+    display: 'grid',
     overflow: 'auto',
-    borderRight: '1px solid #d0d7de',
-    '&:last-child': {
-      borderRight: 'none',
+    height: '100%',
+    '& > div': {
+      borderRight: '1px solid #d0d7de',
+      '&:last-child': {
+        borderRight: 'none',
+      },
     },
   },
-  numbersColumn: {
-    position: 'sticky',
-    left: 0,
-    zIndex: 2,
-    backgroundColor: '#f6f8fa',
-    borderRight: '1px solid #d0d7de',
-    width: '60px',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  contentColumn: {
+  diffContent: {
     flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
+    overflow: 'auto',
+    fontFamily: 'monospace',
+    fontSize: '12px',
+    lineHeight: '18px',
+    padding: '0',
+    backgroundColor: '#ffffff',
   },
   line: {
     display: 'flex',
-    minHeight: '20px',
-    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    minHeight: '18px',
+    padding: '0 8px',
+    whiteSpace: 'pre',
     '&:hover': {
       backgroundColor: '#f6f8fa',
     },
   },
   lineNumber: {
-    color: '#6e7781',
-    minWidth: '35px',
-    padding: '0 10px',
-    textAlign: 'center',
+    width: '40px',
+    color: '#6e7681',
     userSelect: 'none',
-    borderRight: '1px solid #d0d7de',
-    backgroundColor: '#f6f8fa',
-    display: 'inline-block',
+    textAlign: 'right',
+    marginRight: '16px',
+    fontSize: '12px',
   },
   lineContent: {
-    padding: '0 16px',
     flex: 1,
-    whiteSpace: 'pre',
-    overflow: 'visible',
+    color: '#24292f',
+    fontSize: '12px',
   },
   addedLine: {
     backgroundColor: '#e6ffec',
-    '&:hover': {
-      backgroundColor: '#d8f3dc',
+    '& $lineContent': {
+      color: '#24292f',
+    },
+    '& $lineNumber': {
+      color: '#6e7681',
     },
   },
   removedLine: {
     backgroundColor: '#ffebe9',
-    '&:hover': {
-      backgroundColor: '#ffddd9',
+    '& $lineContent': {
+      color: '#24292f',
+    },
+    '& $lineNumber': {
+      color: '#6e7681',
     },
   },
   contextLine: {
     color: '#57606a',
+  },
+  toolbar: {
+    padding: '8px 12px',
+    borderBottom: '1px solid #d0d7de',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  viewToggleGroup: {
+    display: 'flex',
+    gap: '4px',
+    '& .MuiButtonBase-root': {
+      padding: '4px',
+      borderRadius: '4px',
+      border: '1px solid #d0d7de',
+      '&.active': {
+        backgroundColor: '#f6f8fa',
+      },
+      '&:hover': {
+        backgroundColor: '#f6f8fa',
+      },
+    },
+  },
+  viewToggle: {
+    marginRight: '8px',
+  },
+  diffHeader: {
+    padding: '8px 12px',
+    borderBottom: '1px solid #d0d7de',
+    backgroundColor: '#ffffff',
   },
 }));
 
@@ -303,13 +339,13 @@ const FileTreeItem = ({
               size='small'
               label={`+${file.additions}`}
               className={classes.statChip}
-              style={{backgroundColor: '#dafbe1', color: '#1a7f37'}}
+              style={{backgroundColor: '#e6ffec', color: '#2cbe4e'}}
             />
             <Chip
               size='small'
               label={`-${file.deletions}`}
               className={classes.statChip}
-              style={{backgroundColor: '#ffeef0', color: '#cf222e'}}
+              style={{backgroundColor: '#ffebe9', color: '#cf222e'}}
             />
           </div>
         )}
@@ -344,7 +380,7 @@ const FileTreeItem = ({
 const findCommonLines = (oldLines = [], newLines = []) => {
   // Handle undefined or null inputs
   if (!oldLines || !newLines) return [];
-  
+
   const lines = [];
   let oldIndex = 0;
   let newIndex = 0;
@@ -413,24 +449,115 @@ const findCommonLines = (oldLines = [], newLines = []) => {
   return lines;
 };
 
-const CodeDiffViewer = ({fileChanges = []}) => {
+const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
   const classes = useStyles();
-  const [selectedFile, setSelectedFile] = useState(fileChanges[0]?.path || '');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileChanges, setFileChanges] = useState(initialFileChanges || []);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSplitView, setIsSplitView] = useState(false);
+  const [viewMode, setViewMode] = useState('unified'); // unified, split-horizontal, split-vertical
+  const {currentProject} = useProject();
+  const leftScrollRef = useRef(null);
+  const rightScrollRef = useRef(null);
 
-  // Handle empty fileChanges
-  if (!fileChanges || fileChanges.length === 0) {
-    return (
-      <Box className={classes.root}>
-        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-          <Typography variant="body1" color="textSecondary">
-            No file changes to display
-          </Typography>
-        </Box>
-      </Box>
+  useEffect(() => {
+    const fetchFileChanges = async () => {
+      if (currentProject?._id) {
+        try {
+          const changes = await getFileChanges(currentProject._id);
+          setFileChanges(changes);
+        } catch (error) {
+          console.error('Failed to fetch file changes:', error);
+        }
+      }
+    };
+
+    fetchFileChanges();
+  }, [currentProject?._id]);
+
+  useEffect(() => {
+    const leftScroll = leftScrollRef.current;
+    const rightScroll = rightScrollRef.current;
+
+    if (leftScroll && rightScroll) {
+      const syncScroll = (e) => {
+        const target = e.target;
+        const other = target === leftScroll ? rightScroll : leftScroll;
+        other.scrollTop = target.scrollTop;
+      };
+
+      leftScroll.addEventListener('scroll', syncScroll);
+      rightScroll.addEventListener('scroll', syncScroll);
+
+      return () => {
+        leftScroll.removeEventListener('scroll', syncScroll);
+        rightScroll.removeEventListener('scroll', syncScroll);
+      };
+    }
+  }, [viewMode]);
+
+  const filteredFiles = useMemo(() => {
+    if (!searchQuery) return fileChanges;
+    return fileChanges.filter((file) =>
+      file.path.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }
+  }, [fileChanges, searchQuery]);
+
+  const currentFile = useMemo(() => {
+    return fileChanges.find((file) => file.path === selectedFile);
+  }, [fileChanges, selectedFile]);
+
+  const handleFileSelect = (path) => {
+    setSelectedFile(path);
+  };
+
+  const renderEmptyState = () => (
+    <Box
+      display='flex'
+      justifyContent='center'
+      alignItems='center'
+      height='100%'>
+      <Typography variant='body1' color='textSecondary'>
+        No file changes to display
+      </Typography>
+    </Box>
+  );
+
+  const renderFileList = () => (
+    <Box className={classes.fileList}>
+      <Box className={classes.searchContainer}>
+        <TextField
+          fullWidth
+          size='small'
+          variant='outlined'
+          placeholder='Filter changed files'
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={classes.searchInput}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position='start'>
+                <SearchIcon style={{fontSize: 20}} />
+              </InputAdornment>
+            ),
+            classes: {
+              notchedOutline: classes.noBorder,
+            },
+          }}
+        />
+      </Box>
+      <Box className={classes.fileTree}>
+        {filteredFiles.map((file, index) => (
+          <FileTreeItem
+            key={index}
+            file={file}
+            selectedFile={selectedFile}
+            onSelectFile={handleFileSelect}
+            allFiles={filteredFiles}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
 
   const renderDiffLines = (diffLines = []) => {
     if (!diffLines || diffLines.length === 0) {
@@ -464,178 +591,80 @@ const CodeDiffViewer = ({fileChanges = []}) => {
     ));
   };
 
-  const filteredFiles = useMemo(() => {
-    if (!searchQuery) return fileChanges;
-    return fileChanges.filter((file) =>
-      file.path.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [fileChanges, searchQuery]);
-
-  // Group files by directory
-  const fileTree = useMemo(() => {
-    const grouped = {};
-    filteredFiles.forEach((file) => {
-      const parts = file.path.split('/');
-      let current = grouped;
-      parts.forEach((part, i) => {
-        if (!current[part]) {
-          current[part] = i === parts.length - 1 ? file : {};
-        }
-        current = current[part];
-      });
-    });
-    return grouped;
-  }, [filteredFiles]);
-
-  const currentFile = fileChanges.find((f) => f.path === selectedFile);
-
-  // Handle case when file content is missing
-  const hasValidContent = currentFile?.oldContent || currentFile?.newContent;
-  const emptyContentMessage = !hasValidContent ? (
-    <Box p={2}>
-      <Typography variant="body2" color="textSecondary">
-        File content is not available
-      </Typography>
+  const renderViewToggle = () => (
+    <Box className={classes.viewToggleGroup}>
+      <IconButton
+        onClick={() => setViewMode('unified')}
+        className={viewMode === 'unified' ? 'active' : ''}
+        title="Unified View">
+        <ViewStreamIcon />
+      </IconButton>
+      <IconButton
+        onClick={() => setViewMode('split-horizontal')}
+        className={viewMode === 'split-horizontal' ? 'active' : ''}
+        title="Split Horizontal">
+        <ViewColumnIcon />
+      </IconButton>
+      <IconButton
+        onClick={() => setViewMode('split-vertical')}
+        className={viewMode === 'split-vertical' ? 'active' : ''}
+        title="Split Vertical">
+        <ViewAgendaIcon />
+      </IconButton>
     </Box>
-  ) : null;
+  );
+
+  const isSplitView = viewMode.startsWith('split-');
+  const isVerticalSplit = viewMode === 'split-vertical';
+
+  if (!fileChanges || fileChanges.length === 0) {
+    return <Box className={classes.root}>{renderEmptyState()}</Box>;
+  }
 
   return (
     <Box className={classes.root}>
-      <Box className={classes.fileList}>
-        <Box className={classes.searchContainer}>
-          <TextField
-            fullWidth
-            size='small'
-            variant='outlined'
-            placeholder='Filter changed files'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={classes.searchInput}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position='start'>
-                  <SearchIcon style={{fontSize: 20}} />
-                </InputAdornment>
-              ),
-              classes: {
-                notchedOutline: classes.noBorder,
-              },
-            }}
-          />
+      {renderFileList()}
+      <Box className={classes.diffContainer}>
+        <Box className={classes.toolbar}>
+          {renderViewToggle()}
         </Box>
-        <Box className={classes.fileTree}>
-          {filteredFiles.map((file, index) => (
-            <FileTreeItem
-              key={index}
-              file={file}
-              selectedFile={selectedFile}
-              onSelectFile={setSelectedFile}
-              allFiles={filteredFiles}
-            />
-          ))}
-        </Box>
-      </Box>
-      <Box className={classes.mainContent}>
-        {currentFile && (
-          <Paper className={classes.fileContainer}>
-            <Box className={classes.fileHeader}>
-              <Typography className={classes.fileName}>
-                {currentFile.path}
-              </Typography>
-              <Box className={classes.statsContainer}>
-                <Chip
-                  icon={<AddIcon style={{fontSize: 16}} />}
-                  label={`+${currentFile.additions}`}
-                  className={classes.addChip}
-                  size='small'
-                />
-                <Chip
-                  icon={<RemoveIcon style={{fontSize: 16}} />}
-                  label={`-${currentFile.deletions}`}
-                  className={classes.removeChip}
-                  size='small'
-                />
-                <Tooltip title={isSplitView ? 'Unified View' : 'Split View'}>
-                  <IconButton
-                    size='small'
-                    onClick={() => setIsSplitView(!isSplitView)}>
-                    {isSplitView ? <ViewStreamIcon /> : <ViewColumnIcon />}
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
-            <Box className={classes.diffContainer}>
-              {!hasValidContent ? (
-                emptyContentMessage
-              ) : isSplitView ? (
-                <>
-                  <Box className={classes.splitView}>
-                    {findCommonLines(
-                      currentFile.oldContent?.split('\n') || [],
-                      currentFile.newContent?.split('\n') || [],
-                    ).map((line, i) => (
-                      <div
-                        key={i}
-                        className={`${classes.line} ${
-                          line.type === 'removed' ? classes.removedLine : ''
-                        }`}>
-                        <span className={classes.lineNumber}>
-                          {line.displayIndex}
-                        </span>
-                        <span
-                          className={`${classes.lineContent} ${
-                            line.type === 'context' ? classes.contextLine : ''
-                          }`}>
-                          {line.type === 'removed' ? '-' : ' '}
-                          {line.type === 'removed'
-                            ? line.content
-                            : line.oldLineNumber
-                              ? line.content
-                              : ''}
-                        </span>
-                      </div>
-                    ))}
-                  </Box>
-                  <Box className={classes.splitView}>
-                    {findCommonLines(
-                      currentFile.oldContent?.split('\n') || [],
-                      currentFile.newContent?.split('\n') || [],
-                    ).map((line, i) => (
-                      <div
-                        key={i}
-                        className={`${classes.line} ${
-                          line.type === 'added' ? classes.addedLine : ''
-                        }`}>
-                        <span className={classes.lineNumber}>
-                          {line.displayIndex}
-                        </span>
-                        <span
-                          className={`${classes.lineContent} ${
-                            line.type === 'context' ? classes.contextLine : ''
-                          }`}>
-                          {line.type === 'added' ? '+' : ' '}
-                          {line.type === 'added'
-                            ? line.content
-                            : line.newLineNumber
-                              ? line.content
-                              : ''}
-                        </span>
-                      </div>
-                    ))}
-                  </Box>
-                </>
-              ) : (
-                <Box flex={1}>
-                  {renderDiffLines(
-                    findCommonLines(
-                      currentFile.oldContent?.split('\n') || [],
-                      currentFile.newContent?.split('\n') || [],
-                    ),
-                  )}
-                </Box>
+        {!currentFile ? (
+          <Box p={2}>
+            <Typography variant='body2' color='textSecondary'>
+              Select a file to view changes
+            </Typography>
+          </Box>
+        ) : isSplitView ? (
+          <Box className={classes.splitView} style={{
+            gridTemplateColumns: isVerticalSplit ? '1fr' : '1fr 1fr',
+            gridTemplateRows: isVerticalSplit ? '1fr 1fr' : '1fr',
+          }}>
+            <Box className={classes.diffContent} ref={leftScrollRef}>
+              {renderDiffLines(
+                findCommonLines(
+                  currentFile.oldContent?.split('\n') || [],
+                  currentFile.newContent?.split('\n') || [],
+                ).filter(line => line.type !== 'added')
               )}
             </Box>
-          </Paper>
+            <Box className={classes.diffContent} ref={rightScrollRef}>
+              {renderDiffLines(
+                findCommonLines(
+                  currentFile.oldContent?.split('\n') || [],
+                  currentFile.newContent?.split('\n') || [],
+                ).filter(line => line.type !== 'removed')
+              )}
+            </Box>
+          </Box>
+        ) : (
+          <Box className={classes.diffContent}>
+            {renderDiffLines(
+              findCommonLines(
+                currentFile.oldContent?.split('\n') || [],
+                currentFile.newContent?.split('\n') || [],
+              )
+            )}
+          </Box>
         )}
       </Box>
     </Box>

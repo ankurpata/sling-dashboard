@@ -20,6 +20,7 @@ export const apiEndpoints = {
       session: (sessionId) =>
         `${API_BASE_URL}/project/chat/sessions/${sessionId}`,
     },
+    fileChanges: `${API_BASE_URL}/file/changes`,
   },
   chat: {
     prompt: `${API_BASE_URL}/chat/prompt`,
