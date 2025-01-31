@@ -267,20 +267,25 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#262626',
+    backgroundColor: '#1a1a1a',
     borderBottom: '1px solid #404040',
     padding: '4px 8px',
   },
   previewTabs: {
-    backgroundColor: '#262626',
+    backgroundColor: '#1a1a1a',
+    minHeight: '36px',
     '& .MuiTab-root': {
       color: '#9ca3af',
+      minHeight: '36px',
+      textTransform: 'none',
+      fontSize: '13px',
       '&.Mui-selected': {
         color: '#ffffff',
       },
     },
     '& .MuiTabs-indicator': {
       backgroundColor: '#ffffff',
+      height: '2px',
     },
   },
   previewContent: {
