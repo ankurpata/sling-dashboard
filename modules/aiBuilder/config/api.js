@@ -24,7 +24,8 @@ export const apiEndpoints = {
   },
   chat: {
     prompt: `${API_BASE_URL}/chat/prompt`,
-    history: (projectId, conversationId = '') => `${API_BASE_URL}/chat/history/${projectId}/${conversationId}`,
+    history: (projectId, conversationId = '') =>
+      `${API_BASE_URL}/chat/history/${projectId}/${conversationId}`,
   },
   session: {
     create: `${API_BASE_URL}/session/create`,
@@ -33,6 +34,9 @@ export const apiEndpoints = {
   },
   projects: `${API_BASE_URL}/projects`,
   userInfo: `${API_BASE_URL}/user/info`,
+  ai: {
+    commitMessage: `${API_BASE_URL}/ai/commit-message`,
+  },
 };
 
 // Create axios instance with default config
@@ -41,8 +45,8 @@ import axios from 'axios';
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 // Add auth token to all requests
@@ -50,7 +54,7 @@ apiClient.interceptors.request.use(
   (config) => {
     // Initialize headers if they don't exist
     config.headers = config.headers || {};
-    
+
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -60,7 +64,7 @@ apiClient.interceptors.request.use(
   (error) => {
     console.error('Request interceptor error:', error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // Add response interceptor to handle auth errors
@@ -74,8 +78,8 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('token');
     }
     return Promise.reject(error);
-  }
+  },
 );
 
-export { API_BASE_URL };
+export {API_BASE_URL};
 export default apiClient;

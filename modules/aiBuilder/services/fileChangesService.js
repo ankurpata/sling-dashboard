@@ -7,7 +7,6 @@ export const getFileChanges = async (projectId) => {
     });
     return response?.data?.data || [];
   } catch (error) {
-    console.error('Error fetching file changes:', error);
-    throw error;
+    console.error('[getFileChanges] Error fetching file changes:', error);
   }
 };

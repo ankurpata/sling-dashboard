@@ -23,6 +23,7 @@ import {
 } from '../services/socketService';
 
 import canvasStyles from '../styles/canvas.styles';
+import {getFileChanges} from '../services/fileChangesService';
 
 // CanvasLayout component
 const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
@@ -33,7 +34,6 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
   const [isTyping, setIsTyping] = useState(false);
   const [currentView, setCurrentView] = useState('editor');
   const [fileChanges, setFileChanges] = useState([]);
-  const [filesToReview, setFilesToReview] = useState([]);
   const [isCommitDialogOpen, setIsCommitDialogOpen] = useState(false);
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -49,6 +49,10 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
       });
     }
   };
+
+  useEffect(() => {
+    handleFileChanges();
+  }, [sessionId, initialChatHistory]);
 
   // Initialize chat history from props
   useEffect(() => {
@@ -106,14 +110,6 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
           },
         );
 
-        const unsubscribeComplete = subscribeToEvent(
-          'analyze-query-complete',
-          (data) => {
-            console.log('Analysis Completd:', data);
-            handleCompleteUpdate(data);
-          },
-        );
-
         const unsubscribeError = subscribeToEvent(
           'analyze-query-error',
           (error) => {
@@ -133,7 +129,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
         return () => {
           unsubscribeDebug();
           unsubscribeProgress();
-          unsubscribeComplete();
+
           unsubscribeSuccess();
           unsubscribeError();
           unsubscribeFileChanges();
@@ -187,18 +183,6 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
       console.error('Error in socket setup:', error);
     }
   }, [sessionId, currentProject?._id]);
-
-  useEffect(() => {
-    // This is where you would implement the logic to check for files that need review
-    // For now, we'll simulate it with some sample data
-    const checkFilesForReview = () => {
-      // Replace this with actual logic to check git status or your version control system
-      // This is just a placeholder
-      setFilesToReview(['file1.js', 'file2.js', 'file3.js']);
-    };
-
-    checkFilesForReview();
-  }, []);
 
   const handleSendMessage = async (newPrompt) => {
     if (!newPrompt.trim()) return;
@@ -296,27 +280,18 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
     setTimeout(scrollToBottom, 100);
   };
 
-  const handleFileChanges = (data) => {
-    console.log('Received file changes:', data);
-    if (data.changes && Array.isArray(data.changes)) {
-      setFileChanges(data.changes);
-    }
+  const handleFileChanges = async (data) => {
+    const totalChanges = await getFileChanges(currentProject._id);
+    setFileChanges(totalChanges);
   };
 
   const handleReviewClick = () => {
     setIsCommitDialogOpen(true);
   };
 
-  const handleCommit = async (message) => {
-    // Here you would implement the actual commit logic
-    console.log('Committing with message:', message);
-    console.log('Files:', filesToReview);
-    // After successful commit, clear the files to review
-    setFilesToReview([]);
-  };
-
   const handleRejectAll = () => {
-    setFilesToReview([]);
+    // setFileChanges([]);
+    //TODO : ADd api call to clear all file changes from local folder.
   };
 
   const handleAcceptAll = () => {
@@ -406,9 +381,9 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
               )}
               <div ref={messagesEndRef} />
             </Box>
-            {filesToReview.length > 0 && (
+            {fileChanges.length > 0 && (
               <ReviewNotification
-                fileCount={filesToReview.length}
+                fileCount={fileChanges.length}
                 onReject={handleRejectAll}
                 onPushForReview={handleAcceptAll}
               />
@@ -529,8 +504,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
       <CommitDialog
         open={isCommitDialogOpen}
         onClose={() => setIsCommitDialogOpen(false)}
-        files={filesToReview}
-        onCommit={handleCommit}
+        files={fileChanges}
       />
     </Box>
   );
