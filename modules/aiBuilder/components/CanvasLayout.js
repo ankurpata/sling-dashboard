@@ -95,6 +95,9 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
           (data) => {
             console.log('Success update received:', data);
             handleSuccessUpdate(data);
+            if (data.fileChanges) {
+              setFileChanges(data.fileChanges);
+            }
           },
         );
 

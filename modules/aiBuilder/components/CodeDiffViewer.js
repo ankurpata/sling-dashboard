@@ -472,7 +472,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
     };
 
     fetchFileChanges();
-  }, [currentProject?._id]);
+  }, []);
 
   useEffect(() => {
     const leftScroll = leftScrollRef.current;
@@ -495,12 +495,12 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
     }
   }, [viewMode]);
 
-  const filteredFiles = useMemo(() => {
+  const filteredFiles = () => {
     if (!searchQuery) return fileChanges;
     return fileChanges.filter((file) =>
       file.path.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [fileChanges, searchQuery]);
+  };
 
   const currentFile = useMemo(() => {
     return fileChanges.find((file) => file.path === selectedFile);
@@ -546,13 +546,13 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
         />
       </Box>
       <Box className={classes.fileTree}>
-        {filteredFiles.map((file, index) => (
+        {filteredFiles().map((file, index) => (
           <FileTreeItem
             key={index}
             file={file}
             selectedFile={selectedFile}
             onSelectFile={handleFileSelect}
-            allFiles={filteredFiles}
+            allFiles={filteredFiles()}
           />
         ))}
       </Box>
@@ -620,7 +620,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
   if (!fileChanges || fileChanges.length === 0) {
     return (
       <Box
-        className={classes.roo}
+        className={classes.root}
         style={{
           display: 'flex',
           justifyContent: 'center',
