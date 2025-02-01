@@ -141,28 +141,14 @@ const Header = ({isCanvasView}) => {
   const {user} = useUser();
   const router = useRouter();
 
-  const handleSignIn = () => {
-    router.push('/signin');
-  };
-
-  const handleSignUp = () => {
-    router.push('/signup');
-  };
-
   return (
     <AppBar
       position='static'
       className={`${classes.appBar} ${isCanvasView ? 'darkTheme' : ''}`}>
       <Toolbar className={classes.toolbar}>
         <a href='/' className={classes.logo}>
-          <img
-            src='/images/logo.png'
-            alt='Logo'
-          />
-          <Typography
-            variant='subtitle1'>
-            Baloon.dev
-          </Typography>
+          <img src='/images/logo.png' alt='Logo' />
+          <Typography variant='subtitle1'>Baloon.dev</Typography>
         </a>
 
         <nav className={classes.nav}>

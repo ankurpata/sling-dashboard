@@ -134,7 +134,7 @@ const ProjectSession = () => {
 
   return (
     <div className={classes.root}>
-      <Header />
+      <Header isCanvasView={true}></Header>
       <CanvasLayout
         sessionId={sessionId}
         initialChatHistory={chatHistory}
