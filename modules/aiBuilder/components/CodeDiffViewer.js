@@ -199,8 +199,99 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
     backgroundColor: '#ffffff',
   },
+  diffContent: {
+    flex: 1,
+    overflow: 'auto',
+    fontFamily: '"SF Mono", "Consolas", "Monaco", monospace',
+    fontSize: '13px',
+    lineHeight: '20px',
+    padding: '0',
+    backgroundColor: '#ffffff',
+    tabSize: 2,
+  },
+  line: {
+    display: 'flex',
+    alignItems: 'stretch',
+    minHeight: '20px',
+    backgroundColor: '#ffffff',
+    '&:hover': {
+      backgroundColor: '#f6f8fa',
+    },
+  },
+  lineNumber: {
+    minWidth: '84px',
+    color: '#6e7681',
+    userSelect: 'none',
+    display: 'flex',
+    justifyContent: 'flex-end',
+    borderRight: '1px solid #d0d7de',
+    backgroundColor: '#f6f8fa',
+    position: 'sticky',
+    left: 0,
+    '& span': {
+      width: '40px',
+      padding: '0 10px',
+      textAlign: 'right',
+      display: 'inline-block',
+      fontSize: '12px',
+      color: '#57606a',
+      fontFamily: '"SF Mono", "Consolas", "Monaco", monospace',
+      borderRight: '1px solid #d0d7de',
+      '&:last-child': {
+        borderRight: 'none',
+      }
+    }
+  },
+  lineContent: {
+    flex: 1,
+    color: '#24292f',
+    padding: '0 16px',
+    fontFamily: '"SF Mono", "Consolas", "Monaco", monospace',
+    fontSize: '13px',
+    whiteSpace: 'pre',
+    display: 'flex',
+    alignItems: 'center',
+    '& pre': {
+      margin: 0,
+      whiteSpace: 'pre',
+    }
+  },
+  addedLine: {
+    '& $lineContent': {
+      backgroundColor: '#e6ffec',
+    },
+    '& $lineNumber': {
+      backgroundColor: '#f0fff4',
+      borderRight: '1px solid #a6f0c6',
+      '& span': {
+        color: '#1a7f37',
+      }
+    },
+  },
+  removedLine: {
+    '& $lineContent': {
+      backgroundColor: '#ffebe9',
+    },
+    '& $lineNumber': {
+      backgroundColor: '#fff5f5',
+      borderRight: '1px solid #ffc9c9',
+      '& span': {
+        color: '#cf222e',
+      }
+    },
+  },
+  contextLine: {
+    color: '#57606a',
+  },
+  codeMark: {
+    display: 'inline-block',
+    width: '16px',
+    color: '#57606a',
+    userSelect: 'none',
+  },
   splitView: {
     display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
     overflow: 'auto',
     height: '100%',
     '& > div': {
@@ -210,58 +301,16 @@ const useStyles = makeStyles((theme) => ({
       },
     },
   },
-  diffContent: {
-    flex: 1,
-    overflow: 'auto',
-    fontFamily: 'monospace',
-    fontSize: '12px',
-    lineHeight: '18px',
-    padding: '0',
-    backgroundColor: '#ffffff',
-  },
-  line: {
+  diffHeader: {
+    padding: '8px 16px',
+    borderBottom: '1px solid #d0d7de',
+    backgroundColor: '#f6f8fa',
     display: 'flex',
     alignItems: 'center',
-    minHeight: '18px',
-    padding: '0 8px',
-    whiteSpace: 'pre',
-    '&:hover': {
-      backgroundColor: '#f6f8fa',
-    },
-  },
-  lineNumber: {
-    width: '40px',
-    color: '#6e7681',
-    userSelect: 'none',
-    textAlign: 'right',
-    marginRight: '16px',
-    fontSize: '12px',
-  },
-  lineContent: {
-    flex: 1,
-    color: '#24292f',
-    fontSize: '12px',
-  },
-  addedLine: {
-    backgroundColor: '#e6ffec',
-    '& $lineContent': {
-      color: '#24292f',
-    },
-    '& $lineNumber': {
-      color: '#6e7681',
-    },
-  },
-  removedLine: {
-    backgroundColor: '#ffebe9',
-    '& $lineContent': {
-      color: '#24292f',
-    },
-    '& $lineNumber': {
-      color: '#6e7681',
-    },
-  },
-  contextLine: {
-    color: '#57606a',
+    justifyContent: 'space-between',
+    position: 'sticky',
+    top: 0,
+    zIndex: 1,
   },
   toolbar: {
     padding: '8px 12px',
@@ -287,11 +336,6 @@ const useStyles = makeStyles((theme) => ({
   },
   viewToggle: {
     marginRight: '8px',
-  },
-  diffHeader: {
-    padding: '8px 12px',
-    borderBottom: '1px solid #d0d7de',
-    backgroundColor: '#ffffff',
   },
 }));
 
@@ -623,7 +667,10 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
     if (!diffLines || diffLines.length === 0) {
       return (
         <div className={classes.line}>
-          <span className={classes.lineNumber}> </span>
+          <div className={classes.lineNumber}>
+            <span></span>
+            <span></span>
+          </div>
           <span className={classes.lineContent}>No changes to display</span>
         </div>
       );
@@ -639,14 +686,16 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
               ? classes.removedLine
               : ''
         }`}>
-        <span className={classes.lineNumber}>
-          {line.oldLineNumber || ' '} {line.newLineNumber || ' '}
-        </span>
-        <span
-          className={`${classes.lineContent} ${line.type === 'context' ? classes.contextLine : ''}`}>
-          {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
-          {line.content}
-        </span>
+        <div className={classes.lineNumber}>
+          <span>{line.oldLineNumber || ' '}</span>
+          <span>{line.newLineNumber || ' '}</span>
+        </div>
+        <div className={`${classes.lineContent} ${line.type === 'context' ? classes.contextLine : ''}`}>
+          <span className={classes.codeMark}>
+            {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
+          </span>
+          <pre>{line.content}</pre>
+        </div>
       </div>
     ));
   };
