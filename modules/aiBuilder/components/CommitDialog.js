@@ -18,6 +18,7 @@ import {
 import CloseIcon from '@material-ui/icons/Close';
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
+import NoteAddIcon from '@material-ui/icons/NoteAdd';
 import {getAICommitMessage} from '../services/aiService';
 import {createPullRequest, listPullRequests, discardChanges} from '../services/repositoryService';
 
@@ -121,24 +122,16 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: 'flex-end',
   },
   addChip: {
-    backgroundColor: '#1e4620',
-    color: '#81c784',
-    height: 24,
-    '& .MuiChip-icon': {
-      color: '#81c784',
-      fontSize: '1rem',
-      marginLeft: 4,
-    },
+    backgroundColor: '#238636',
+    color: '#fff',
   },
   deleteChip: {
-    backgroundColor: '#461e1e',
-    color: '#e57373',
-    height: 24,
-    '& .MuiChip-icon': {
-      color: '#e57373',
-      fontSize: '1rem',
-      marginLeft: 4,
-    },
+    backgroundColor: '#da3633',
+    color: '#fff',
+  },
+  newFileChip: {
+    backgroundColor: '#58a6ff',
+    color: '#fff',
   },
   actions: {
     padding: '16px 24px',
@@ -357,7 +350,7 @@ const CommitDialog = ({open, onClose, files, projectId}) => {
               <Typography
                 variant='subtitle2'
                 style={{marginBottom: 8, color: '#888'}}>
-                Files to be committed:
+                Files to be pushed:
               </Typography>
               {files?.map((file, index) => (
                 <Box key={index} className={classes.fileItem}>
@@ -365,19 +358,30 @@ const CommitDialog = ({open, onClose, files, projectId}) => {
                     {file.path}
                   </Typography>
                   <Box className={classes.chipContainer}>
-                    {file.additions > 0 && (
+                    {file.additions > 0 || file.deletions > 0 ? (
+                      <>
+                        {file.additions > 0 && (
+                          <Chip
+                            icon={<AddIcon />}
+                            label={file.additions}
+                            className={classes.addChip}
+                            size='small'
+                          />
+                        )}
+                        {file.deletions > 0 && (
+                          <Chip
+                            icon={<RemoveIcon />}
+                            label={file.deletions}
+                            className={classes.deleteChip}
+                            size='small'
+                          />
+                        )}
+                      </>
+                    ) : (
                       <Chip
-                        icon={<AddIcon />}
-                        label={file.additions}
-                        className={classes.addChip}
-                        size='small'
-                      />
-                    )}
-                    {file.deletions > 0 && (
-                      <Chip
-                        icon={<RemoveIcon />}
-                        label={file.deletions}
-                        className={classes.deleteChip}
+                        icon={<NoteAddIcon />}
+                        label="New"
+                        className={classes.newFileChip}
                         size='small'
                       />
                     )}

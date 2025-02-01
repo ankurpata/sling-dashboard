@@ -503,6 +503,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
       </Box>
       <CommitDialog
         open={isCommitDialogOpen}
+        projectId={currentProject?._id}
         onClose={() => setIsCommitDialogOpen(false)}
         files={fileChanges}
       />
