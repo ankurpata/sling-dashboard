@@ -37,6 +37,11 @@ export const apiEndpoints = {
   ai: {
     commitMessage: `${API_BASE_URL}/ai/commit-message`,
   },
+  github: {
+    createPullRequest: `${API_BASE_URL}/github/pull-request`,
+    listPullRequests: `${API_BASE_URL}/github/pull-requests`,
+    discardChanges: (projectId) => `${API_BASE_URL}/github/discard-changes/${projectId}`,
+  },
 };
 
 // Create axios instance with default config

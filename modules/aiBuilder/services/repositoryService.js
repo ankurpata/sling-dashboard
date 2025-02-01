@@ -50,3 +50,51 @@ export const fetchRepositories = async (userId) => {
     throw error.response?.data?.message || 'Failed to fetch repositories';
   }
 };
+
+/**
+ * Create a pull request for the specified project
+ * @param {string} projectId - The ID of the project
+ * @param {string} commitMessage - Optional commit message
+ * @returns {Promise<Object>} Pull request details
+ */
+export const createPullRequest = async (projectId, commitMessage) => {
+  try {
+    const response = await apiClient.post(apiEndpoints.github.createPullRequest, {
+      projectId,
+      commitMessage,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('[createPullRequest] Error creating pull request:', error);
+    throw error.response?.data?.message || 'Failed to create pull request';
+  }
+};
+
+/**
+ * Get list of user's pull requests
+ * @returns {Promise<Array>} Array of pull requests
+ */
+export const listPullRequests = async () => {
+  try {
+    const response = await apiClient.get(apiEndpoints.github.listPullRequests);
+    return response.data.pullRequests;
+  } catch (error) {
+    console.error('[listPullRequests] Error fetching pull requests:', error);
+    throw error.response?.data?.message || 'Failed to fetch pull requests';
+  }
+};
+
+/**
+ * Discard changes for a project
+ * @param {string} projectId - The ID of the project
+ * @returns {Promise<Object>} Response data
+ */
+export const discardChanges = async (projectId) => {
+  try {
+    const response = await apiClient.post(apiEndpoints.github.discardChanges(projectId));
+    return response.data;
+  } catch (error) {
+    console.error('[discardChanges] Error discarding changes:', error);
+    throw error.response?.data?.message || 'Failed to discard changes';
+  }
+};

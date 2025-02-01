@@ -590,7 +590,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
         </div>
         {isDirectory && expanded && childFiles.length > 0 && (
           <div className={classes.nestedFiles}>
-            {childFiles.map((childFile, index) => (
+            {childFiles?.map((childFile, index) => (
               <FileTreeItem
                 key={`${childFile.path}-${index}`}
                 file={childFile}

@@ -381,7 +381,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
               )}
               <div ref={messagesEndRef} />
             </Box>
-            {fileChanges.length > 0 && (
+            {fileChanges?.length > 0 && (
               <ReviewNotification
                 fileCount={fileChanges.length}
                 onReject={handleRejectAll}
