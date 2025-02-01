@@ -90,6 +90,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(2.5, 3),
     flex: 1,
     overflowY: 'auto',
+    overflowX: 'hidden',
     marginBottom: theme.spacing(2),
     scrollBehavior: 'smooth',
     '&::-webkit-scrollbar': {
@@ -170,10 +171,10 @@ const useStyles = makeStyles((theme) => ({
   input: {
     width: '100%',
     '& .MuiOutlinedInput-root': {
-      borderRadius: '8px',
-      backgroundColor: '#333333',
-      transition: 'all 0.2s ease',
-      border: '1px solid #404040',
+    borderRadius: '8px',
+    backgroundColor: '#333333',
+    transition: 'all 0.2s ease',
+    border: '1px solid #404040',
       '&:hover': {
         borderColor: '#4a4a4a',
       },
@@ -181,13 +182,13 @@ const useStyles = makeStyles((theme) => ({
         borderColor: '#059669',
       },
       '& textarea': {
-        padding: theme.spacing(1.2, 2),
-        paddingRight: theme.spacing(10),
-        fontSize: '0.95rem',
-        color: '#ffffff',
-        '&::placeholder': {
-          color: '#9ca3af',
-        },
+    padding: theme.spacing(1.2, 2),
+    paddingRight: theme.spacing(10),
+    fontSize: '0.95rem',
+    color: '#ffffff',
+    '&::placeholder': {
+      color: '#9ca3af',
+    },
       },
     },
   },

@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useMemo, useRef} from 'react';
-import {makeStyles} from '@material-ui/core/styles';
+import {makeStyles, styled} from '@material-ui/core/styles';
 import {
   Box,
   Typography,
@@ -596,19 +596,19 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
       <IconButton
         onClick={() => setViewMode('unified')}
         className={viewMode === 'unified' ? 'active' : ''}
-        title="Unified View">
+        title='Unified View'>
         <ViewStreamIcon />
       </IconButton>
       <IconButton
         onClick={() => setViewMode('split-horizontal')}
         className={viewMode === 'split-horizontal' ? 'active' : ''}
-        title="Split Horizontal">
+        title='Split Horizontal'>
         <ViewColumnIcon />
       </IconButton>
       <IconButton
         onClick={() => setViewMode('split-vertical')}
         className={viewMode === 'split-vertical' ? 'active' : ''}
-        title="Split Vertical">
+        title='Split Vertical'>
         <ViewAgendaIcon />
       </IconButton>
     </Box>
@@ -618,16 +618,25 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
   const isVerticalSplit = viewMode === 'split-vertical';
 
   if (!fileChanges || fileChanges.length === 0) {
-    return <Box className={classes.root}>{renderEmptyState()}</Box>;
+    return (
+      <Box
+        className={classes.roo}
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          height: '100%',
+          alignItems: 'center',
+        }}>
+        {renderEmptyState()}
+      </Box>
+    );
   }
 
   return (
     <Box className={classes.root}>
       {renderFileList()}
       <Box className={classes.diffContainer}>
-        <Box className={classes.toolbar}>
-          {renderViewToggle()}
-        </Box>
+        <Box className={classes.toolbar}>{renderViewToggle()}</Box>
         {!currentFile ? (
           <Box p={2}>
             <Typography variant='body2' color='textSecondary'>
@@ -635,16 +644,18 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
             </Typography>
           </Box>
         ) : isSplitView ? (
-          <Box className={classes.splitView} style={{
-            gridTemplateColumns: isVerticalSplit ? '1fr' : '1fr 1fr',
-            gridTemplateRows: isVerticalSplit ? '1fr 1fr' : '1fr',
-          }}>
+          <Box
+            className={classes.splitView}
+            style={{
+              gridTemplateColumns: isVerticalSplit ? '1fr' : '1fr 1fr',
+              gridTemplateRows: isVerticalSplit ? '1fr 1fr' : '1fr',
+            }}>
             <Box className={classes.diffContent} ref={leftScrollRef}>
               {renderDiffLines(
                 findCommonLines(
                   currentFile.oldContent?.split('\n') || [],
                   currentFile.newContent?.split('\n') || [],
-                ).filter(line => line.type !== 'added')
+                ).filter((line) => line.type !== 'added'),
               )}
             </Box>
             <Box className={classes.diffContent} ref={rightScrollRef}>
@@ -652,7 +663,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
                 findCommonLines(
                   currentFile.oldContent?.split('\n') || [],
                   currentFile.newContent?.split('\n') || [],
-                ).filter(line => line.type !== 'removed')
+                ).filter((line) => line.type !== 'removed'),
               )}
             </Box>
           </Box>
@@ -662,7 +673,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
               findCommonLines(
                 currentFile.oldContent?.split('\n') || [],
                 currentFile.newContent?.split('\n') || [],
-              )
+              ),
             )}
           </Box>
         )}

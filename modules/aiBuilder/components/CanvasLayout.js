@@ -374,7 +374,8 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
               className={classes.input}
               variant='outlined'
               multiline
-              rows={1}
+              minRows={1}
+              maxRows={6}
               placeholder='Ask a follow up...'
               value={promptInput}
               onChange={(e) => setPromptInput(e.target.value)}
