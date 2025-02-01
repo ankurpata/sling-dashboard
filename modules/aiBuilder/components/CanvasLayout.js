@@ -5,6 +5,7 @@ import {
   IconButton,
   ListItem,
   TextField,
+  Button,
 } from '@material-ui/core';
 import AttachFile from '@material-ui/icons/AttachFile';
 import Send from '@material-ui/icons/Send';
@@ -12,6 +13,8 @@ import {Tabs, Tab, Slide} from '@material-ui/core';
 import {OpenInNew, Refresh} from '@material-ui/icons';
 import {useProject} from '../context/ProjectContext';
 import CodeDiffViewer from './CodeDiffViewer';
+import CommitDialog from './CommitDialog';
+import ReviewNotification from './ReviewNotification';
 import {
   initializeSocket,
   disconnectSocket,
@@ -30,6 +33,8 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
   const [isTyping, setIsTyping] = useState(false);
   const [currentView, setCurrentView] = useState('editor');
   const [fileChanges, setFileChanges] = useState([]);
+  const [filesToReview, setFilesToReview] = useState([]);
+  const [isCommitDialogOpen, setIsCommitDialogOpen] = useState(false);
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -183,6 +188,18 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
     }
   }, [sessionId, currentProject?._id]);
 
+  useEffect(() => {
+    // This is where you would implement the logic to check for files that need review
+    // For now, we'll simulate it with some sample data
+    const checkFilesForReview = () => {
+      // Replace this with actual logic to check git status or your version control system
+      // This is just a placeholder
+      setFilesToReview(['file1.js', 'file2.js', 'file3.js']);
+    };
+
+    checkFilesForReview();
+  }, []);
+
   const handleSendMessage = async (newPrompt) => {
     if (!newPrompt.trim()) return;
 
@@ -286,6 +303,26 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
     }
   };
 
+  const handleReviewClick = () => {
+    setIsCommitDialogOpen(true);
+  };
+
+  const handleCommit = async (message) => {
+    // Here you would implement the actual commit logic
+    console.log('Committing with message:', message);
+    console.log('Files:', filesToReview);
+    // After successful commit, clear the files to review
+    setFilesToReview([]);
+  };
+
+  const handleRejectAll = () => {
+    setFilesToReview([]);
+  };
+
+  const handleAcceptAll = () => {
+    setIsCommitDialogOpen(true);
+  };
+
   const renderChatMessage = (message, index) => {
     // Show favicon only for first response after user message
     const showFavicon = () => {
@@ -367,43 +404,48 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
                   </ListItem>
                 </Box>
               )}
-              <div ref={messagesEndRef} />{' '}
-              {/* This keeps scrolling to bottom */}
+              <div ref={messagesEndRef} />
             </Box>
-          </Box>
-
-          <Box className={classes.inputContainer}>
-            <TextField
-              className={classes.input}
-              variant='outlined'
-              multiline
-              minRows={1}
-              maxRows={6}
-              placeholder='Ask a follow up...'
-              value={promptInput}
-              onChange={(e) => setPromptInput(e.target.value)}
-              onKeyPress={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  handleSendMessage(promptInput);
-                }
-              }}
-              disabled={isTyping}
-              InputProps={{
-                endAdornment: (
-                  <Box className={classes.actionButtons}>
-                    <IconButton disabled={isTyping}>
-                      <AttachFile />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleSendMessage(promptInput)}
-                      disabled={isTyping || !promptInput.trim()}>
-                      <Send />
-                    </IconButton>
-                  </Box>
-                ),
-              }}
-            />
+            {filesToReview.length > 0 && (
+              <ReviewNotification
+                fileCount={filesToReview.length}
+                onReject={handleRejectAll}
+                onPushForReview={handleAcceptAll}
+              />
+            )}
+            <Box className={classes.inputContainer}>
+              <TextField
+                className={classes.input}
+                variant='outlined'
+                multiline
+                minRows={1}
+                maxRows={6}
+                placeholder='Ask a follow up...'
+                value={promptInput}
+                onChange={(e) => setPromptInput(e.target.value)}
+                onKeyPress={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    handleSendMessage(promptInput);
+                  }
+                }}
+                disabled={isTyping}
+                InputProps={{
+                  endAdornment: (
+                    <Box className={classes.actionButtons}>
+                      <IconButton disabled={isTyping}>
+                        <AttachFile />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleSendMessage(promptInput)}
+                        disabled={isTyping || !promptInput.trim()}>
+                        <Send />
+                      </IconButton>
+                    </Box>
+                  ),
+                }}
+              />
+            </Box>
           </Box>
         </Box>
         <Box className={classes.preview} position='relative'>
@@ -484,6 +526,12 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
           </Box>
         </Box>
       </Box>
+      <CommitDialog
+        open={isCommitDialogOpen}
+        onClose={() => setIsCommitDialogOpen(false)}
+        files={filesToReview}
+        onCommit={handleCommit}
+      />
     </Box>
   );
 };
