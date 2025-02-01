@@ -295,88 +295,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const FileTreeItem = ({
-  file,
-  depth = 0,
-  selectedFile,
-  onSelectFile,
-  allFiles,
-}) => {
-  const classes = useStyles();
-  const [expanded, setExpanded] = useState(true);
-  const isDirectory = file.path.includes('/');
-  const fileName = isDirectory ? file.path.split('/')[depth] : file.path;
-  const hasChildren = isDirectory && depth < file.path.split('/').length - 1;
-
-  const handleClick = () => {
-    if (hasChildren) {
-      setExpanded(!expanded);
-    } else {
-      onSelectFile(file.path);
-    }
-  };
-
-  return (
-    <>
-      <div
-        className={`${classes.fileItem} ${!hasChildren && file.path === selectedFile ? classes.selectedFile : ''}`}
-        onClick={handleClick}
-        style={{paddingLeft: `${depth * 16}px`}}>
-        {hasChildren ? (
-          <Box display='flex' alignItems='center'>
-            <ChevronRightIcon
-              className={`${classes.chevron} ${expanded ? classes.chevronExpanded : ''}`}
-            />
-            <FolderIcon className={classes.folderIcon} />
-          </Box>
-        ) : (
-          <FileIcon className={classes.fileIcon} />
-        )}
-        <Typography className={classes.fileName}>{fileName}</Typography>
-        {!hasChildren && (
-          <div className={classes.fileStats}>
-            <Chip
-              size='small'
-              label={`+${file.additions}`}
-              className={classes.statChip}
-              style={{backgroundColor: '#e6ffec', color: '#2cbe4e'}}
-            />
-            <Chip
-              size='small'
-              label={`-${file.deletions}`}
-              className={classes.statChip}
-              style={{backgroundColor: '#ffebe9', color: '#cf222e'}}
-            />
-          </div>
-        )}
-      </div>
-      {hasChildren && expanded && (
-        <div className={classes.nestedFiles}>
-          {allFiles
-            .filter((f) =>
-              f.path.startsWith(
-                file.path
-                  .split('/')
-                  .slice(0, depth + 1)
-                  .join('/'),
-              ),
-            )
-            .map((childFile, index) => (
-              <FileTreeItem
-                key={index}
-                file={childFile}
-                depth={depth + 1}
-                selectedFile={selectedFile}
-                onSelectFile={onSelectFile}
-                allFiles={allFiles}
-              />
-            ))}
-        </div>
-      )}
-    </>
-  );
-};
-
 const findCommonLines = (oldLines = [], newLines = []) => {
   // Handle undefined or null inputs
   if (!oldLines || !newLines) return [];
@@ -502,6 +420,148 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
     );
   };
 
+  const organizeFiles = (files) => {
+    // Group files by their root directory
+    const filesByDir = files.reduce((acc, file) => {
+      const parts = file.path.split('/');
+      const rootDir = parts[0];
+      if (!acc[rootDir]) {
+        acc[rootDir] = [];
+      }
+      acc[rootDir].push(file);
+      return acc;
+    }, {});
+
+    // Create root level items
+    const rootItems = Object.entries(filesByDir).map(([dir, dirFiles]) => {
+      // Create subdirectories first
+      const subdirs = new Set(
+        dirFiles
+          .filter(f => f.path.split('/').length > 2)
+          .map(f => f.path.split('/')[1])
+      );
+
+      const subdirItems = Array.from(subdirs).map(subdir => ({
+        path: `${dir}/${subdir}`,
+        isDirectory: true,
+        children: dirFiles.filter(f => f.path.startsWith(`${dir}/${subdir}/`))
+      }));
+
+      return {
+        path: dir,
+        isDirectory: true,
+        children: [
+          ...subdirItems,
+          ...dirFiles.filter(f => f.path.split('/').length === 2)
+        ],
+        additions: dirFiles.reduce((sum, f) => sum + (f.additions || 0), 0),
+        deletions: dirFiles.reduce((sum, f) => sum + (f.deletions || 0), 0)
+      };
+    });
+
+    return rootItems;
+  };
+
+  const getChildFiles = (file, allFiles, depth) => {
+    if (!file.isDirectory) return [];
+    
+    if (depth === 0) {
+      // For root level directories, show both subdirectories and files
+      const prefix = file.path;
+      return file.children.filter(f => {
+        const parts = f.path.split('/');
+        return parts.length === 2; // Direct children only
+      });
+    }
+
+    // For nested directories
+    const prefix = file.path;
+    return allFiles.filter(f => {
+      const parts = f.path.split('/');
+      const parentPath = parts.slice(0, depth + 1).join('/');
+      return f.path.startsWith(prefix) && parentPath === prefix;
+    });
+  };
+
+  const FileTreeItem = ({
+    file,
+    depth = 0,
+    selectedFile,
+    onSelectFile,
+    allFiles,
+  }) => {
+    const classes = useStyles();
+    const [expanded, setExpanded] = useState(true);
+    const parts = file.path.split('/');
+    const fileName = parts[depth];
+    const isDirectory = file.isDirectory || parts.length > depth + 1;
+
+    const handleClick = () => {
+      if (isDirectory) {
+        setExpanded(!expanded);
+      } else {
+        onSelectFile(file.path);
+      }
+    };
+
+    const childFiles = getChildFiles(file, allFiles, depth);
+
+    return (
+      <>
+        <div
+          className={`${classes.fileItem} ${
+            !isDirectory && file.path === selectedFile ? classes.selectedFile : ''
+          }`}
+          onClick={handleClick}
+          style={{paddingLeft: `${depth * 16}px`}}>
+          {isDirectory ? (
+            <Box display='flex' alignItems='center'>
+              <ChevronRightIcon
+                className={`${classes.chevron} ${
+                  expanded ? classes.chevronExpanded : ''
+                }`}
+              />
+              <FolderIcon className={classes.folderIcon} />
+            </Box>
+          ) : (
+            <FileIcon className={classes.fileIcon} />
+          )}
+          <Typography className={classes.fileName}>{fileName}</Typography>
+          {!isDirectory && (
+            <div className={classes.fileStats}>
+              <Chip
+                size='small'
+                label={`+${file.additions || 0}`}
+                className={classes.statChip}
+                style={{backgroundColor: '#e6ffec', color: '#2cbe4e'}}
+              />
+              <Chip
+                size='small'
+                label={`-${file.deletions || 0}`}
+                className={classes.statChip}
+                style={{backgroundColor: '#ffebe9', color: '#cf222e'}}
+              />
+            </div>
+          )}
+        </div>
+        {isDirectory && expanded && childFiles.length > 0 && (
+          <div className={classes.nestedFiles}>
+            {childFiles.map((childFile, index) => (
+              <FileTreeItem
+                key={`${childFile.path}-${index}`}
+                file={childFile}
+                depth={depth + 1}
+                selectedFile={selectedFile}
+                onSelectFile={onSelectFile}
+                allFiles={allFiles}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    );
+  };
+
   const currentFile = useMemo(() => {
     return fileChanges.find((file) => file.path === selectedFile);
   }, [fileChanges, selectedFile]);
@@ -546,7 +606,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
         />
       </Box>
       <Box className={classes.fileTree}>
-        {filteredFiles().map((file, index) => (
+        {organizeFiles(filteredFiles()).map((file, index) => (
           <FileTreeItem
             key={index}
             file={file}
