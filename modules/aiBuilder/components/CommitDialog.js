@@ -15,6 +15,7 @@ import {
   Tabs,
   Tab,
   Snackbar,
+  ErrorIcon,
 } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import AddIcon from '@material-ui/icons/Add';
@@ -370,9 +371,24 @@ const useStyles = makeStyles((theme) => ({
       },
     },
   },
+  errorMessage: {
+    backgroundColor: '#3d1c1c',
+    color: '#f85149',
+    padding: '8px 16px',
+    borderRadius: 4,
+    marginTop: -8,
+    marginBottom: 16,
+    fontSize: '0.875rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    '& .MuiSvgIcon-root': {
+      fontSize: '1.1rem',
+    },
+  },
 }));
 
-const CommitDialog = ({open, onClose, files, projectId}) => {
+const CommitDialog = ({open, onClose, files, projectId, setFileChanges}) => {
   const classes = useStyles();
   const [message, setMessage] = useState('');
   const [branchName, setBranchName] = useState('');
@@ -384,53 +400,57 @@ const CommitDialog = ({open, onClose, files, projectId}) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const generateCacheKey = (files) => {
     // Create a unique key based on file paths and their states
     const fileKey = files
-      .map(f => `${f.path}:${f.additions || 0}:${f.deletions || 0}`)
+      .map((f) => `${f.path}:${f.additions || 0}:${f.deletions || 0}`)
       .join('|');
     return `${COMMIT_CACHE_KEY}_${fileKey}`;
   };
 
-  const fetchCommitMessage = useCallback(async (forceRefresh = false) => {
-    if (!files || files.length === 0) return;
+  const fetchCommitMessage = useCallback(
+    async (forceRefresh = false) => {
+      if (!files || files.length === 0) return;
 
-    const cacheKey = generateCacheKey(files);
-    const cachedData = localStorage.getItem(cacheKey);
-    
-    if (!forceRefresh && cachedData) {
-      const {message, timestamp} = JSON.parse(cachedData);
-      const isExpired = Date.now() - timestamp > COMMIT_CACHE_DURATION;
-      
-      if (!isExpired) {
-        setMessage(message);
-        return;
+      const cacheKey = generateCacheKey(files);
+      const cachedData = localStorage.getItem(cacheKey);
+
+      if (!forceRefresh && cachedData) {
+        const {message, timestamp} = JSON.parse(cachedData);
+        const isExpired = Date.now() - timestamp > COMMIT_CACHE_DURATION;
+
+        if (!isExpired) {
+          setMessage(message);
+          return;
+        }
       }
-    }
 
-    setIsMessageLoading(true);
-    try {
-      const commitMessage = await getAICommitMessage(files);
-      if (commitMessage?.message) {
-        setMessage(commitMessage.message);
-        localStorage.setItem(
-          cacheKey,
-          JSON.stringify({
-            message: commitMessage.message,
-            timestamp: Date.now(),
-          })
+      setIsMessageLoading(true);
+      try {
+        const commitMessage = await getAICommitMessage(files);
+        if (commitMessage?.message) {
+          setMessage(commitMessage.message);
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              message: commitMessage.message,
+              timestamp: Date.now(),
+            }),
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching AI commit message:', error);
+        setMessage(
+          'Update: Made changes to improve functionality and user experience',
         );
+      } finally {
+        setIsMessageLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching AI commit message:', error);
-      setMessage(
-        'Update: Made changes to improve functionality and user experience',
-      );
-    } finally {
-      setIsMessageLoading(false);
-    }
-  }, [files]);
+    },
+    [files],
+  );
 
   const handleRefreshMessage = (e) => {
     e.stopPropagation();
@@ -476,6 +496,8 @@ const CommitDialog = ({open, onClose, files, projectId}) => {
 
   useEffect(() => {
     if (open) {
+      setError('');
+      setPrSuccess(null);
       fetchCommitMessage();
     }
   }, [open, fetchCommitMessage]);
@@ -492,14 +514,16 @@ const CommitDialog = ({open, onClose, files, projectId}) => {
 
   const handleCommit = async () => {
     setIsLoading(true);
+    setError('');
     try {
       const response = await createPullRequest(projectId, message, branchName);
       if (response.success && response.prUrl) {
         setPrSuccess(response.prUrl);
+        setFileChanges([]);
       }
     } catch (error) {
       console.error('Error creating pull request:', error);
-      // TODO: Show error message to user
+      setError('Failed to create pull request. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -607,6 +631,7 @@ const CommitDialog = ({open, onClose, files, projectId}) => {
                 onChange={(e) => setMessage(e.target.value)}
                 className={classes.messageField}
                 helperText='Brief description of the changes you made'
+                error={!!error}
                 InputProps={{
                   endAdornment: (
                     <IconButton
@@ -614,12 +639,13 @@ const CommitDialog = ({open, onClose, files, projectId}) => {
                       onClick={handleRefreshMessage}
                       disabled={isMessageLoading}
                       size='small'
-                      title="Refresh AI commit message">
+                      title='Refresh AI commit message'>
                       <RefreshIcon />
                     </IconButton>
                   ),
                 }}
               />
+              {error && <Box className={classes.errorMessage}>{error}</Box>}
               <TextField
                 variant='outlined'
                 fullWidth
@@ -635,10 +661,10 @@ const CommitDialog = ({open, onClose, files, projectId}) => {
                 className={classes.tabs}
                 variant='fullWidth'>
                 <Tab label='Changes' className={classes.tab} />
-                <Tab 
+                <Tab
                   className={classes.tab}
                   label={
-                    <Box display="flex" alignItems="center">
+                    <Box display='flex' alignItems='center'>
                       Previous Changes
                       <IconButton
                         className={`${classes.refreshButton} ${isRefreshing ? 'spinning' : ''}`}
