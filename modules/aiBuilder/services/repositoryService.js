@@ -55,13 +55,15 @@ export const fetchRepositories = async (userId) => {
  * Create a pull request for the specified project
  * @param {string} projectId - The ID of the project
  * @param {string} commitMessage - Optional commit message
+ * @param {string} branchName - Optional branch name
  * @returns {Promise<Object>} Pull request details
  */
-export const createPullRequest = async (projectId, commitMessage) => {
+export const createPullRequest = async (projectId, commitMessage, branchName) => {
   try {
     const response = await apiClient.post(apiEndpoints.github.createPullRequest, {
       projectId,
       commitMessage,
+      branchName,
     });
     return response.data;
   } catch (error) {
@@ -77,7 +79,7 @@ export const createPullRequest = async (projectId, commitMessage) => {
 export const listPullRequests = async () => {
   try {
     const response = await apiClient.get(apiEndpoints.github.listPullRequests);
-    return response.data.pullRequests;
+    return response.data.data;
   } catch (error) {
     console.error('[listPullRequests] Error fetching pull requests:', error);
     throw error.response?.data?.message || 'Failed to fetch pull requests';
