@@ -176,7 +176,7 @@ const UserProfile = () => {
           <Box className={classes.avatarSection}>
             <Avatar 
               className={classes.avatar}
-              src={user.avatar}
+              src={user.avatarUrl}
               alt={user.name}
             />
             <Button

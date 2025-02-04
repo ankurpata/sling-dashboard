@@ -37,6 +37,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
   const [isCommitDialogOpen, setIsCommitDialogOpen] = useState(false);
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   const [activeTabState, setActiveTabState] = useState('chat');
   const [previewTab, setPreviewTab] = useState('preview');
@@ -96,6 +97,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
           (data) => {
             console.log('Progress update received:', data);
             handleProgressUpdate(data);
+            setIsTyping(false);
           },
         );
 
@@ -106,6 +108,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
             handleSuccessUpdate(data);
             if (data.fileChanges) {
               setFileChanges(data.fileChanges);
+              setIsTyping(false);
             }
           },
         );
@@ -115,6 +118,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
           (error) => {
             console.log('Analysis error received:', error);
             handleAnalysisError(error);
+            setIsTyping(false);
           },
         );
 
@@ -123,6 +127,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
           (data) => {
             console.log('File changes event received:', data);
             handleFileChanges(data);
+            setIsTyping(false);
           },
         );
 
@@ -154,17 +159,17 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
         const isLastMessageFromUser = lastMessage.role === 'user';
 
         if (isLastMessageFromUser) {
-          console.log(
-            'Sending initial prompt through socket:',
-            lastMessage.message,
-          );
-          emitMessage('analyze-query', {
-            projectId: currentProject._id,
-            sessionId,
-            conversationId,
-            query: lastMessage.message,
-            newConversation: true,
-          });
+          // console.log(
+          //   'Sending initial prompt through socket:',
+          //   lastMessage.message,
+          // );
+          // emitMessage('analyze-query', {
+          //   projectId: currentProject._id,
+          //   sessionId,
+          //   conversationId,
+          //   query: lastMessage.message,
+          //   newConversation: true,
+          // });
         } else {
           console.log(
             'Skipping initial analyze-query as last message was not from user',
@@ -188,6 +193,16 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
     if (!newPrompt.trim()) return;
 
     setIsTyping(true);
+
+    // Clear any existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set timeout to hide "Thinking..." after 2 minutes
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 120000); // 2 minutes
 
     // Update chat history with new user message
     setChatHistories((prev) => ({
@@ -214,6 +229,10 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
   };
 
   const handleProgressUpdate = (data) => {
+    // Clear typing timeout when we get a response
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
     setChatHistories((prev) => ({
       ...prev,
       [sessionId]: [
@@ -283,6 +302,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
   const handleFileChanges = async (data) => {
     const totalChanges = await getFileChanges(currentProject._id);
     setFileChanges(totalChanges);
+    
   };
 
   const handleReviewClick = () => {

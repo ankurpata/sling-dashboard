@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   Container,
   Paper,
@@ -13,9 +13,9 @@ import {
   CircularProgress,
   Divider,
 } from '@material-ui/core';
-import { ArrowBack, Edit as EditIcon } from '@material-ui/icons';
-import { useRouter } from 'next/router';
-import { useUser } from '../modules/aiBuilder/context/UserContext';
+import {ArrowBack, Edit as EditIcon} from '@material-ui/icons';
+import {useRouter} from 'next/router';
+import {useUser} from '../modules/aiBuilder/context/UserContext';
 import MainLayout from '../components/layout/MainLayout';
 
 const useStyles = makeStyles((theme) => ({
@@ -157,7 +157,7 @@ const useStyles = makeStyles((theme) => ({
 const Profile = () => {
   const classes = useStyles();
   const router = useRouter();
-  const { user, updateUser, loading } = useUser();
+  const {user, updateUser, loading} = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -190,10 +190,10 @@ const Profile = () => {
   };
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData(prev => ({
+    const {name, value} = event.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -209,7 +209,11 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box
+        display='flex'
+        justifyContent='center'
+        alignItems='center'
+        minHeight='100vh'>
         <CircularProgress />
       </Box>
     );
@@ -228,39 +232,36 @@ const Profile = () => {
           {!isEditing ? (
             <Button
               className={classes.editButton}
-              variant="contained"
+              variant='contained'
               startIcon={<EditIcon />}
-              onClick={() => setIsEditing(true)}
-            >
+              onClick={() => setIsEditing(true)}>
               Edit Profile
             </Button>
           ) : (
             <Box className={classes.actions}>
               <Button
-                variant="outlined"
+                variant='outlined'
                 onClick={() => setIsEditing(false)}
-                style={{ 
+                style={{
                   marginRight: 8,
                   borderColor: '#111827',
                   color: '#111827',
                   '&:hover': {
                     backgroundColor: 'rgba(17, 24, 39, 0.04)',
                   },
-                }}
-              >
+                }}>
                 Cancel
               </Button>
               <Button
-                variant="contained"
-                style={{ 
+                variant='contained'
+                style={{
                   backgroundColor: '#111827',
                   color: '#fff',
                   '&:hover': {
                     backgroundColor: '#374151',
                   },
                 }}
-                type="submit"
-              >
+                type='submit'>
                 Save Changes
               </Button>
             </Box>
@@ -270,18 +271,17 @@ const Profile = () => {
         <Paper className={classes.paper}>
           <form onSubmit={handleSubmit}>
             <Box className={classes.avatarSection}>
-              <Avatar 
+              <Avatar
                 className={classes.avatar}
-                src={user.photoURL || user.avatar}
+                src={user.avatarUrl}
                 alt={formData.name}
               />
               <Button
-                variant="outlined"
-                color="primary"
-                size="small"
+                variant='outlined'
+                color='primary'
+                size='small'
                 className={classes.changePhotoButton}
-                disabled={true}
-              >
+                disabled={true}>
                 Change Photo
               </Button>
             </Box>
@@ -293,23 +293,27 @@ const Profile = () => {
                   {isEditing ? (
                     <TextField
                       fullWidth
-                      name="name"
+                      name='name'
                       value={formData.name}
                       onChange={handleChange}
-                      variant="outlined"
-                      size="small"
+                      variant='outlined'
+                      size='small'
                       className={classes.textField}
                     />
                   ) : (
-                    <Typography className={classes.fieldValue}>{formData.name}</Typography>
+                    <Typography className={classes.fieldValue}>
+                      {formData.name}
+                    </Typography>
                   )}
                 </Box>
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <Box className={classes.fieldContainer}>
                   <Typography className={classes.fieldLabel}>Email</Typography>
-                  <Typography className={classes.fieldValue}>{formData.email}</Typography>
+                  <Typography className={classes.fieldValue}>
+                    {formData.email}
+                  </Typography>
                 </Box>
               </Grid>
 
@@ -319,10 +323,10 @@ const Profile = () => {
                   {isEditing ? (
                     <TextField
                       fullWidth
-                      name="bio"
+                      name='bio'
                       value={formData.bio}
                       onChange={handleChange}
-                      variant="outlined"
+                      variant='outlined'
                       multiline
                       rows={4}
                       className={classes.textField}
@@ -338,19 +342,23 @@ const Profile = () => {
               {(formData.company || isEditing) && (
                 <Grid item xs={12} sm={6}>
                   <Box className={classes.fieldContainer}>
-                    <Typography className={classes.fieldLabel}>Company</Typography>
+                    <Typography className={classes.fieldLabel}>
+                      Company
+                    </Typography>
                     {isEditing ? (
                       <TextField
                         fullWidth
-                        name="company"
+                        name='company'
                         value={formData.company}
                         onChange={handleChange}
-                        variant="outlined"
-                        size="small"
+                        variant='outlined'
+                        size='small'
                         className={classes.textField}
                       />
                     ) : (
-                      <Typography className={classes.fieldValue}>{formData.company}</Typography>
+                      <Typography className={classes.fieldValue}>
+                        {formData.company}
+                      </Typography>
                     )}
                   </Box>
                 </Grid>
@@ -359,19 +367,23 @@ const Profile = () => {
               {(formData.location || isEditing) && (
                 <Grid item xs={12} sm={6}>
                   <Box className={classes.fieldContainer}>
-                    <Typography className={classes.fieldLabel}>Location</Typography>
+                    <Typography className={classes.fieldLabel}>
+                      Location
+                    </Typography>
                     {isEditing ? (
                       <TextField
                         fullWidth
-                        name="location"
+                        name='location'
                         value={formData.location}
                         onChange={handleChange}
-                        variant="outlined"
-                        size="small"
+                        variant='outlined'
+                        size='small'
                         className={classes.textField}
                       />
                     ) : (
-                      <Typography className={classes.fieldValue}>{formData.location}</Typography>
+                      <Typography className={classes.fieldValue}>
+                        {formData.location}
+                      </Typography>
                     )}
                   </Box>
                 </Grid>
@@ -380,15 +392,17 @@ const Profile = () => {
               {(formData.website || isEditing) && (
                 <Grid item xs={12} sm={6}>
                   <Box className={classes.fieldContainer}>
-                    <Typography className={classes.fieldLabel}>Website</Typography>
+                    <Typography className={classes.fieldLabel}>
+                      Website
+                    </Typography>
                     {isEditing ? (
                       <TextField
                         fullWidth
-                        name="website"
+                        name='website'
                         value={formData.website}
                         onChange={handleChange}
-                        variant="outlined"
-                        size="small"
+                        variant='outlined'
+                        size='small'
                         className={classes.textField}
                       />
                     ) : (
@@ -409,43 +423,43 @@ const Profile = () => {
             <Box className={classes.connectionStatus}>
               <Box className={classes.connectedDot} />
               <Typography>
-                GitHub {user.isGithubConnected ? '(Connected)' : '(Not Connected)'}
+                GitHub{' '}
+                {user.isGithubConnected ? '(Connected)' : '(Not Connected)'}
               </Typography>
             </Box>
             <Box className={classes.connectionStatus}>
               <Box className={classes.connectedDot} />
               <Typography>
-                Google {user.isGoogleConnected ? '(Connected)' : '(Not Connected)'}
+                Google{' '}
+                {user.isGoogleConnected ? '(Connected)' : '(Not Connected)'}
               </Typography>
             </Box>
 
             {isEditing && (
               <Box className={classes.actions}>
                 <Button
-                  variant="outlined"
+                  variant='outlined'
                   onClick={() => setIsEditing(false)}
-                  style={{ 
+                  style={{
                     marginRight: 8,
                     borderColor: '#111827',
                     color: '#111827',
                     '&:hover': {
                       backgroundColor: 'rgba(17, 24, 39, 0.04)',
                     },
-                  }}
-                >
+                  }}>
                   Cancel
                 </Button>
                 <Button
-                  variant="contained"
-                  style={{ 
+                  variant='contained'
+                  style={{
                     backgroundColor: '#111827',
                     color: '#fff',
                     '&:hover': {
                       backgroundColor: '#374151',
                     },
                   }}
-                  type="submit"
-                >
+                  type='submit'>
                   Save Changes
                 </Button>
               </Box>
