@@ -58,13 +58,22 @@ export const fetchRepositories = async (userId) => {
  * @param {string} branchName - Optional branch name
  * @returns {Promise<Object>} Pull request details
  */
-export const createPullRequest = async (projectId, commitMessage, branchName) => {
+export const createPullRequest = async (
+  projectId,
+  commitMessage,
+  branchName,
+  conversationId,
+) => {
   try {
-    const response = await apiClient.post(apiEndpoints.github.createPullRequest, {
-      projectId,
-      commitMessage,
-      branchName,
-    });
+    const response = await apiClient.post(
+      apiEndpoints.github.createPullRequest,
+      {
+        projectId,
+        commitMessage,
+        branchName,
+        conversationId,
+      },
+    );
     return response.data;
   } catch (error) {
     console.error('[createPullRequest] Error creating pull request:', error);
@@ -93,7 +102,9 @@ export const listPullRequests = async () => {
  */
 export const discardChanges = async (projectId) => {
   try {
-    const response = await apiClient.post(apiEndpoints.github.discardChanges(projectId));
+    const response = await apiClient.post(
+      apiEndpoints.github.discardChanges(projectId),
+    );
     return response.data;
   } catch (error) {
     console.error('[discardChanges] Error discarding changes:', error);

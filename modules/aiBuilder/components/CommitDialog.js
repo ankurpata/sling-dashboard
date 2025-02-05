@@ -388,7 +388,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const CommitDialog = ({open, onClose, files, projectId, setFileChanges}) => {
+const CommitDialog = ({
+  open,
+  onClose,
+  files,
+  projectId,
+  setFileChanges,
+  conversationId,
+}) => {
   const classes = useStyles();
   const [message, setMessage] = useState('');
   const [branchName, setBranchName] = useState('');
@@ -497,7 +504,7 @@ const CommitDialog = ({open, onClose, files, projectId, setFileChanges}) => {
   useEffect(() => {
     if (open) {
       setError('');
-      // setPrSuccess(null);
+      setPrSuccess(null);
       fetchCommitMessage();
     }
   }, [open, fetchCommitMessage]);
@@ -516,7 +523,12 @@ const CommitDialog = ({open, onClose, files, projectId, setFileChanges}) => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await createPullRequest(projectId, message, branchName);
+      const response = await createPullRequest(
+        projectId,
+        message,
+        branchName,
+        conversationId,
+      );
       if (response.success && response.prUrl) {
         setPrSuccess(response.prUrl);
         setFileChanges([]);

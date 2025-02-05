@@ -24,10 +24,16 @@ import {
 } from '../services/socketService';
 
 import canvasStyles from '../styles/canvas.styles';
-import {getFileChanges } from '../services/fileChangesService';
+import {getFileChanges} from '../services/fileChangesService';
 
 // CanvasLayout component
-const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allConversations, onConversationChange}) => {
+const CanvasLayout = ({
+  sessionId,
+  initialChatHistory = [],
+  conversationId,
+  allConversations,
+  onConversationChange,
+}) => {
   const classes = canvasStyles();
   const {currentProject} = useProject();
   const [chatHistories, setChatHistories] = useState({});
@@ -73,15 +79,17 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
 
   useEffect(() => {
     // Process conversations to get the first user message from each conversation
-    const conversationFirstMessages = allConversations.map(conversation => {
-      const firstUserMessage = conversation.messages.find(msg => msg.role === 'user');
+    const conversationFirstMessages = allConversations.map((conversation) => {
+      const firstUserMessage = conversation.messages.find(
+        (msg) => msg.role === 'user',
+      );
       return {
         id: conversation.conversationId,
         title: firstUserMessage?.message || 'Untitled Conversation',
         timestamp: firstUserMessage?.timestamp || new Date().toISOString(),
       };
     });
-    
+
     setConversations(conversationFirstMessages);
   }, [allConversations, activeTabState]);
 
@@ -127,7 +135,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
             console.log('File changes event received:', data);
             handleFileChanges(data);
             setIsTyping(false);
-          })
+          }),
         );
       };
 
@@ -170,7 +178,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
       return () => {
         console.log('Cleaning up socket connections...');
         // Clean up all event subscriptions
-        cleanupFunctions.forEach(cleanup => cleanup());
+        cleanupFunctions.forEach((cleanup) => cleanup());
         socketInstance.off('connect', connectHandler);
         disconnectSocket();
       };
@@ -228,11 +236,13 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
     setChatHistories((prev) => {
       const currentMessages = prev[sessionId] || [];
       const lastMessage = currentMessages[currentMessages.length - 1];
-      
+
       // If the last message is the same as the new one, don't add it
-      if (lastMessage && 
-          lastMessage.role === 'progress' && 
-          lastMessage.message === data.message) {
+      if (
+        lastMessage &&
+        lastMessage.role === 'progress' &&
+        lastMessage.message === data.message
+      ) {
         return prev;
       }
 
@@ -306,7 +316,6 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
   const handleFileChanges = async (data) => {
     const totalChanges = await getFileChanges(currentProject._id);
     setFileChanges(totalChanges);
-    
   };
 
   const handleReviewClick = () => {
@@ -332,7 +341,9 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
     // Add delete conversation logic here
     try {
       // await deleteConversation(currentProject.id, conversationId);
-      setConversations(conversations.filter((conv) => conv.id !== conversationId));
+      setConversations(
+        conversations.filter((conv) => conv.id !== conversationId),
+      );
     } catch (error) {
       console.error('Failed to delete conversation:', error);
     }
@@ -356,9 +367,10 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
         display='flex'
         alignItems='flex-start'
         className={`${classes.messageWrapper} ${message.role} ${
-          fileChanges?.length > 0 && 
-          index === (chatHistories[sessionId]?.length - 1) ? 
-          'lastMessage' : ''
+          fileChanges?.length > 0 &&
+          index === chatHistories[sessionId]?.length - 1
+            ? 'lastMessage'
+            : ''
         }`}>
         {showFavicon() && (
           <Box className={classes.messageIcon}>
@@ -421,7 +433,8 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
                         <Box className={classes.messageIcon}>
                           <img src='/images/favicon.ico' alt='AI' />
                         </Box>
-                        <ListItem className={`${classes.chatMessage} ai typing`}>
+                        <ListItem
+                          className={`${classes.chatMessage} ai typing`}>
                           <Typography>Thinking...</Typography>
                         </ListItem>
                       </Box>
@@ -441,7 +454,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
                     <Box className={classes.inputWrapper}>
                       <TextField
                         fullWidth
-                        placeholder="Ask a follow up..."
+                        placeholder='Ask a follow up...'
                         value={promptInput}
                         onChange={(e) => setPromptInput(e.target.value)}
                         onKeyPress={(e) => {
@@ -450,7 +463,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
                             handleSendMessage(promptInput);
                           }
                         }}
-                        variant="standard"
+                        variant='standard'
                         InputProps={{
                           disableUnderline: true,
                           className: classes.input,
@@ -458,16 +471,15 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
                       />
                       <IconButton
                         onClick={() => handleSendMessage(promptInput)}
-                        disabled={!promptInput.trim() || isTyping}
-                      >
+                        disabled={!promptInput.trim() || isTyping}>
                         <Send />
                       </IconButton>
                     </Box>
                   </Box>
                 </>
               ) : (
-                <History 
-                  conversations={conversations} 
+                <History
+                  conversations={conversations}
                   onConversationClick={handleConversationClick}
                   currentConversationId={conversationId}
                   onDeleteConversation={handleDeleteConversation}
@@ -560,6 +572,7 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
         onClose={() => setIsCommitDialogOpen(false)}
         setFileChanges={setFileChanges}
         files={fileChanges}
+        conversationId={conversationId}
       />
     </Box>
   );
