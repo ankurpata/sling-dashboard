@@ -116,25 +116,21 @@ const CanvasLayout = ({
           subscribeToEvent('analyze-query-progress', (data) => {
             console.log('Progress update received:', data);
             handleProgressUpdate(data);
-            setIsTyping(false);
           }),
           subscribeToEvent('analyze-query-success', (data) => {
             console.log('Success update received:', data);
             handleSuccessUpdate(data);
             if (data.fileChanges) {
               setFileChanges(data.fileChanges);
-              setIsTyping(false);
             }
           }),
           subscribeToEvent('analyze-query-error', (error) => {
             console.log('Analysis error received:', error);
             handleAnalysisError(error);
-            setIsTyping(false);
           }),
           subscribeToEvent('file-changes', (data) => {
             console.log('File changes event received:', data);
             handleFileChanges(data);
-            setIsTyping(false);
           }),
         );
       };

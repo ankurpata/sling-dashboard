@@ -430,8 +430,9 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   messageIcon: {
-    width: 32,
+    width: 35,
     height: 32,
+    paddingTop: 4,
     borderRadius: '50%',
     backgroundColor: '#f5f5f5',
     display: 'flex',
@@ -439,8 +440,9 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: 'center',
     marginRight: theme.spacing(2),
     '& img': {
-      width: 24,
-      height: 24,
+      // width: 24,
+      padding: theme.spacing(0.5),
+      height: 35,
       borderRadius: '50%',
     },
   },

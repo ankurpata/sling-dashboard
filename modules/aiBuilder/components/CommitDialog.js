@@ -504,10 +504,14 @@ const CommitDialog = ({
   useEffect(() => {
     if (open) {
       setError('');
-      setPrSuccess(null);
+      // setPrSuccess(null);
       fetchCommitMessage();
     }
   }, [open, fetchCommitMessage]);
+
+  useEffect(() => {
+    setPrSuccess('');
+  }, [open]);
 
   useEffect(() => {
     if (activeTab === 1) {
