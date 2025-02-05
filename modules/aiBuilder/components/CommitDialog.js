@@ -396,7 +396,7 @@ const CommitDialog = ({open, onClose, files, projectId, setFileChanges}) => {
   const [activeTab, setActiveTab] = useState(0);
   const [pullRequests, setPullRequests] = useState({});
   const [isPRLoading, setPRLoading] = useState(false);
-  const [prSuccess, setPrSuccess] = useState(null);
+  const [prSuccess, setPrSuccess] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
@@ -497,7 +497,7 @@ const CommitDialog = ({open, onClose, files, projectId, setFileChanges}) => {
   useEffect(() => {
     if (open) {
       setError('');
-      setPrSuccess(null);
+      // setPrSuccess(null);
       fetchCommitMessage();
     }
   }, [open, fetchCommitMessage]);
@@ -557,7 +557,6 @@ const CommitDialog = ({open, onClose, files, projectId, setFileChanges}) => {
         .catch(console.error);
     }
   };
-
   return (
     <>
       <Dialog open={open} onClose={onClose} className={classes.dialog}>
