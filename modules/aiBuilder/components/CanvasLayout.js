@@ -82,75 +82,49 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
     try {
       console.log('Initializing socket connection...');
       const socketInstance = initializeSocket(sessionId);
+      const cleanupFunctions = [];
 
       // Wait for socket to be connected before subscribing to events
       const setupSocketEvents = () => {
         console.log('Setting up socket event listeners...');
 
-        // Debug: Log all incoming socket events
-        const unsubscribeDebug = subscribeToEvent('*', (event) => {
-          console.log('Socket event received:', event);
-        });
-
-        const unsubscribeProgress = subscribeToEvent(
-          'analyze-query-progress',
-          (data) => {
+        // Subscribe to events and store cleanup functions
+        cleanupFunctions.push(
+          subscribeToEvent('analyze-query-progress', (data) => {
             console.log('Progress update received:', data);
             handleProgressUpdate(data);
             setIsTyping(false);
-          },
-        );
-
-        const unsubscribeSuccess = subscribeToEvent(
-          'analyze-query-success',
-          (data) => {
+          }),
+          subscribeToEvent('analyze-query-success', (data) => {
             console.log('Success update received:', data);
             handleSuccessUpdate(data);
             if (data.fileChanges) {
               setFileChanges(data.fileChanges);
               setIsTyping(false);
             }
-          },
-        );
-
-        const unsubscribeError = subscribeToEvent(
-          'analyze-query-error',
-          (error) => {
+          }),
+          subscribeToEvent('analyze-query-error', (error) => {
             console.log('Analysis error received:', error);
             handleAnalysisError(error);
             setIsTyping(false);
-          },
-        );
-
-        const unsubscribeFileChanges = subscribeToEvent(
-          'file-changes',
-          (data) => {
+          }),
+          subscribeToEvent('file-changes', (data) => {
             console.log('File changes event received:', data);
             handleFileChanges(data);
             setIsTyping(false);
-          },
+          })
         );
-
-        return () => {
-          unsubscribeDebug();
-          unsubscribeProgress();
-
-          unsubscribeSuccess();
-          unsubscribeError();
-          unsubscribeFileChanges();
-        };
       };
 
-      let cleanup = null;
       const connectHandler = () => {
         console.log('Socket connected, setting up events');
-        cleanup = setupSocketEvents();
+        setupSocketEvents();
       };
 
       socketInstance.on('connect', connectHandler);
       if (socketInstance.connected) {
         console.log('Socket already connected, setting up events immediately');
-        cleanup = setupSocketEvents();
+        setupSocketEvents();
       }
 
       // Send initial prompt through socket if available and it's from user
@@ -180,7 +154,8 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
       // Cleanup function
       return () => {
         console.log('Cleaning up socket connections...');
-        if (cleanup) cleanup();
+        // Clean up all event subscriptions
+        cleanupFunctions.forEach(cleanup => cleanup());
         socketInstance.off('connect', connectHandler);
         disconnectSocket();
       };
@@ -233,18 +208,32 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    setChatHistories((prev) => ({
-      ...prev,
-      [sessionId]: [
-        ...(prev[sessionId] || []),
-        {
-          role: 'progress',
-          message: data.message,
-          progress: data.progress,
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    }));
+
+    // Check if this message already exists
+    setChatHistories((prev) => {
+      const currentMessages = prev[sessionId] || [];
+      const lastMessage = currentMessages[currentMessages.length - 1];
+      
+      // If the last message is the same as the new one, don't add it
+      if (lastMessage && 
+          lastMessage.role === 'progress' && 
+          lastMessage.message === data.message) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [sessionId]: [
+          ...currentMessages,
+          {
+            role: 'progress',
+            message: data.message,
+            progress: data.progress,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+    });
     setTimeout(scrollToBottom, 100);
   };
 

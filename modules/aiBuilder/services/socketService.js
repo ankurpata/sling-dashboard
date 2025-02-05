@@ -5,6 +5,7 @@ let socket = null;
 let currentSessionId = null;
 let connectionAttempts = 0;
 const MAX_RECONNECTION_ATTEMPTS = 5;
+let activeSubscriptions = new Map();
 
 const createSocket = (sessionId) => {
   // Get auth token from localStorage
@@ -94,6 +95,9 @@ export const initializeSocket = (sessionId) => {
   }
 
   try {
+    // Clean up any existing subscriptions
+    activeSubscriptions.clear();
+    
     socket = createSocket(sessionId);
     currentSessionId = sessionId;
     
@@ -110,11 +114,47 @@ export const initializeSocket = (sessionId) => {
 export const disconnectSocket = () => {
   if (socket) {
     console.log('Disconnecting socket:', socket.id);
+    // Clear all subscriptions before disconnecting
+    activeSubscriptions.forEach((callback, event) => {
+      socket.off(event, callback);
+    });
+    activeSubscriptions.clear();
+    
     socket.disconnect();
     socket = null;
     currentSessionId = null;
     connectionAttempts = 0;
   }
+};
+
+export const subscribeToEvent = (eventName, callback) => {
+  if (!socket) {
+    console.error('No socket connection available for event:', eventName);
+    return () => {};
+  }
+
+  // Remove any existing subscription for this event
+  if (activeSubscriptions.has(eventName)) {
+    socket.off(eventName, activeSubscriptions.get(eventName));
+    activeSubscriptions.delete(eventName);
+  }
+
+  const wrappedCallback = (...args) => {
+    console.log(`Event ${eventName} received with args:`, args);
+    try {
+      callback(...args);
+    } catch (error) {
+      console.error(`Error in ${eventName} callback:`, error);
+    }
+  };
+
+  socket.on(eventName, wrappedCallback);
+  activeSubscriptions.set(eventName, wrappedCallback);
+
+  return () => {
+    socket?.off(eventName, wrappedCallback);
+    activeSubscriptions.delete(eventName);
+  };
 };
 
 export const emitMessage = (eventName, data) => {
@@ -134,30 +174,4 @@ export const emitMessage = (eventName, data) => {
   } catch (error) {
     console.error('Error emitting message:', error);
   }
-};
-
-export const subscribeToEvent = (eventName, callback) => {
-  if (!socket) {
-    console.error('No socket connection available for event:', eventName);
-    return () => {};
-  }
-
-  const wrappedCallback = (...args) => {
-    console.log(`Event ${eventName} received with args:`, args);
-    try {
-      callback(...args);
-    } catch (error) {
-      console.error(`Error in ${eventName} callback:`, error);
-    }
-  };
-
-  console.log('Subscribing to event:', eventName);
-  socket.on(eventName, wrappedCallback);
-  
-  return () => {
-    if (socket) {
-      console.log('Unsubscribing from event:', eventName);
-      socket.off(eventName, wrappedCallback);
-    }
-  };
 };
