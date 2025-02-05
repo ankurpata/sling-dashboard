@@ -162,35 +162,33 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   inputContainer: {
-    marginTop: 'auto',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: theme.spacing(2),
-    borderTop: '1px solid #404040',
-    position: 'relative',
-    backgroundColor: '#262626',
+    // backgroundColor: '#1e1e1e',
+    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+    zIndex: 1,
   },
   input: {
     width: '100%',
-    '& .MuiOutlinedInput-root': {
-    borderRadius: '8px',
-    backgroundColor: '#333333',
-    transition: 'all 0.2s ease',
-    border: '1px solid #404040',
-      '&:hover': {
-        borderColor: '#4a4a4a',
-      },
-      '&.Mui-focused': {
-        borderColor: '#059669',
-      },
-      '& textarea': {
-    padding: theme.spacing(1.2, 2),
-    paddingRight: theme.spacing(10),
-    fontSize: '0.95rem',
-    color: '#ffffff',
-    '&::placeholder': {
-      color: '#9ca3af',
-    },
+    '& .MuiInputBase-input': {
+      color: 'rgba(255, 255, 255, 0.9)',
+      padding: theme.spacing(1.2, 2),
+      '&::placeholder': {
+        color: 'rgba(255, 255, 255, 0.5)',
+        opacity: 1,
       },
     },
+  },
+  inputWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    backgroundColor: '#2d2d2d',
+    borderRadius: theme.spacing(1),
+    padding: theme.spacing(1),
   },
   actionButtons: {
     position: 'absolute',
@@ -404,10 +402,22 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: '12px',
     marginTop: theme.spacing(2),
   },
-  inputWrapper: {
-    maxWidth: '800px',
-    margin: '0 auto',
+  chatContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    backgroundColor: '#1e1e1e',
     position: 'relative',
+    height: '100%',
+  },
+  messageList: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: theme.spacing(2),
+    paddingBottom: '80px',
+    display: 'flex',
+    flexDirection: 'column',
   },
   messageIcon: {
     width: 32,

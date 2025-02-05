@@ -607,7 +607,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
   };
 
   const currentFile = useMemo(() => {
-    return fileChanges.find((file) => file.path === selectedFile);
+    return fileChanges?.find((file) => file.path === selectedFile);
   }, [fileChanges, selectedFile]);
 
   const handleFileSelect = (path) => {

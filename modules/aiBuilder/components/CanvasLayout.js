@@ -15,6 +15,7 @@ import {useProject} from '../context/ProjectContext';
 import CodeDiffViewer from './CodeDiffViewer';
 import CommitDialog from './CommitDialog';
 import ReviewNotification from './ReviewNotification';
+import History from './History';
 import {
   initializeSocket,
   disconnectSocket,
@@ -23,7 +24,7 @@ import {
 } from '../services/socketService';
 
 import canvasStyles from '../styles/canvas.styles';
-import {getFileChanges} from '../services/fileChangesService';
+import {getFileChanges } from '../services/fileChangesService';
 
 // CanvasLayout component
 const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
@@ -35,12 +36,12 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
   const [currentView, setCurrentView] = useState('editor');
   const [fileChanges, setFileChanges] = useState([]);
   const [isCommitDialogOpen, setIsCommitDialogOpen] = useState(false);
+  const [activeTabState, setActiveTabState] = useState('chat');
+  const [previewTab, setPreviewTab] = useState('preview');
+  const [conversations, setConversations] = useState([]);
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-
-  const [activeTabState, setActiveTabState] = useState('chat');
-  const [previewTab, setPreviewTab] = useState('preview');
 
   // Helper function to scroll to bottom
   const scrollToBottom = () => {
@@ -69,6 +70,25 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
   useEffect(() => {
     scrollToBottom();
   }, [chatHistories, sessionId]);
+
+  useEffect(() => {
+    // Group conversations by conversationId from initialChatHistory
+    const groupedConversations = initialChatHistory.reduce((acc, curr) => {
+      if (!acc[curr.conversationId]) {
+        acc[curr.conversationId] = {
+          id: curr.conversationId,
+          title: curr.message.slice(0, 50) + '...',
+          timestamp: curr.timestamp,
+        };
+      } else if (new Date(curr.timestamp) > new Date(acc[curr.conversationId].timestamp)) {
+        acc[curr.conversationId].timestamp = curr.timestamp;
+        acc[curr.conversationId].title = curr.message.slice(0, 50) + '...';
+      }
+      return acc;
+    }, {});
+    
+    setConversations(Object.values(groupedConversations));
+  }, [initialChatHistory, activeTabState]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -307,6 +327,28 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
     setIsCommitDialogOpen(true);
   };
 
+  const handleConversationClick = (conversationId) => {
+    // Load the conversation messages
+    if (currentProject?.id) {
+      getChatHistory(currentProject.id, conversationId).then((history) => {
+        setChatHistories({
+          ...chatHistories,
+          [sessionId]: history,
+        });
+      });
+    }
+  };
+
+  const handleDeleteConversation = async (conversationId) => {
+    // Add delete conversation logic here
+    try {
+      // await deleteConversation(currentProject.id, conversationId);
+      setConversations(conversations.filter((conv) => conv.id !== conversationId));
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    }
+  };
+
   const renderChatMessage = (message, index) => {
     // Show favicon only for first response after user message
     const showFavicon = () => {
@@ -369,26 +411,65 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
             </Box>
           </Box>
           <Box className={classes.progressContent}>
-            <Box className={classes.chatHistory} ref={chatContainerRef}>
-              {chatHistories[sessionId]?.map((message, index) =>
-                renderChatMessage(message, index),
-              )}
-              {isTyping && (
-                <Box
-                  key={`typing-${sessionId}`}
-                  mb={2}
-                  display='flex'
-                  alignItems='flex-start'
-                  className={`${classes.messageWrapper} ai`}>
-                  <Box className={classes.messageIcon}>
-                    <img src='/images/favicon.ico' alt='AI' />
+            <Box className={classes.chatContainer} ref={chatContainerRef}>
+              {activeTabState === 'chat' ? (
+                <>
+                  <Box className={classes.messageList}>
+                    {(chatHistories[sessionId] || []).map((message, index) =>
+                      renderChatMessage(message, index),
+                    )}
+                    {isTyping && (
+                      <Box
+                        key={`typing-${sessionId}`}
+                        mb={2}
+                        display='flex'
+                        alignItems='flex-start'
+                        className={`${classes.messageWrapper} ai`}>
+                        <Box className={classes.messageIcon}>
+                          <img src='/images/favicon.ico' alt='AI' />
+                        </Box>
+                        <ListItem className={`${classes.chatMessage} ai typing`}>
+                          <Typography>Thinking...</Typography>
+                        </ListItem>
+                      </Box>
+                    )}
+                    <div ref={messagesEndRef} />
                   </Box>
-                  <ListItem className={`${classes.chatMessage} ai typing`}>
-                    <Typography>Thinking...</Typography>
-                  </ListItem>
-                </Box>
+                  <Box className={classes.inputContainer}>
+                    <Box className={classes.inputWrapper}>
+                      <TextField
+                        fullWidth
+                        placeholder="Ask a follow up..."
+                        value={promptInput}
+                        onChange={(e) => setPromptInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage(promptInput);
+                          }
+                        }}
+                        variant="standard"
+                        InputProps={{
+                          disableUnderline: true,
+                          className: classes.input,
+                        }}
+                      />
+                      <IconButton
+                        onClick={() => handleSendMessage(promptInput)}
+                        disabled={!promptInput.trim() || isTyping}
+                      >
+                        <Send />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </>
+              ) : (
+                <History
+                  conversations={conversations}
+                  onConversationClick={handleConversationClick}
+                  onDeleteConversation={handleDeleteConversation}
+                />
               )}
-              <div ref={messagesEndRef} />
             </Box>
             {fileChanges?.length > 0 && (
               <ReviewNotification
@@ -397,39 +478,6 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
                 onPushForReview={handleAcceptAll}
               />
             )}
-            <Box className={classes.inputContainer}>
-              <TextField
-                className={classes.input}
-                variant='outlined'
-                multiline
-                minRows={1}
-                maxRows={6}
-                placeholder='Ask a follow up...'
-                value={promptInput}
-                onChange={(e) => setPromptInput(e.target.value)}
-                onKeyPress={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    handleSendMessage(promptInput);
-                  }
-                }}
-                disabled={isTyping}
-                InputProps={{
-                  endAdornment: (
-                    <Box className={classes.actionButtons}>
-                      <IconButton disabled={isTyping}>
-                        <AttachFile />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => handleSendMessage(promptInput)}
-                        disabled={isTyping || !promptInput.trim()}>
-                        <Send />
-                      </IconButton>
-                    </Box>
-                  ),
-                }}
-              />
-            </Box>
           </Box>
         </Box>
         <Box className={classes.preview} position='relative'>
