@@ -154,6 +154,9 @@ const useStyles = makeStyles((theme) => ({
       width: 'auto',
       alignSelf: 'flex-end',
     },
+    '&.lastMessage': {
+      paddingBottom: theme.spacing(8), // 35px approximately
+    },
   },
   messageContent: {
     wordBreak: 'break-word',
@@ -696,7 +699,7 @@ const useStyles = makeStyles((theme) => ({
   },
   reviewNotificationContainer: {
     position: 'absolute',
-    bottom: '70px',
+    bottom: '73px',
     left: 0,
     right: 0,
     // padding: theme.spacing(2),

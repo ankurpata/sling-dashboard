@@ -355,7 +355,11 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
         mb={2}
         display='flex'
         alignItems='flex-start'
-        className={`${classes.messageWrapper} ${message.role}`}>
+        className={`${classes.messageWrapper} ${message.role} ${
+          fileChanges?.length > 0 && 
+          index === (chatHistories[sessionId]?.length - 1) ? 
+          'lastMessage' : ''
+        }`}>
         {showFavicon() && (
           <Box className={classes.messageIcon}>
             <img src='/images/favicon.ico' alt='AI' />

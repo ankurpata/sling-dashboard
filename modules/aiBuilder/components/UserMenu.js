@@ -106,6 +106,7 @@ const useStyles = makeStyles((theme) => ({
   userName: {
     fontWeight: 500,
     fontSize: '0.9rem',
+    paddingLet: 5,
     color: '#111827',
     '.darkTheme &': {
       color: '#ffffff',
