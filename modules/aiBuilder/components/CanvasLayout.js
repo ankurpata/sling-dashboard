@@ -530,14 +530,10 @@ const CanvasLayout = ({
                     borderRadius: '12px',
                   }}>
                   {previewTab === 'preview' ? (
-                    currentProject?.development?.previewUrl ||
-                    'http://localhost:3674' ? (
+                    currentProject?.development?.previewUrl ? (
                       <Box className={classes.livePreview}>
                         <iframe
-                          src={
-                            currentProject?.development?.previewUrl ||
-                            'http://localhost:3674'
-                          }
+                          src={currentProject?.development?.previewUrl}
                           className={classes.previewFrame}
                           title='Preview'
                           sandbox='allow-same-origin allow-scripts allow-popups allow-forms'
