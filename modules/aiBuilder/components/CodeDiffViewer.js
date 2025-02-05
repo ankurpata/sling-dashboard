@@ -465,8 +465,12 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
   };
 
   const organizeFiles = (files) => {
-    // Group files by their root directory
-    const filesByDir = files.reduce((acc, file) => {
+    // Separate root files and directory files
+    const rootFiles = files.filter(file => !file.path.includes('/'));
+    const dirFiles = files.filter(file => file.path.includes('/'));
+
+    // Group directory files by their root directory
+    const filesByDir = dirFiles.reduce((acc, file) => {
       const parts = file.path.split('/');
       const rootDir = parts[0];
       if (!acc[rootDir]) {
@@ -476,8 +480,8 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
       return acc;
     }, {});
 
-    // Create root level items
-    const rootItems = Object.entries(filesByDir).map(([dir, dirFiles]) => {
+    // Create directory items
+    const dirItems = Object.entries(filesByDir).map(([dir, dirFiles]) => {
       // Create subdirectories first
       const subdirs = new Set(
         dirFiles
@@ -503,7 +507,15 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
       };
     });
 
-    return rootItems;
+    // Convert root files to file items
+    const rootFileItems = rootFiles.map(file => ({
+      ...file,
+      isDirectory: false,
+      children: []
+    }));
+
+    // Return combined array of root files and directories
+    return [...rootFileItems, ...dirItems];
   };
 
   const getChildFiles = (file, allFiles, depth) => {
