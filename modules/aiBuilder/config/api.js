@@ -21,6 +21,7 @@ export const apiEndpoints = {
         `${API_BASE_URL}/project/chat/sessions/${sessionId}`,
     },
     fileChanges: `${API_BASE_URL}/file/changes`,
+    discardFileChanges: `${API_BASE_URL}/project/discard-changes/`,
   },
   chat: {
     prompt: `${API_BASE_URL}/chat/prompt`,

@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {useRouter} from 'next/router';
 import {Box, Button, Typography} from '@material-ui/core';
 import {makeStyles} from '@material-ui/core/styles';
-import PublishIcon from '@material-ui/icons/Publish';
 import CanvasLayout from '../../modules/aiBuilder/components/CanvasLayout';
 import Header from '../../modules/aiBuilder/components/Header';
 import {

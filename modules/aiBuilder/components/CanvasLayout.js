@@ -7,7 +7,6 @@ import {
   TextField,
   Button,
 } from '@material-ui/core';
-import AttachFile from '@material-ui/icons/AttachFile';
 import Send from '@material-ui/icons/Send';
 import {Tabs, Tab, Slide} from '@material-ui/core';
 import {OpenInNew, Refresh} from '@material-ui/icons';
@@ -24,7 +23,11 @@ import {
 } from '../services/socketService';
 
 import canvasStyles from '../styles/canvas.styles';
-import {getFileChanges} from '../services/fileChangesService';
+import {
+  getFileChanges,
+  discardFileChanges,
+} from '../services/fileChangesService';
+import {useUser} from '../context/UserContext';
 
 // CanvasLayout component
 const CanvasLayout = ({
@@ -36,6 +39,7 @@ const CanvasLayout = ({
 }) => {
   const classes = canvasStyles();
   const {currentProject} = useProject();
+  const {user} = useUser();
   const [chatHistories, setChatHistories] = useState({});
   const [promptInput, setPromptInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -48,6 +52,23 @@ const CanvasLayout = ({
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const [previewUrl, setPreviewUrl] = useState(
+    currentProject?.development?.previewUrl || 'No preview URL available',
+  );
+  const iframeRef = useRef(null);
+
+  useEffect(() => {
+    const handleIframeNavigation = (event) => {
+      if (event.data?.type === 'URL_UPDATE') {
+        setPreviewUrl(event.data.url);
+      }
+    };
+
+    window.addEventListener('message', handleIframeNavigation);
+    return () => {
+      window.removeEventListener('message', handleIframeNavigation);
+    };
+  }, []);
 
   // Helper function to scroll to bottom
   const scrollToBottom = () => {
@@ -319,8 +340,9 @@ const CanvasLayout = ({
   };
 
   const handleRejectAll = () => {
-    // setFileChanges([]);
+    setFileChanges([]);
     //TODO : ADd api call to clear all file changes from local folder.
+    discardFileChanges(currentProject._id, user.id);
   };
 
   const handleAcceptAll = () => {
@@ -495,19 +517,20 @@ const CanvasLayout = ({
                 <Box className={classes.urlBar}>
                   <Box className={classes.urlText}>
                     <Typography className={classes.urlText}>
-                      {currentProject?.development?.previewUrl ||
-                        'No preview URL available'}
+                      {previewUrl || 'No preview URL available'}
                     </Typography>
                   </Box>
                   <Box className={classes.urlActions}>
                     <IconButton
                       size='small'
-                      onClick={() =>
-                        window.open('http://localhost:3674', '_blank')
-                      }>
+                      onClick={() => window.open(previewUrl, '_blank')}>
                       <OpenInNew fontSize='small' />
                     </IconButton>
-                    <IconButton size='small'>
+                    <IconButton
+                      size='small'
+                      onClick={() =>
+                        iframeRef.current?.contentWindow?.location.reload()
+                      }>
                       <Refresh fontSize='small' />
                     </IconButton>
                   </Box>
@@ -530,13 +553,20 @@ const CanvasLayout = ({
                     borderRadius: '12px',
                   }}>
                   {previewTab === 'preview' ? (
-                    currentProject?.development?.previewUrl ? (
+                    previewUrl ? (
                       <Box className={classes.livePreview}>
                         <iframe
-                          src={currentProject?.development?.previewUrl}
+                          ref={iframeRef}
+                          src={previewUrl}
                           className={classes.previewFrame}
                           title='Preview'
                           sandbox='allow-same-origin allow-scripts allow-popups allow-forms'
+                          onLoad={() => {
+                            iframeRef.current.contentWindow.postMessage(
+                              {type: 'INIT_LISTENER'},
+                              '*',
+                            );
+                          }}
                         />
                       </Box>
                     ) : (
