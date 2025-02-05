@@ -27,7 +27,7 @@ import canvasStyles from '../styles/canvas.styles';
 import {getFileChanges } from '../services/fileChangesService';
 
 // CanvasLayout component
-const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
+const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allConversations}) => {
   const classes = canvasStyles();
   const {currentProject} = useProject();
   const [chatHistories, setChatHistories] = useState({});
@@ -72,23 +72,18 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
   }, [chatHistories, sessionId]);
 
   useEffect(() => {
-    // Group conversations by conversationId from initialChatHistory
-    const groupedConversations = initialChatHistory.reduce((acc, curr) => {
-      if (!acc[curr.conversationId]) {
-        acc[curr.conversationId] = {
-          id: curr.conversationId,
-          title: curr.message.slice(0, 50) + '...',
-          timestamp: curr.timestamp,
-        };
-      } else if (new Date(curr.timestamp) > new Date(acc[curr.conversationId].timestamp)) {
-        acc[curr.conversationId].timestamp = curr.timestamp;
-        acc[curr.conversationId].title = curr.message.slice(0, 50) + '...';
-      }
-      return acc;
-    }, {});
+    // Process conversations to get the first user message from each conversation
+    const conversationFirstMessages = allConversations.map(conversation => {
+      const firstUserMessage = conversation.messages.find(msg => msg.role === 'user');
+      return {
+        id: conversation.conversationId,
+        title: firstUserMessage?.message || 'Untitled Conversation',
+        timestamp: firstUserMessage?.timestamp || new Date().toISOString(),
+      };
+    });
     
-    setConversations(Object.values(groupedConversations));
-  }, [initialChatHistory, activeTabState]);
+    setConversations(conversationFirstMessages);
+  }, [allConversations, activeTabState]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -435,6 +430,15 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
                     )}
                     <div ref={messagesEndRef} />
                   </Box>
+                  {fileChanges?.length > 0 && (
+                    <Box className={classes.reviewNotificationContainer}>
+                      <ReviewNotification
+                        fileCount={fileChanges.length}
+                        onReject={handleRejectAll}
+                        onPushForReview={handleAcceptAll}
+                      />
+                    </Box>
+                  )}
                   <Box className={classes.inputContainer}>
                     <Box className={classes.inputWrapper}>
                       <TextField
@@ -471,13 +475,6 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId}) => {
                 />
               )}
             </Box>
-            {fileChanges?.length > 0 && (
-              <ReviewNotification
-                fileCount={fileChanges.length}
-                onReject={handleRejectAll}
-                onPushForReview={handleAcceptAll}
-              />
-            )}
           </Box>
         </Box>
         <Box className={classes.preview} position='relative'>

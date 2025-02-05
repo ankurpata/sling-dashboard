@@ -2,14 +2,11 @@ import React from 'react';
 import {
   List,
   ListItem,
-  ListItemText,
   Typography,
   Box,
-  IconButton,
   makeStyles,
 } from '@material-ui/core';
-import DeleteIcon from '@material-ui/icons/Delete';
-import { format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -17,81 +14,87 @@ const useStyles = makeStyles((theme) => ({
     height: '100%',
     backgroundColor: '#1e1e1e',
     color: '#fff',
-  },
-  listItem: {
-    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    },
+    padding: theme.spacing(2),
   },
   title: {
-    color: '#fff',
+    fontSize: '20px',
     fontWeight: 500,
+    marginBottom: theme.spacing(2),
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  listItem: {
+    padding: theme.spacing(2),
+    cursor: 'pointer',
+    marginBottom: theme.spacing(1),
+    backgroundColor: '#2a2a2a',
+    borderRadius: '12px',
+    '&:hover': {
+      backgroundColor: '#333333',
+    },
+  },
+  conversationTitle: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: '14px',
+    fontWeight: 400,
+    lineHeight: 1.5,
   },
   timestamp: {
     color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: '0.8rem',
+    fontSize: '12px',
+    display: 'block',
+    marginTop: theme.spacing(0.5),
   },
-  deleteButton: {
+  showMore: {
     color: 'rgba(255, 255, 255, 0.5)',
+    padding: theme.spacing(2),
+    cursor: 'pointer',
+    textAlign: 'left',
     '&:hover': {
-      color: '#fff',
+      backgroundColor: '#2a2a2a',
+      borderRadius: '12px',
     },
-  },
-  emptyState: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    color: 'rgba(255, 255, 255, 0.5)',
   },
 }));
 
-const History = ({ conversations = [], onConversationClick, onDeleteConversation }) => {
+const History = ({ conversations = [], onConversationClick }) => {
   const classes = useStyles();
-
-  if (!conversations.length) {
-    return (
-      <Box className={classes.emptyState}>
-        <Typography>No conversations yet</Typography>
-      </Box>
-    );
-  }
+  const [showAll, setShowAll] = React.useState(false);
+  
+  const displayedConversations = showAll ? conversations : conversations.slice(0, 3);
+  const remainingCount = conversations.length - 3;
 
   return (
-    <List className={classes.root}>
-      {conversations.map((conversation) => (
-        <ListItem
-          key={conversation.id}
-          button
-          className={classes.listItem}
-          onClick={() => onConversationClick(conversation.id)}
-        >
-          <ListItemText
-            primary={
-              <Typography className={classes.title}>
-                {conversation.title || 'Untitled Conversation'}
-              </Typography>
-            }
-            secondary={
-              <Typography className={classes.timestamp}>
-                {format(new Date(conversation.timestamp), 'MMM d, h:mm a')}
-              </Typography>
-            }
-          />
-          <IconButton
-            edge="end"
-            className={classes.deleteButton}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteConversation(conversation.id);
-            }}
+    <Box className={classes.root}>
+      <Typography className={classes.title}>Past Conversations</Typography>
+      <List>
+        {displayedConversations.map((conversation) => (
+          <ListItem
+            key={conversation.id}
+            className={classes.listItem}
+            onClick={() => onConversationClick(conversation.id)}
           >
-            <DeleteIcon />
-          </IconButton>
-        </ListItem>
-      ))}
-    </List>
+            <Box>
+              <Typography className={classes.conversationTitle}>
+                {conversation.title}
+              </Typography>
+              <Typography className={classes.timestamp}>
+                {formatDistanceToNow(new Date(conversation.timestamp), { addSuffix: true })}
+              </Typography>
+            </Box>
+          </ListItem>
+        ))}
+        {!showAll && remainingCount > 0 && (
+          <ListItem 
+            className={classes.showMore}
+            onClick={() => setShowAll(true)}
+          >
+            <Typography>
+              Show {remainingCount} more...
+            </Typography>
+          </ListItem>
+        )}
+      </List>
+    </Box>
   );
 };
 

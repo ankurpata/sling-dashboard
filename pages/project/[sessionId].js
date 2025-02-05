@@ -67,6 +67,7 @@ const ProjectSession = () => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [chatHistory, setChatHistory] = useState([]);
+  const [allConversations, setAllConversations] = useState([]);
   const {user, fetchUserInfo} = useUser();
   const {currentProject, loadProjectById} = useProject();
 
@@ -89,15 +90,13 @@ const ProjectSession = () => {
 
           // Fetch chat history if we have a conversationId
           if (sessionData.session?.conversationId) {
-            const data = await getChatHistory(
-              project._id,
-              sessionData.session.conversationId,
-            );
+            const data = await getChatHistory(project._id);
             // Find the specific conversation
             const conversation = data.conversations?.find(
               (conv) =>
                 conv.conversationId === sessionData.session.conversationId,
             );
+            setAllConversations(data?.conversations || []);
             setChatHistory(conversation?.messages || []);
           } else {
             setChatHistory([]);
@@ -139,6 +138,7 @@ const ProjectSession = () => {
         sessionId={sessionId}
         initialChatHistory={chatHistory}
         conversationId={conversationId}
+        allConversations={allConversations}
         session={session}
       />
     </div>

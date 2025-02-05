@@ -13,6 +13,8 @@ const useStyles = makeStyles((theme) => ({
     minHeight: '600px',
     gap: theme.spacing(3),
     padding: theme.spacing(3),
+    borderRadius: '15px',
+    border: '1px solid #404040',
   },
   progress: {
     flex: '0 0 25%',
@@ -167,7 +169,6 @@ const useStyles = makeStyles((theme) => ({
     left: 0,
     right: 0,
     padding: theme.spacing(2),
-    // backgroundColor: '#1e1e1e',
     borderTop: '1px solid rgba(255, 255, 255, 0.1)',
     zIndex: 1,
   },
@@ -410,14 +411,20 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: '#1e1e1e',
     position: 'relative',
     height: '100%',
+    padding: theme.spacing(2),
   },
   messageList: {
     flex: 1,
     overflowY: 'auto',
-    padding: theme.spacing(2),
     paddingBottom: '80px',
     display: 'flex',
     flexDirection: 'column',
+    '& .message': {
+      backgroundColor: '#2a2a2a',
+      borderRadius: '12px',
+      padding: theme.spacing(2),
+      marginBottom: theme.spacing(1),
+    },
   },
   messageIcon: {
     width: 32,
@@ -686,6 +693,14 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       backgroundColor: '#006abc',
     },
+  },
+  reviewNotificationContainer: {
+    position: 'absolute',
+    bottom: '80px',
+    left: 0,
+    right: 0,
+    padding: theme.spacing(2),
+    zIndex: 1,
   },
 }));
 
