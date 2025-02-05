@@ -5,7 +5,10 @@ import {makeStyles} from '@material-ui/core/styles';
 import PublishIcon from '@material-ui/icons/Publish';
 import CanvasLayout from '../../modules/aiBuilder/components/CanvasLayout';
 import Header from '../../modules/aiBuilder/components/Header';
-import {getSession} from '../../modules/aiBuilder/services/sessionService';
+import {
+  createSession,
+  getSession,
+} from '../../modules/aiBuilder/services/sessionService';
 import {getChatHistory} from '../../modules/aiBuilder/services/chatService';
 import {useUser} from '../../modules/aiBuilder/context/UserContext';
 import {useProject} from '../../modules/aiBuilder/context/ProjectContext';
@@ -68,6 +71,7 @@ const ProjectSession = () => {
   const [loading, setLoading] = useState(true);
   const [chatHistory, setChatHistory] = useState([]);
   const [allConversations, setAllConversations] = useState([]);
+  const [activeConversationId, setActiveConversationId] = useState(null);
   const {user, fetchUserInfo} = useUser();
   const {currentProject, loadProjectById} = useProject();
 
@@ -88,13 +92,23 @@ const ProjectSession = () => {
 
           setSession(sessionData.session);
 
+          // Get conversation ID from URL or session
+          const urlConversationId = router.query.conversationId;
+          const activeId =
+            urlConversationId || sessionData.session?.conversationId;
+          setActiveConversationId(activeId);
+
+          // We  need to update session with active conversationId
+          sessionData.session.conversationId = activeId;
+          //api too
+          await createSession(user._id, currentProject._id, activeId);
+          console.log('Session created:', session);
           // Fetch chat history if we have a conversationId
-          if (sessionData.session?.conversationId) {
+          if (activeId) {
             const data = await getChatHistory(project._id);
             // Find the specific conversation
             const conversation = data.conversations?.find(
-              (conv) =>
-                conv.conversationId === sessionData.session.conversationId,
+              (conv) => conv.conversationId === activeId,
             );
             setAllConversations(data?.conversations || []);
             setChatHistory(conversation?.messages || []);
@@ -112,7 +126,24 @@ const ProjectSession = () => {
     }
 
     fetchSession();
-  }, [sessionId]);
+  }, [sessionId, router.query.conversationId]);
+
+  const handleConversationChange = (newConversationId) => {
+    setActiveConversationId(newConversationId);
+
+    // Update chat history for the new conversation
+    const conversation = allConversations.find(
+      (conv) => conv.conversationId === newConversationId,
+    );
+    setChatHistory(conversation?.messages || []);
+
+    // Update the URL to reflect the new conversation
+    router.push(
+      `/project/${sessionId}?conversationId=${newConversationId}`,
+      undefined,
+      {shallow: true},
+    );
+  };
 
   if (loading) {
     return (
@@ -129,17 +160,15 @@ const ProjectSession = () => {
     );
   }
 
-  const conversationId = session?.conversationId;
-
   return (
     <div className={classes.root}>
       <Header isCanvasView={true}></Header>
       <CanvasLayout
         sessionId={sessionId}
         initialChatHistory={chatHistory}
-        conversationId={conversationId}
+        conversationId={activeConversationId}
         allConversations={allConversations}
-        session={session}
+        onConversationChange={handleConversationChange}
       />
     </div>
   );

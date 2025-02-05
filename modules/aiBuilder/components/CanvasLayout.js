@@ -27,7 +27,7 @@ import canvasStyles from '../styles/canvas.styles';
 import {getFileChanges } from '../services/fileChangesService';
 
 // CanvasLayout component
-const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allConversations}) => {
+const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allConversations, onConversationChange}) => {
   const classes = canvasStyles();
   const {currentProject} = useProject();
   const [chatHistories, setChatHistories] = useState({});
@@ -323,14 +323,8 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
   };
 
   const handleConversationClick = (conversationId) => {
-    // Load the conversation messages
-    if (currentProject?.id) {
-      getChatHistory(currentProject.id, conversationId).then((history) => {
-        setChatHistories({
-          ...chatHistories,
-          [sessionId]: history,
-        });
-      });
+    if (onConversationChange) {
+      onConversationChange(conversationId);
     }
   };
 
@@ -468,9 +462,10 @@ const CanvasLayout = ({sessionId, initialChatHistory = [], conversationId, allCo
                   </Box>
                 </>
               ) : (
-                <History
-                  conversations={conversations}
+                <History 
+                  conversations={conversations} 
                   onConversationClick={handleConversationClick}
+                  currentConversationId={conversationId}
                   onDeleteConversation={handleDeleteConversation}
                 />
               )}

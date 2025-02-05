@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: '#262626',
     padding: '2px',
     borderRadius: '15px',
-    border: '1px solid #404040',
+    // border: '1px solid #404040',
   },
   tab: {
     flex: 1,
@@ -696,10 +696,10 @@ const useStyles = makeStyles((theme) => ({
   },
   reviewNotificationContainer: {
     position: 'absolute',
-    bottom: '80px',
+    bottom: '70px',
     left: 0,
     right: 0,
-    padding: theme.spacing(2),
+    // padding: theme.spacing(2),
     zIndex: 1,
   },
 }));
