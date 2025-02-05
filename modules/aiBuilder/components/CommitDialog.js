@@ -395,12 +395,13 @@ const CommitDialog = ({
   projectId,
   setFileChanges,
   conversationId,
+  emptyState,
 }) => {
   const classes = useStyles();
   const [message, setMessage] = useState('');
   const [branchName, setBranchName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(emptyState ? 1 : 0);
   const [pullRequests, setPullRequests] = useState({});
   const [isPRLoading, setPRLoading] = useState(false);
   const [prSuccess, setPrSuccess] = useState('');
@@ -578,10 +579,13 @@ const CommitDialog = ({
       <Dialog open={open} onClose={onClose} className={classes.dialog}>
         <DialogTitle className={classes.title} disableTypography>
           <Box>
-            <Typography variant='h2'>Push Changes</Typography>
+            <Typography variant='h2'>
+              {!emptyState ? 'Push Changes' : 'Past Changes'}
+            </Typography>
             <Typography className={classes.subtitle}>
-              This will only create a pull request for review. No direct changes
-              to production.
+              {!emptyState
+                ? 'This will only create a pull request for review. No direct changes to production.'
+                : ''}
             </Typography>
           </Box>
           <IconButton
@@ -635,66 +639,70 @@ const CommitDialog = ({
                   <span>Generating commit message...</span>
                 </Box>
               )}
-              <TextField
-                autoFocus
-                multiline
-                rows={3}
-                variant='outlined'
-                fullWidth
-                placeholder='Describe your changes...'
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className={classes.messageField}
-                helperText='Brief description of the changes you made'
-                error={!!error}
-                InputProps={{
-                  endAdornment: (
-                    <IconButton
-                      className={`${classes.messageRefreshButton} ${isMessageLoading ? 'spinning' : ''}`}
-                      onClick={handleRefreshMessage}
-                      disabled={isMessageLoading}
-                      size='small'
-                      title='Refresh AI commit message'>
-                      <RefreshIcon />
-                    </IconButton>
-                  ),
-                }}
-              />
-              {error && <Box className={classes.errorMessage}>{error}</Box>}
-              <TextField
-                variant='outlined'
-                fullWidth
-                placeholder='feature/my-new-feature'
-                value={branchName}
-                onChange={(e) => setBranchName(e.target.value)}
-                className={classes.branchField}
-                helperText='Optional: Branch name for your changes (if not provided, a name will be generated)'
-              />
-              <Tabs
-                value={activeTab}
-                onChange={handleTabChange}
-                className={classes.tabs}
-                variant='fullWidth'>
-                <Tab label='Changes' className={classes.tab} />
-                <Tab
-                  className={classes.tab}
-                  label={
-                    <Box display='flex' alignItems='center'>
-                      Previous Changes
-                      <IconButton
-                        className={`${classes.refreshButton} ${isRefreshing ? 'spinning' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRefresh();
-                        }}
-                        disabled={isPRLoading}
-                        size='small'>
-                        <RefreshIcon />
-                      </IconButton>
-                    </Box>
-                  }
-                />
-              </Tabs>
+              {!emptyState && (
+                <>
+                  <TextField
+                    autoFocus
+                    multiline
+                    rows={3}
+                    variant='outlined'
+                    fullWidth
+                    placeholder='Describe your changes...'
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className={classes.messageField}
+                    helperText='Brief description of the changes you made'
+                    error={!!error}
+                    InputProps={{
+                      endAdornment: (
+                        <IconButton
+                          className={`${classes.messageRefreshButton} ${isMessageLoading ? 'spinning' : ''}`}
+                          onClick={handleRefreshMessage}
+                          disabled={isMessageLoading}
+                          size='small'
+                          title='Refresh AI commit message'>
+                          <RefreshIcon />
+                        </IconButton>
+                      ),
+                    }}
+                  />
+                  {error && <Box className={classes.errorMessage}>{error}</Box>}
+                  <TextField
+                    variant='outlined'
+                    fullWidth
+                    placeholder='feature/my-new-feature'
+                    value={branchName}
+                    onChange={(e) => setBranchName(e.target.value)}
+                    className={classes.branchField}
+                    helperText='Optional: Branch name for your changes (if not provided, a name will be generated)'
+                  />
+                  <Tabs
+                    value={activeTab}
+                    onChange={handleTabChange}
+                    className={classes.tabs}
+                    variant='fullWidth'>
+                    <Tab label='Changes' className={classes.tab} />
+                    <Tab
+                      className={classes.tab}
+                      label={
+                        <Box display='flex' alignItems='center'>
+                          Previous Changes
+                          <IconButton
+                            className={`${classes.refreshButton} ${isRefreshing ? 'spinning' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRefresh();
+                            }}
+                            disabled={isPRLoading}
+                            size='small'>
+                            <RefreshIcon />
+                          </IconButton>
+                        </Box>
+                      }
+                    />
+                  </Tabs>
+                </>
+              )}
               <Box className={classes.tabContent}>
                 {activeTab === 0 ? (
                   <Box className={classes.fileList}>

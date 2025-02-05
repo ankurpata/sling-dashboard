@@ -8,6 +8,7 @@ import {
   TextField,
   InputAdornment,
   Collapse,
+  Button,
   Tooltip,
   IconButton,
   List,
@@ -25,9 +26,11 @@ import {
   ViewColumn as ViewColumnIcon,
   ViewStream as ViewStreamIcon,
   ViewAgenda as ViewAgendaIcon,
+  History as HistoryIcon,
 } from '@material-ui/icons';
 import {getFileChanges} from '../services/fileChangesService';
 import {useProject} from '../context/ProjectContext';
+import CommitDialog from '../components/CommitDialog';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -239,8 +242,8 @@ const useStyles = makeStyles((theme) => ({
       borderRight: '1px solid #d0d7de',
       '&:last-child': {
         borderRight: 'none',
-      }
-    }
+      },
+    },
   },
   lineContent: {
     flex: 1,
@@ -254,7 +257,7 @@ const useStyles = makeStyles((theme) => ({
     '& pre': {
       margin: 0,
       whiteSpace: 'pre',
-    }
+    },
   },
   addedLine: {
     '& $lineContent': {
@@ -265,7 +268,7 @@ const useStyles = makeStyles((theme) => ({
       borderRight: '1px solid #a6f0c6',
       '& span': {
         color: '#1a7f37',
-      }
+      },
     },
   },
   removedLine: {
@@ -277,7 +280,7 @@ const useStyles = makeStyles((theme) => ({
       borderRight: '1px solid #ffc9c9',
       '& span': {
         color: '#cf222e',
-      }
+      },
     },
   },
   contextLine: {
@@ -336,6 +339,50 @@ const useStyles = makeStyles((theme) => ({
   },
   viewToggle: {
     marginRight: '8px',
+  },
+  emptyStateContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+    width: '100%',
+    backgroundColor: '#1e1e1e',
+    padding: theme.spacing(3),
+  },
+  emptyStateBox: {
+    backgroundColor: '#262626',
+    borderRadius: '12px',
+    border: '1px solid #404040',
+    padding: theme.spacing(4),
+    maxWidth: 400,
+    width: '100%',
+  },
+  emptyStateImage: {
+    width: 120,
+    height: 120,
+    marginBottom: theme.spacing(3),
+    opacity: 0.8,
+  },
+  emptyStateTitle: {
+    color: '#ffffff',
+    fontSize: '1.1rem',
+    fontWeight: 500,
+    marginBottom: theme.spacing(1),
+  },
+  emptyStateText: {
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginBottom: theme.spacing(3),
+    lineHeight: 1.5,
+  },
+  emptyStateButton: {
+    backgroundColor: '#333333',
+    color: '#ffffff',
+    borderRadius: '8px',
+    padding: theme.spacing(1, 2),
+    '&:hover': {
+      backgroundColor: '#404040',
+    },
   },
 }));
 
@@ -420,6 +467,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
   const {currentProject} = useProject();
   const leftScrollRef = useRef(null);
   const rightScrollRef = useRef(null);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchFileChanges = async () => {
@@ -466,8 +514,8 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
 
   const organizeFiles = (files) => {
     // Separate root files and directory files
-    const rootFiles = files.filter(file => !file.path.includes('/'));
-    const dirFiles = files.filter(file => file.path.includes('/'));
+    const rootFiles = files.filter((file) => !file.path.includes('/'));
+    const dirFiles = files.filter((file) => file.path.includes('/'));
 
     // Group directory files by their root directory
     const filesByDir = dirFiles.reduce((acc, file) => {
@@ -485,14 +533,16 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
       // Create subdirectories first
       const subdirs = new Set(
         dirFiles
-          .filter(f => f.path.split('/').length > 2)
-          .map(f => f.path.split('/')[1])
+          .filter((f) => f.path.split('/').length > 2)
+          .map((f) => f.path.split('/')[1]),
       );
 
-      const subdirItems = Array.from(subdirs).map(subdir => ({
+      const subdirItems = Array.from(subdirs).map((subdir) => ({
         path: `${dir}/${subdir}`,
         isDirectory: true,
-        children: dirFiles.filter(f => f.path.startsWith(`${dir}/${subdir}/`))
+        children: dirFiles.filter((f) =>
+          f.path.startsWith(`${dir}/${subdir}/`),
+        ),
       }));
 
       return {
@@ -500,18 +550,18 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
         isDirectory: true,
         children: [
           ...subdirItems,
-          ...dirFiles.filter(f => f.path.split('/').length === 2)
+          ...dirFiles.filter((f) => f.path.split('/').length === 2),
         ],
         additions: dirFiles.reduce((sum, f) => sum + (f.additions || 0), 0),
-        deletions: dirFiles.reduce((sum, f) => sum + (f.deletions || 0), 0)
+        deletions: dirFiles.reduce((sum, f) => sum + (f.deletions || 0), 0),
       };
     });
 
     // Convert root files to file items
-    const rootFileItems = rootFiles.map(file => ({
+    const rootFileItems = rootFiles.map((file) => ({
       ...file,
       isDirectory: false,
-      children: []
+      children: [],
     }));
 
     // Return combined array of root files and directories
@@ -520,11 +570,11 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
 
   const getChildFiles = (file, allFiles, depth) => {
     if (!file.isDirectory) return [];
-    
+
     if (depth === 0) {
       // For root level directories, show both subdirectories and files
       const prefix = file.path;
-      return file.children.filter(f => {
+      return file.children.filter((f) => {
         const parts = f.path.split('/');
         return parts.length === 2; // Direct children only
       });
@@ -532,7 +582,7 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
 
     // For nested directories
     const prefix = file.path;
-    return allFiles.filter(f => {
+    return allFiles.filter((f) => {
       const parts = f.path.split('/');
       const parentPath = parts.slice(0, depth + 1).join('/');
       return f.path.startsWith(prefix) && parentPath === prefix;
@@ -566,7 +616,9 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
       <>
         <div
           className={`${classes.fileItem} ${
-            !isDirectory && file.path === selectedFile ? classes.selectedFile : ''
+            !isDirectory && file.path === selectedFile
+              ? classes.selectedFile
+              : ''
           }`}
           onClick={handleClick}
           style={{paddingLeft: `${depth * 16}px`}}>
@@ -626,16 +678,67 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
     setSelectedFile(path);
   };
 
+  const handleOpenHistory = () => {
+    setHistoryDialogOpen(true);
+  };
+
+  const handleCloseHistory = () => {
+    setHistoryDialogOpen(false);
+  };
+
   const renderEmptyState = () => (
-    <Box
-      display='flex'
-      justifyContent='center'
-      alignItems='center'
-      height='100%'>
-      <Typography variant='body1' color='textSecondary'>
-        No file changes to display
-      </Typography>
-    </Box>
+    <>
+      <Box className={classes.emptyStateContainer}>
+        <Paper elevation={0} className={classes.emptyStateBox}>
+          <Box display='flex' flexDirection='column' alignItems='center'>
+            <Box className={classes.emptyStateImage}>
+              <svg
+                width="120"
+                height="120"
+                viewBox="0 0 120 120"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M60 10C32.386 10 10 32.386 10 60s22.386 50 50 50 50-22.386 50-50S87.614 10 60 10zm0 90c-22.091 0-40-17.909-40-40s17.909-40 40-40 40 17.909 40 40-17.909 40-40 40z"
+                  fill="#404040"
+                />
+                <path
+                  d="M60 40c-11.046 0-20 8.954-20 20s8.954 20 20 20 20-8.954 20-20-8.954-20-20-20zm0 30c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z"
+                  fill="#666666"
+                />
+              </svg>
+            </Box>
+            <Typography variant='h6' className={classes.emptyStateTitle}>
+              No Changes Yet
+            </Typography>
+            <Typography
+              variant='body2'
+              className={classes.emptyStateText}>
+              Your changes will appear here once you start making modifications to your files.
+            </Typography>
+            <Button
+              variant='contained'
+              className={classes.emptyStateButton}
+              startIcon={<HistoryIcon />}
+              onClick={handleOpenHistory}
+              disableElevation>
+              View History
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+      <CommitDialog
+        open={historyDialogOpen}
+        onClose={handleCloseHistory}
+        files={[]}
+        projectId={null}
+        setFileChanges={() => {}}
+        conversationId={null}
+        emptyState={true}
+        initialTab={1} // Open directly to the PR history tab
+      />
+    </>
   );
 
   const renderFileList = () => (
@@ -702,7 +805,8 @@ const CodeDiffViewer = ({fileChanges: initialFileChanges}) => {
           <span>{line.oldLineNumber || ' '}</span>
           <span>{line.newLineNumber || ' '}</span>
         </div>
-        <div className={`${classes.lineContent} ${line.type === 'context' ? classes.contextLine : ''}`}>
+        <div
+          className={`${classes.lineContent} ${line.type === 'context' ? classes.contextLine : ''}`}>
           <span className={classes.codeMark}>
             {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
           </span>
